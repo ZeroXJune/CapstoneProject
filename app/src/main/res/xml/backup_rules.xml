@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<full-backup-content>
+    <!-- Exclude Firebase and Google Play Services -->
+    <exclude domain="sharedpref" path="com.google.firebase*" />
+    <exclude domain="database" path="com.google.firebase*" />
+    <exclude domain="file" path="google_play_services*" />
+</full-backup-content>

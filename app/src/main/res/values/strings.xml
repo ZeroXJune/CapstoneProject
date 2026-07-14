@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">TrikRide</string>
+    <string name="app_tagline">Smart Tricycle Ride System</string>
+
+    <!-- Navigation -->
+    <string name="home">Home</string>
+    <string name="rides">Rides</string>
+    <string name="profile">Profile</string>
+    <string name="settings">Settings</string>
+
+    <!-- Authentication -->
+    <string name="login">Login</string>
+    <string name="sign_up">Sign Up</string>
+    <string name="email">Email</string>
+    <string name="password">Password</string>
+    <string name="forgot_password">Forgot Password?</string>
+    <string name="dont_have_account">Don\'t have an account? Sign Up</string>
+    <string name="already_have_account">Already have an account? Login</string>
+
+    <!-- Ride Features -->
+    <string name="book_ride">Book a Ride</string>
+    <string name="pickup_location">Pickup Location</string>
+    <string name="dropoff_location">Dropoff Location</string>
+    <string name="searching_drivers">Searching for drivers...</string>
+    <string name="driver_arriving">Driver arriving in %d min</string>
+    <string name="ride_in_progress">Ride in progress</string>
+    <string name="ride_completed">Ride completed</string>
+
+    <!-- Driver Features -->
+    <string name="driver_registration">Driver Registration</string>
+    <string name="license_number">License Number</string>
+    <string name="tricycle_number">Tricycle Number</string>
+    <string name="upload_documents">Upload Documents</string>
+    <string name="go_online">Go Online</string>
+    <string name="go_offline">Go Offline</string>
+    <string name="active_rides">Active Rides</string>
+
+    <!-- Status Messages -->
+    <string name="loading">Loading...</string>
+    <string name="error">Error</string>
+    <string name="retry">Retry</string>
+    <string name="cancel">Cancel</string>
+    <string name="confirm">Confirm</string>
+    <string name="success">Success</string>
+
+    <!-- Errors -->
+    <string name="invalid_email">Invalid email address</string>
+    <string name="password_too_short">Password must be at least 6 characters</string>
+    <string name="fields_required">Please fill all required fields</string>
+    <string name="network_error">Network error. Please check your connection</string>
+
+    <!-- Ratings and Reviews -->
+    <string name="rate_driver">Rate Driver</string>
+    <string name="rate_passenger">Rate Passenger</string>
+    <string name="add_review">Add Review</string>
+    <string name="rating">Rating</string>
+</resources>

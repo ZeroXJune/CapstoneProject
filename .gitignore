@@ -1,0 +1,26 @@
+# Build files
+*.apk
+*.aab
+build/
+.gradle/
+
+# IDE
+.idea/
+*.iml
+*.iws
+*.ipr
+.vscode/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Firebase
+google-services.json
+
+# Secrets
+local.properties
+secrets.properties
+
+# Logs
+*.log
