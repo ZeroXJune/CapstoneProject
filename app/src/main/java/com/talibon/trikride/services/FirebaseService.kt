@@ -112,6 +112,30 @@ class FirebaseService {
         awaitClose { ref.removeEventListener(listener) }
     }
 
+    fun getOpenRideRequestsFlow(): Flow<List<RideRequest>> = callbackFlow {
+        val listener = object : ValueEventListener {
+            override fun onDataChange(snapshot: DataSnapshot) {
+                val now = System.currentTimeMillis()
+                val requests = snapshot.children.mapNotNull { it.getValue(RideRequest::class.java) }
+                    .filter { (it.expiresAt.toLongOrNull() ?: Long.MAX_VALUE) > now }
+                trySend(requests)
+            }
+
+            override fun onCancelled(error: DatabaseError) {
+                close(error.toException())
+            }
+        }
+
+        val ref = database.getReference("rideRequests")
+        ref.addValueEventListener(listener)
+
+        awaitClose { ref.removeEventListener(listener) }
+    }
+
+    suspend fun removeRideRequest(requestId: String) {
+        database.getReference("rideRequests").child(requestId).removeValue()
+    }
+
     suspend fun createRide(ride: Ride) {
         database.getReference("rides").child(ride.id).setValue(ride)
     }
@@ -143,10 +167,31 @@ class FirebaseService {
     }
 
     fun getActiveRidesFlow(passengerId: String): Flow<List<Ride>> = callbackFlow {
+        val terminalStatuses = setOf(RideStatus.COMPLETED, RideStatus.CANCELLED, RideStatus.NO_SHOW)
         val listener = object : ValueEventListener {
             override fun onDataChange(snapshot: DataSnapshot) {
                 val rides = snapshot.children.mapNotNull { it.getValue(Ride::class.java) }
-                    .filter { it.passengerId == passengerId && it.status != RideStatus.COMPLETED }
+                    .filter { it.passengerId == passengerId && it.status !in terminalStatuses }
+                trySend(rides)
+            }
+
+            override fun onCancelled(error: DatabaseError) {
+                close(error.toException())
+            }
+        }
+
+        val ref = database.getReference("rides")
+        ref.addValueEventListener(listener)
+
+        awaitClose { ref.removeEventListener(listener) }
+    }
+
+    fun getDriverActiveRidesFlow(driverId: String): Flow<List<Ride>> = callbackFlow {
+        val terminalStatuses = setOf(RideStatus.COMPLETED, RideStatus.CANCELLED, RideStatus.NO_SHOW)
+        val listener = object : ValueEventListener {
+            override fun onDataChange(snapshot: DataSnapshot) {
+                val rides = snapshot.children.mapNotNull { it.getValue(Ride::class.java) }
+                    .filter { it.driverId == driverId && it.status !in terminalStatuses }
                 trySend(rides)
             }
 

@@ -43,7 +43,9 @@ cd capstoneproject
    ./gradlew signingReport
    ```
 5. Register the app and download `google-services.json`
-6. Place `google-services.json` in `app/` directory
+6. Place `google-services.json` in `app/` directory (see `app/google-services.json.template`
+   for the expected shape). The build automatically enables the Google Services plugin
+   once the file exists — the project still compiles without it.
 
 ### 3.3 Enable Firebase Services
 
@@ -93,11 +95,12 @@ In Firebase Console, enable:
 1. Go to [Google Cloud Console](https://console.cloud.google.com/)
 2. Enable Maps SDK for Android
 3. Create API key with Android restrictions
-4. In `AndroidManifest.xml`, replace:
-   ```xml
-   android:value="YOUR_GOOGLE_MAPS_API_KEY_HERE"
+4. Add the key to `local.properties` in the project root (this file is gitignored,
+   so the key never reaches version control):
+   ```properties
+   MAPS_API_KEY=AIza...your_key_here
    ```
-   with your actual API key
+   The build injects it into the manifest automatically via a placeholder.
 
 ## Step 6: Build and Run
 

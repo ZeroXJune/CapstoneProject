@@ -9,21 +9,25 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.talibon.trikride.models.UserType
 import com.talibon.trikride.ui.theme.TrikRidePrimary
+import java.util.UUID
 
 @Composable
 fun MainAppScreen() {
     var userType by remember { mutableStateOf<UserType?>(null) }
     var isLoggedIn by remember { mutableStateOf(false) }
+    // Demo session id until Firebase Auth is wired in; replace with FirebaseAuth.uid.
+    var userId by remember { mutableStateOf("") }
 
     when {
         !isLoggedIn -> AuthScreen(
             onLoginSuccess = { type ->
                 userType = type
+                userId = UUID.randomUUID().toString()
                 isLoggedIn = true
             }
         )
-        userType == UserType.PASSENGER -> PassengerHomeScreen()
-        userType == UserType.DRIVER -> DriverHomeScreen()
+        userType == UserType.PASSENGER -> PassengerHomeScreen(userId = userId)
+        userType == UserType.DRIVER -> DriverHomeScreen(userId = userId)
         userType == UserType.ADMIN -> AdminDashboardScreen()
         else -> SplashScreen()
     }
@@ -229,16 +233,23 @@ fun SignUpScreen(
 }
 
 @Composable
-fun PassengerHomeScreen() {
-    Text("Passenger Home Screen")
-}
-
-@Composable
-fun DriverHomeScreen() {
-    Text("Driver Home Screen")
-}
-
-@Composable
 fun AdminDashboardScreen() {
-    Text("Admin Dashboard")
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(16.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
+    ) {
+        Text(
+            text = "Admin Dashboard",
+            style = MaterialTheme.typography.headlineMedium,
+            fontWeight = FontWeight.Bold
+        )
+        Spacer(modifier = Modifier.height(8.dp))
+        Text(
+            text = "Driver verification and ride monitoring — coming in the next phase.",
+            style = MaterialTheme.typography.bodyMedium
+        )
+    }
 }

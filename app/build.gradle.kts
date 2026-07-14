@@ -1,9 +1,26 @@
+import java.util.Properties
+
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
-    id("com.google.gms.google-services")
     id("kotlin-kapt")
 }
+
+// Apply the Google Services plugin only when the Firebase config file is present,
+// so the project still builds before Firebase is configured.
+if (file("google-services.json").exists()) {
+    apply(plugin = "com.google.gms.google-services")
+}
+
+// Read the Google Maps API key from local.properties (never committed to git).
+// Add a line like: MAPS_API_KEY=AIza... to local.properties in the project root.
+val localProperties = Properties().apply {
+    val propsFile = rootProject.file("local.properties")
+    if (propsFile.exists()) {
+        propsFile.inputStream().use { load(it) }
+    }
+}
+val mapsApiKey: String = localProperties.getProperty("MAPS_API_KEY") ?: "MISSING_MAPS_API_KEY"
 
 android {
     namespace = "com.talibon.trikride"
@@ -20,6 +37,8 @@ android {
         vectorDrawables {
             useSupportLibrary = true
         }
+
+        manifestPlaceholders["MAPS_API_KEY"] = mapsApiKey
     }
 
     buildTypes {
