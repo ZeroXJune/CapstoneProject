@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- Android 12+ backup/transfer rules. Defaults are fine for now;
+     add <exclude> entries here if sensitive local files are ever stored. -->
 <data-extraction-rules>
-    <domain-config cleartextTrafficPermitted="false">
-        <domain includeSubdomains="true">*.example.com</domain>
-    </domain-config>
+    <cloud-backup />
+    <device-transfer />
 </data-extraction-rules>
