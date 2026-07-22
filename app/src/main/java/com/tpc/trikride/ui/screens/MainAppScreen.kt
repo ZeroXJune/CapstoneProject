@@ -131,15 +131,15 @@ private fun SplashScreen() {
         ) {
             Box(
                 modifier = Modifier
-                    .size(140.dp)
+                    .size(150.dp)
                     .clip(CircleShape)
-                    .background(Color.White.copy(alpha = 0.12f)),
+                    .background(Color.White),
                 contentAlignment = Alignment.Center
             ) {
                 Image(
-                    painter = painterResource(id = R.drawable.ic_launcher),
+                    painter = painterResource(id = R.drawable.trikride_logo),
                     contentDescription = "TrikRide logo",
-                    modifier = Modifier.size(96.dp)
+                    modifier = Modifier.size(104.dp)
                 )
             }
             Spacer(modifier = Modifier.height(24.dp))
