@@ -4,10 +4,12 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.tpc.trikride.models.UserType
 import com.tpc.trikride.repositories.AuthRepository
+import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withTimeout
 
 class AuthViewModel(
     private val repo: AuthRepository = AuthRepository()
@@ -30,13 +32,15 @@ class AuthViewModel(
         viewModelScope.launch {
             _state.update { it.copy(isLoading = true, error = null) }
             try {
-                val uid = repo.login(email, password)
-                val type = repo.loadUserType(uid)
+                val uid = withTimeout(DB_TIMEOUT_MS) { repo.login(email, password) }
+                val type = withTimeout(DB_TIMEOUT_MS) { repo.loadUserType(uid) }
                 _state.value = AuthUiState(
                     userId = uid,
                     userType = type,
                     needsAccountType = type == null
                 )
+            } catch (e: TimeoutCancellationException) {
+                _state.update { it.copy(isLoading = false, error = DB_UNREACHABLE) }
             } catch (e: Exception) {
                 _state.update { it.copy(isLoading = false, error = friendly(e)) }
             }
@@ -54,8 +58,12 @@ class AuthViewModel(
         viewModelScope.launch {
             _state.update { it.copy(isLoading = true, error = null) }
             try {
-                val uid = repo.register(fullName, idNumber, email, phone, password, userType)
+                val uid = withTimeout(DB_TIMEOUT_MS) {
+                    repo.register(fullName, idNumber, email, phone, password, userType)
+                }
                 _state.value = AuthUiState(userId = uid, userType = userType)
+            } catch (e: TimeoutCancellationException) {
+                _state.update { it.copy(isLoading = false, error = DB_UNREACHABLE) }
             } catch (e: Exception) {
                 _state.update { it.copy(isLoading = false, error = friendly(e)) }
             }
@@ -66,11 +74,16 @@ class AuthViewModel(
     fun chooseAccountType(userType: UserType) {
         val uid = _state.value.userId ?: return
         viewModelScope.launch {
+            _state.update { it.copy(isLoading = true, error = null) }
             try {
-                repo.setUserType(uid, userType)
-                _state.update { it.copy(userType = userType, needsAccountType = false) }
+                withTimeout(DB_TIMEOUT_MS) { repo.setUserType(uid, userType) }
+                _state.update {
+                    it.copy(isLoading = false, userType = userType, needsAccountType = false)
+                }
+            } catch (e: TimeoutCancellationException) {
+                _state.update { it.copy(isLoading = false, error = DB_UNREACHABLE) }
             } catch (e: Exception) {
-                _state.update { it.copy(error = friendly(e)) }
+                _state.update { it.copy(isLoading = false, error = friendly(e)) }
             }
         }
     }
@@ -81,6 +94,14 @@ class AuthViewModel(
     }
 
     fun clearError() = _state.update { it.copy(error = null) }
+
+    private companion object {
+        const val DB_TIMEOUT_MS = 12_000L
+        const val DB_UNREACHABLE =
+            "Couldn't reach the database. Make sure the Realtime Database is created in " +
+                "Firebase, then re-download google-services.json and replace it in the app/ " +
+                "folder. (If you just did, check the database Rules allow writes.)"
+    }
 
     private fun friendly(e: Exception): String {
         val msg = e.message ?: return "Something went wrong. Please try again."
