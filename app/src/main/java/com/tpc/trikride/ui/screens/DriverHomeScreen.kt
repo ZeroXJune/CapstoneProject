@@ -33,6 +33,7 @@ import com.tpc.trikride.models.RideStatus
 import com.tpc.trikride.models.VerificationStatus
 import com.tpc.trikride.ui.components.PrimaryButton
 import com.tpc.trikride.ui.components.SectionCard
+import com.tpc.trikride.ui.components.SettingsCard
 import com.tpc.trikride.ui.components.SimplePlaceholder
 import com.tpc.trikride.ui.components.TrikTextField
 import com.tpc.trikride.ui.theme.ErrorColor
@@ -498,6 +499,8 @@ private fun DriverProfileContent(driver: Driver) {
                 InfoRow(Icons.Filled.CheckCircle, "Verification", driver.verificationStatus.name)
             }
         }
+        Spacer(modifier = Modifier.height(16.dp))
+        SettingsCard()
     }
 }
 

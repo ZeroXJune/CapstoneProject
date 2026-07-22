@@ -40,6 +40,7 @@ import com.tpc.trikride.models.RideStatus
 import com.tpc.trikride.ui.components.PrimaryButton
 import com.tpc.trikride.ui.components.SecondaryButton
 import com.tpc.trikride.ui.components.SectionCard
+import com.tpc.trikride.ui.components.SettingsCard
 import com.tpc.trikride.ui.components.SimplePlaceholder
 import com.tpc.trikride.ui.theme.EmeraldGreen
 import com.tpc.trikride.ui.theme.ForestGreen
@@ -113,11 +114,7 @@ fun PassengerHomeScreen(
                     title = "Notifications",
                     message = "Ride updates and alerts will show up here."
                 )
-                PassengerTab.PROFILE -> SimplePlaceholder(
-                    icon = Icons.Filled.Person,
-                    title = "Profile",
-                    message = "Account details and settings — coming soon."
-                )
+                PassengerTab.PROFILE -> PassengerProfileContent()
             }
         }
     }
@@ -646,6 +643,35 @@ private fun MapPlaceholder(height: Dp) {
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
         }
+    }
+}
+
+@Composable
+private fun PassengerProfileContent() {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .verticalScroll(rememberScrollState())
+            .padding(20.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Spacer(modifier = Modifier.height(16.dp))
+        Box(
+            modifier = Modifier
+                .size(88.dp)
+                .clip(CircleShape)
+                .background(MaterialTheme.colorScheme.primaryContainer),
+            contentAlignment = Alignment.Center
+        ) {
+            Icon(Icons.Filled.Person, contentDescription = null,
+                tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(44.dp))
+        }
+        Spacer(modifier = Modifier.height(12.dp))
+        Text("Passenger", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+        Text("Talibon Polytechnic College", style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant)
+        Spacer(modifier = Modifier.height(20.dp))
+        SettingsCard()
     }
 }
 
