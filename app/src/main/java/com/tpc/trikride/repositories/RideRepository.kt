@@ -28,6 +28,8 @@ class RideRepository(
         passengerId: String,
         pickup: Location,
         dropoff: Location,
+        passengerCount: Int = 1,
+        luggage: String = "None",
         notes: String = ""
     ): RideRequest {
         val now = System.currentTimeMillis()
@@ -38,6 +40,8 @@ class RideRepository(
             dropoffLocation = dropoff,
             requestedAt = now.toString(),
             expiresAt = (now + Constants.RIDE_REQUEST_TTL_MS).toString(),
+            passengerCount = passengerCount,
+            luggage = luggage,
             notes = notes
         )
         firebase.createRideRequest(request)
@@ -74,7 +78,9 @@ class RideRepository(
             requestedAt = request.requestedAt,
             acceptedAt = System.currentTimeMillis().toString(),
             estimatedDuration = FareCalculator.estimateDurationMinutes(distanceKm),
-            estimatedFare = FareCalculator.estimateFare(distanceKm),
+            estimatedFare = FareCalculator.estimateFare(distanceKm, request.passengerCount),
+            passengerCount = request.passengerCount,
+            luggage = request.luggage,
             notes = request.notes
         )
         firebase.createRide(ride)

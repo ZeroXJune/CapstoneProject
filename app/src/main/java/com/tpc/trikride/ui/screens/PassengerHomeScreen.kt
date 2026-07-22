@@ -9,6 +9,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Chat
 import androidx.compose.material.icons.filled.DirectionsBike
@@ -20,7 +21,9 @@ import androidx.compose.material.icons.filled.MyLocation
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Phone
+import androidx.compose.material.icons.filled.Remove
 import androidx.compose.material.icons.filled.Star
+import androidx.compose.material.icons.filled.SupportAgent
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -50,7 +53,7 @@ import com.tpc.trikride.utils.FareCalculator
 import com.tpc.trikride.utils.LocationUtils
 import com.tpc.trikride.viewmodels.PassengerViewModel
 
-private enum class PassengerTab { HOME, HISTORY, NOTIFICATIONS, PROFILE }
+private enum class PassengerTab { HOME, HISTORY, SUPPORT, PROFILE }
 
 @Composable
 fun PassengerHomeScreen(
@@ -96,8 +99,8 @@ fun PassengerHomeScreen(
                         showBooking -> BookingContent(
                             error = error,
                             onDismissError = viewModel::dismissError,
-                            onConfirm = { p, d, notes ->
-                                viewModel.requestRide(p, d, notes)
+                            onConfirm = { p, d, count, luggage, notes ->
+                                viewModel.requestRide(p, d, count, luggage, notes)
                                 showBooking = false
                             },
                             onBack = { showBooking = false }
@@ -110,11 +113,7 @@ fun PassengerHomeScreen(
                     title = "Ride History",
                     message = "Your completed and cancelled rides will appear here."
                 )
-                PassengerTab.NOTIFICATIONS -> SimplePlaceholder(
-                    icon = Icons.Filled.Notifications,
-                    title = "Notifications",
-                    message = "Ride updates and alerts will show up here."
-                )
+                PassengerTab.SUPPORT -> SupportContent()
                 PassengerTab.PROFILE -> PassengerProfileContent(onSignOut = onSignOut)
             }
         }
@@ -137,10 +136,10 @@ private fun PassengerBottomBar(selected: PassengerTab, onSelect: (PassengerTab) 
             label = { Text("History") }
         )
         NavigationBarItem(
-            selected = selected == PassengerTab.NOTIFICATIONS,
-            onClick = { onSelect(PassengerTab.NOTIFICATIONS) },
-            icon = { Icon(Icons.Filled.Notifications, contentDescription = "Notifications") },
-            label = { Text("Alerts") }
+            selected = selected == PassengerTab.SUPPORT,
+            onClick = { onSelect(PassengerTab.SUPPORT) },
+            icon = { Icon(Icons.Filled.SupportAgent, contentDescription = "Support") },
+            label = { Text("Support") }
         )
         NavigationBarItem(
             selected = selected == PassengerTab.PROFILE,
@@ -265,15 +264,22 @@ private fun QuickAction(
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
+private val LUGGAGE_OPTIONS = listOf(
+    "Backpack", "Large Bag", "Shopping Bags", "Box / Package", "Market Goods"
+)
+
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun BookingContent(
     error: String?,
     onDismissError: () -> Unit,
-    onConfirm: (Location, Location, String) -> Unit,
+    onConfirm: (Location, Location, Int, String, String) -> Unit,
     onBack: () -> Unit
 ) {
     var pickup by remember { mutableStateOf<Location?>(null) }
     var dropoff by remember { mutableStateOf<Location?>(null) }
+    var passengerCount by remember { mutableStateOf(1) }
+    val selectedLuggage = remember { mutableStateListOf<String>() }
     var notes by remember { mutableStateOf("") }
 
     Column(
@@ -290,7 +296,7 @@ private fun BookingContent(
         }
         Spacer(modifier = Modifier.height(12.dp))
 
-        MapPlaceholder(height = 180.dp)
+        MapPlaceholder(height = 160.dp)
         Spacer(modifier = Modifier.height(16.dp))
 
         error?.let {
@@ -310,6 +316,59 @@ private fun BookingContent(
         LocationField("Pickup Location", Icons.Filled.MyLocation, pickup) { pickup = it }
         Spacer(modifier = Modifier.height(12.dp))
         LocationField("Destination", Icons.Filled.LocationOn, dropoff) { dropoff = it }
+        Spacer(modifier = Modifier.height(16.dp))
+
+        // Passenger count
+        SectionCard {
+            Column {
+                Text("Number of Passengers", style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.Bold)
+                Text("Max 3 per tricycle", style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Spacer(modifier = Modifier.height(8.dp))
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    FilledTonalIconButton(
+                        onClick = { if (passengerCount > 1) passengerCount-- },
+                        enabled = passengerCount > 1
+                    ) { Icon(Icons.Filled.Remove, contentDescription = "Fewer") }
+                    Text(
+                        "$passengerCount",
+                        style = MaterialTheme.typography.headlineSmall,
+                        fontWeight = FontWeight.Bold,
+                        modifier = Modifier.padding(horizontal = 20.dp)
+                    )
+                    FilledTonalIconButton(
+                        onClick = { if (passengerCount < 3) passengerCount++ },
+                        enabled = passengerCount < 3
+                    ) { Icon(Icons.Filled.Add, contentDescription = "More") }
+                }
+            }
+        }
+        Spacer(modifier = Modifier.height(12.dp))
+
+        // Luggage
+        SectionCard {
+            Column {
+                Text("Luggage / Items to Carry", style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.Bold)
+                Text("Select all that apply — the driver will be notified",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Spacer(modifier = Modifier.height(8.dp))
+                FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    LUGGAGE_OPTIONS.forEach { option ->
+                        FilterChip(
+                            selected = option in selectedLuggage,
+                            onClick = {
+                                if (option in selectedLuggage) selectedLuggage.remove(option)
+                                else selectedLuggage.add(option)
+                            },
+                            label = { Text(option) }
+                        )
+                    }
+                }
+            }
+        }
         Spacer(modifier = Modifier.height(12.dp))
 
         OutlinedTextField(
@@ -326,28 +385,27 @@ private fun BookingContent(
         val valid = from != null && to != null && from.address != to.address
         if (valid && from != null && to != null) {
             val distanceKm = LocationUtils.distanceKm(from, to)
+            val distanceFare = FareCalculator.distanceFare(distanceKm)
+            val extraFare = FareCalculator.extraPassengerFare(passengerCount)
+            val total = FareCalculator.estimateFare(distanceKm, passengerCount)
             SectionCard {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween
-                ) {
-                    Column {
-                        Text("Estimated Fare", style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant)
-                        Text(
-                            "₱%.2f".format(FareCalculator.estimateFare(distanceKm)),
-                            style = MaterialTheme.typography.headlineSmall,
-                            fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.primary
-                        )
+                Column {
+                    Text("Fare Estimate", style = MaterialTheme.typography.titleSmall,
+                        fontWeight = FontWeight.Bold)
+                    Spacer(modifier = Modifier.height(8.dp))
+                    FareLine("Base fare", "₱%.2f".format(FareCalculator.BASE_FARE_PHP))
+                    FareLine("Distance (%.1f km)".format(distanceKm), "₱%.2f".format(distanceFare))
+                    if (extraFare > 0) {
+                        FareLine("Extra passengers (+${passengerCount - 1})", "₱%.2f".format(extraFare))
                     }
-                    Column(horizontalAlignment = Alignment.End) {
-                        Text("Distance", style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant)
-                        Text("%.1f km".format(distanceKm), style = MaterialTheme.typography.titleMedium)
-                        Text("~${FareCalculator.estimateDurationMinutes(distanceKm)} min",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Text("Total Estimate", fontWeight = FontWeight.Bold)
+                        Text("₱%.2f".format(total), style = MaterialTheme.typography.titleLarge,
+                            fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
                     }
                 }
             }
@@ -355,11 +413,30 @@ private fun BookingContent(
         }
 
         PrimaryButton(
-            text = "Confirm Booking",
-            onClick = { if (from != null && to != null) onConfirm(from, to, notes) },
+            text = "Find a Driver",
+            onClick = {
+                if (from != null && to != null) {
+                    val luggage = if (selectedLuggage.isEmpty()) "None" else selectedLuggage.joinToString(", ")
+                    onConfirm(from, to, passengerCount, luggage, notes)
+                }
+            },
             enabled = valid
         )
         Spacer(modifier = Modifier.height(16.dp))
+    }
+}
+
+@Composable
+private fun FareLine(label: String, value: String) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 2.dp),
+        horizontalArrangement = Arrangement.SpaceBetween
+    ) {
+        Text(label, style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant)
+        Text(value, style = MaterialTheme.typography.bodyMedium)
     }
 }
 
@@ -487,6 +564,15 @@ private fun RideTrackingContent(ride: Ride) {
                 RouteRow(Icons.Filled.MyLocation, "Pickup", ride.pickupLocation.address)
                 Spacer(modifier = Modifier.height(10.dp))
                 RouteRow(Icons.Filled.LocationOn, "Destination", ride.dropoffLocation.address)
+                HorizontalDivider(modifier = Modifier.padding(vertical = 10.dp))
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Text("${ride.passengerCount} passenger(s)", style = MaterialTheme.typography.bodyMedium)
+                    Text(ride.luggage, style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
             }
         }
         Spacer(modifier = Modifier.height(16.dp))
@@ -577,6 +663,10 @@ private fun RideCompleteContent(ride: Ride, onBackHome: () -> Unit) {
             Column {
                 SummaryRow("Fare", "₱%.2f".format(ride.estimatedFare))
                 HorizontalDivider(modifier = Modifier.padding(vertical = 10.dp))
+                SummaryRow("Passengers", "${ride.passengerCount}")
+                HorizontalDivider(modifier = Modifier.padding(vertical = 10.dp))
+                SummaryRow("Luggage", ride.luggage)
+                HorizontalDivider(modifier = Modifier.padding(vertical = 10.dp))
                 SummaryRow("Estimated Duration", "${ride.estimatedDuration} min")
                 HorizontalDivider(modifier = Modifier.padding(vertical = 10.dp))
                 SummaryRow("Payment Method", "Cash")
@@ -644,6 +734,84 @@ private fun MapPlaceholder(height: Dp) {
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
         }
+    }
+}
+
+@Composable
+private fun SupportContent() {
+    var description by remember { mutableStateOf("") }
+    var submitted by remember { mutableStateOf(false) }
+
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .verticalScroll(rememberScrollState())
+            .padding(20.dp)
+    ) {
+        Spacer(modifier = Modifier.height(8.dp))
+        Text("Support", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
+        Text("We're here to help", style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant)
+        Spacer(modifier = Modifier.height(20.dp))
+
+        SectionCard {
+            Column {
+                Text("Report an Issue", style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold)
+                Spacer(modifier = Modifier.height(12.dp))
+                if (submitted) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(Icons.Filled.CheckCircle, contentDescription = null,
+                            tint = MaterialTheme.colorScheme.primary)
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text("Report submitted. Thank you!",
+                            color = MaterialTheme.colorScheme.primary)
+                    }
+                } else {
+                    OutlinedTextField(
+                        value = description,
+                        onValueChange = { description = it },
+                        label = { Text("Describe your concern") },
+                        shape = RoundedCornerShape(14.dp),
+                        modifier = Modifier.fillMaxWidth(),
+                        minLines = 3
+                    )
+                    Spacer(modifier = Modifier.height(12.dp))
+                    PrimaryButton(
+                        text = "Submit Report",
+                        onClick = { submitted = true },
+                        enabled = description.isNotBlank()
+                    )
+                }
+            }
+        }
+        Spacer(modifier = Modifier.height(12.dp))
+
+        SectionCard {
+            Column {
+                Text("Contact", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                Spacer(modifier = Modifier.height(12.dp))
+                ContactRow(Icons.Filled.Phone, "Hotline", "0966-749-7561")
+                Spacer(modifier = Modifier.height(8.dp))
+                ContactRow(Icons.Filled.SupportAgent, "Email", "trikride@tpc.edu.ph")
+                Spacer(modifier = Modifier.height(8.dp))
+                ContactRow(Icons.Filled.History, "Hours", "6:00 AM – 9:00 PM")
+            }
+        }
+    }
+}
+
+@Composable
+private fun ContactRow(icon: ImageVector, label: String, value: String) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Icon(icon, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
+        Spacer(modifier = Modifier.width(12.dp))
+        Text(label, style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.weight(1f))
+        Text(value, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold)
     }
 }
 

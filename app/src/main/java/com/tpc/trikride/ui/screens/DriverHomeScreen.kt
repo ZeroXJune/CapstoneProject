@@ -327,7 +327,7 @@ private fun RequestCard(
     onDecline: () -> Unit
 ) {
     val distanceKm = LocationUtils.distanceKm(request.pickupLocation, request.dropoffLocation)
-    val fare = FareCalculator.estimateFare(distanceKm)
+    val fare = FareCalculator.estimateFare(distanceKm, request.passengerCount)
 
     SectionCard {
         Column {
@@ -365,6 +365,16 @@ private fun RequestCard(
                         color = MaterialTheme.colorScheme.onSurfaceVariant)
                     Text("%.1f km".format(distanceKm), style = MaterialTheme.typography.titleMedium)
                 }
+            }
+            Spacer(modifier = Modifier.height(8.dp))
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Text("👥 ${request.passengerCount} passenger(s)",
+                    style = MaterialTheme.typography.bodySmall)
+                Text("🧳 ${request.luggage}", style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
             if (request.notes.isNotBlank()) {
                 Spacer(modifier = Modifier.height(8.dp))
@@ -437,6 +447,15 @@ private fun ActiveRideContent(ride: Ride, onAdvance: () -> Unit) {
                 RouteRowDriver(Icons.Filled.MyLocation, "Pickup", ride.pickupLocation.address)
                 Spacer(modifier = Modifier.height(10.dp))
                 RouteRowDriver(Icons.Filled.LocationOn, "Destination", ride.dropoffLocation.address)
+                Spacer(modifier = Modifier.height(10.dp))
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Text("👥 ${ride.passengerCount} passenger(s)", style = MaterialTheme.typography.bodyMedium)
+                    Text("🧳 ${ride.luggage}", style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
                 if (ride.notes.isNotBlank()) {
                     Spacer(modifier = Modifier.height(10.dp))
                     Text("Passenger notes: ${ride.notes}", style = MaterialTheme.typography.bodySmall)

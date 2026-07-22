@@ -18,6 +18,8 @@ data class Ride(
     val paymentMethod: PaymentMethod = PaymentMethod.CASH,
     val paymentStatus: PaymentStatus = PaymentStatus.PENDING,
     val route: List<Location> = emptyList(),
+    val passengerCount: Int = 1,
+    val luggage: String = "None",
     val notes: String = ""
 )
 
@@ -55,6 +57,8 @@ data class RideRequest(
     val dropoffLocation: Location = Location(),
     val requestedAt: String = "",
     val expiresAt: String = "",
+    val passengerCount: Int = 1,
+    val luggage: String = "None",
     val notes: String = "",
     val preferredDriverId: String? = null
 )

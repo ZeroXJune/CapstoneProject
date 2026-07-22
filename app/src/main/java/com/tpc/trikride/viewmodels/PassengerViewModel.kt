@@ -41,11 +41,18 @@ class PassengerViewModel(
         passengerId.value = userId
     }
 
-    fun requestRide(pickup: Location, dropoff: Location, notes: String = "") {
+    fun requestRide(
+        pickup: Location,
+        dropoff: Location,
+        passengerCount: Int = 1,
+        luggage: String = "None",
+        notes: String = ""
+    ) {
         val id = passengerId.value ?: return
         viewModelScope.launch {
             try {
-                _pendingRequest.value = rideRepository.requestRide(id, pickup, dropoff, notes)
+                _pendingRequest.value =
+                    rideRepository.requestRide(id, pickup, dropoff, passengerCount, luggage, notes)
                 _errorMessage.value = null
             } catch (e: Exception) {
                 _errorMessage.value = e.message ?: "Failed to request ride"
