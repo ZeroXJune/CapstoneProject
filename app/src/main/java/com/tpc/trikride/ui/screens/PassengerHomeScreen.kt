@@ -55,6 +55,7 @@ private enum class PassengerTab { HOME, HISTORY, NOTIFICATIONS, PROFILE }
 @Composable
 fun PassengerHomeScreen(
     userId: String,
+    onSignOut: () -> Unit,
     viewModel: PassengerViewModel = viewModel()
 ) {
     LaunchedEffect(userId) { viewModel.bind(userId) }
@@ -114,7 +115,7 @@ fun PassengerHomeScreen(
                     title = "Notifications",
                     message = "Ride updates and alerts will show up here."
                 )
-                PassengerTab.PROFILE -> PassengerProfileContent()
+                PassengerTab.PROFILE -> PassengerProfileContent(onSignOut = onSignOut)
             }
         }
     }
@@ -647,7 +648,7 @@ private fun MapPlaceholder(height: Dp) {
 }
 
 @Composable
-private fun PassengerProfileContent() {
+private fun PassengerProfileContent(onSignOut: () -> Unit) {
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -671,7 +672,7 @@ private fun PassengerProfileContent() {
         Text("Talibon Polytechnic College", style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant)
         Spacer(modifier = Modifier.height(20.dp))
-        SettingsCard()
+        SettingsCard(onSignOut = onSignOut)
     }
 }
 

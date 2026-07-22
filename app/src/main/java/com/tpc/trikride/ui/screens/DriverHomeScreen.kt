@@ -51,6 +51,7 @@ private enum class DriverTab { DASHBOARD, REQUESTS, HISTORY, PROFILE }
 @Composable
 fun DriverHomeScreen(
     userId: String,
+    onSignOut: () -> Unit,
     viewModel: DriverViewModel = viewModel()
 ) {
     LaunchedEffect(userId) { viewModel.bind(userId) }
@@ -101,7 +102,7 @@ fun DriverHomeScreen(
                     title = "Ride History",
                     message = "Your completed trips and earnings will appear here."
                 )
-                DriverTab.PROFILE -> DriverProfileContent(driver = profile)
+                DriverTab.PROFILE -> DriverProfileContent(driver = profile, onSignOut = onSignOut)
             }
         }
     }
@@ -458,7 +459,7 @@ private fun ActiveRideContent(ride: Ride, onAdvance: () -> Unit) {
 }
 
 @Composable
-private fun DriverProfileContent(driver: Driver) {
+private fun DriverProfileContent(driver: Driver, onSignOut: () -> Unit) {
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -500,7 +501,7 @@ private fun DriverProfileContent(driver: Driver) {
             }
         }
         Spacer(modifier = Modifier.height(16.dp))
-        SettingsCard()
+        SettingsCard(onSignOut = onSignOut)
     }
 }
 

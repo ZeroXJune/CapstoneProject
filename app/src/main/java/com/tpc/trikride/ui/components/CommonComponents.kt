@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.Logout
 import androidx.compose.material.icons.filled.DarkMode
 import androidx.compose.material.icons.filled.LightMode
 import androidx.compose.material.icons.filled.Visibility
@@ -148,7 +149,7 @@ fun SimplePlaceholder(
  * override. Reused by the passenger and driver profile screens.
  */
 @Composable
-fun SettingsCard() {
+fun SettingsCard(onSignOut: (() -> Unit)? = null) {
     val isDark = ThemeState.darkModeOverride ?: isSystemInDarkTheme()
 
     SectionCard {
@@ -173,6 +174,21 @@ fun SettingsCard() {
                     checked = isDark,
                     onCheckedChange = { ThemeState.darkModeOverride = it }
                 )
+            }
+            if (onSignOut != null) {
+                Spacer(modifier = Modifier.height(12.dp))
+                OutlinedButton(
+                    onClick = onSignOut,
+                    shape = RoundedCornerShape(14.dp),
+                    colors = ButtonDefaults.outlinedButtonColors(
+                        contentColor = MaterialTheme.colorScheme.error
+                    ),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Icon(Icons.AutoMirrored.Filled.Logout, contentDescription = null)
+                    Spacer(modifier = Modifier.size(8.dp))
+                    Text("Sign Out")
+                }
             }
         }
     }
