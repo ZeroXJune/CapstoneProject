@@ -77,6 +77,8 @@ fun MainAppScreen(authViewModel: AuthViewModel = viewModel()) {
     // Signed in but no account type stored yet → pick one (persists to DB).
     if (state.userId != null && state.needsAccountType) {
         AccountSelectionScreen(
+            isLoading = state.isLoading,
+            error = state.error,
             onSelect = { authViewModel.chooseAccountType(it) },
             onBack = { authViewModel.signOut(); screen = AppScreen.LOGIN }
         )
@@ -98,13 +100,15 @@ fun MainAppScreen(authViewModel: AuthViewModel = viewModel()) {
             onLoginClick = { authViewModel.clearError(); screen = AppScreen.LOGIN }
         )
         AppScreen.ACCOUNT_SELECTION -> AccountSelectionScreen(
+            isLoading = state.isLoading,
+            error = state.error,
             onSelect = { type ->
                 val reg = pendingReg
                 if (reg != null) {
                     authViewModel.register(reg.fullName, reg.idNumber, reg.email, reg.phone, reg.password, type)
                 }
             },
-            onBack = { screen = AppScreen.REGISTER }
+            onBack = { authViewModel.clearError(); screen = AppScreen.REGISTER }
         )
     }
 }
@@ -322,6 +326,8 @@ private fun RegisterScreen(
 
 @Composable
 private fun AccountSelectionScreen(
+    isLoading: Boolean,
+    error: String?,
     onSelect: (UserType) -> Unit,
     onBack: () -> Unit
 ) {
@@ -331,7 +337,7 @@ private fun AccountSelectionScreen(
             .padding(24.dp)
     ) {
         Spacer(modifier = Modifier.height(16.dp))
-        IconButton(onClick = onBack) {
+        IconButton(onClick = onBack, enabled = !isLoading) {
             Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
         }
         Spacer(modifier = Modifier.height(8.dp))
@@ -349,6 +355,7 @@ private fun AccountSelectionScreen(
             icon = Icons.Filled.DirectionsWalk,
             title = "I'm a Passenger",
             subtitle = "Book rides and travel around the campus",
+            enabled = !isLoading,
             onClick = { onSelect(UserType.PASSENGER) }
         )
         Spacer(modifier = Modifier.height(16.dp))
@@ -356,8 +363,24 @@ private fun AccountSelectionScreen(
             icon = Icons.Filled.LocalTaxi,
             title = "I'm a Driver",
             subtitle = "Provide rides and earn income",
+            enabled = !isLoading,
             onClick = { onSelect(UserType.DRIVER) }
         )
+
+        if (isLoading) {
+            Spacer(modifier = Modifier.height(24.dp))
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.Center,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                CircularProgressIndicator(modifier = Modifier.size(24.dp))
+                Spacer(modifier = Modifier.width(12.dp))
+                Text("Creating your account...", style = MaterialTheme.typography.bodyMedium)
+            }
+        }
+
+        ErrorText(error)
     }
 }
 
@@ -366,10 +389,11 @@ private fun AccountTypeCard(
     icon: androidx.compose.ui.graphics.vector.ImageVector,
     title: String,
     subtitle: String,
+    enabled: Boolean = true,
     onClick: () -> Unit
 ) {
     SectionCard(
-        modifier = Modifier.clickable(onClick = onClick),
+        modifier = Modifier.clickable(enabled = enabled, onClick = onClick),
         contentPadding = PaddingValues(20.dp)
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
