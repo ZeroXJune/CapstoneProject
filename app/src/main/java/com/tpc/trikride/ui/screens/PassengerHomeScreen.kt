@@ -40,6 +40,7 @@ import com.tpc.trikride.models.RideStatus
 import com.tpc.trikride.ui.components.PrimaryButton
 import com.tpc.trikride.ui.components.SecondaryButton
 import com.tpc.trikride.ui.components.SectionCard
+import com.tpc.trikride.ui.components.SimplePlaceholder
 import com.tpc.trikride.ui.theme.EmeraldGreen
 import com.tpc.trikride.ui.theme.ForestGreen
 import com.tpc.trikride.ui.theme.RatingColor
@@ -645,26 +646,6 @@ private fun MapPlaceholder(height: Dp) {
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
         }
-    }
-}
-
-@Composable
-private fun SimplePlaceholder(icon: ImageVector, title: String, message: String) {
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(24.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
-    ) {
-        Icon(icon, contentDescription = null, modifier = Modifier.size(56.dp),
-            tint = MaterialTheme.colorScheme.primary)
-        Spacer(modifier = Modifier.height(16.dp))
-        Text(title, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
-        Spacer(modifier = Modifier.height(8.dp))
-        Text(message, style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            textAlign = TextAlign.Center)
     }
 }
 
