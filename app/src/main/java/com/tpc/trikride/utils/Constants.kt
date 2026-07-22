@@ -1,6 +1,6 @@
-package com.talibon.trikride.utils
+package com.tpc.trikride.utils
 
-import com.talibon.trikride.models.Location
+import com.tpc.trikride.models.Location
 
 object Constants {
 

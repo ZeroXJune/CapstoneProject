@@ -1,4 +1,4 @@
-package com.talibon.trikride.ui.theme
+package com.tpc.trikride.ui.theme
 
 import android.app.Activity
 import android.os.Build

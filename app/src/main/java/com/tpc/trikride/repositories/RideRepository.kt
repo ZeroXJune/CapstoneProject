@@ -1,13 +1,13 @@
-package com.talibon.trikride.repositories
+package com.tpc.trikride.repositories
 
-import com.talibon.trikride.models.Location
-import com.talibon.trikride.models.Ride
-import com.talibon.trikride.models.RideRequest
-import com.talibon.trikride.models.RideStatus
-import com.talibon.trikride.services.FirebaseService
-import com.talibon.trikride.utils.Constants
-import com.talibon.trikride.utils.FareCalculator
-import com.talibon.trikride.utils.LocationUtils
+import com.tpc.trikride.models.Location
+import com.tpc.trikride.models.Ride
+import com.tpc.trikride.models.RideRequest
+import com.tpc.trikride.models.RideStatus
+import com.tpc.trikride.services.FirebaseService
+import com.tpc.trikride.utils.Constants
+import com.tpc.trikride.utils.FareCalculator
+import com.tpc.trikride.utils.LocationUtils
 import kotlinx.coroutines.flow.Flow
 import java.util.UUID
 

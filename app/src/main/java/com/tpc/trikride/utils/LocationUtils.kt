@@ -1,6 +1,6 @@
-package com.talibon.trikride.utils
+package com.tpc.trikride.utils
 
-import com.talibon.trikride.models.Location
+import com.tpc.trikride.models.Location
 import kotlin.math.atan2
 import kotlin.math.cos
 import kotlin.math.sin

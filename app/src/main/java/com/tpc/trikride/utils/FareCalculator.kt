@@ -1,4 +1,4 @@
-package com.talibon.trikride.utils
+package com.tpc.trikride.utils
 
 import kotlin.math.ceil
 import kotlin.math.max

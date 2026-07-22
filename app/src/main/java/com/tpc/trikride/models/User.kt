@@ -1,4 +1,4 @@
-package com.talibon.trikride.models
+package com.tpc.trikride.models
 
 import java.time.LocalDateTime
 

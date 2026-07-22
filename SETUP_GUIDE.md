@@ -36,7 +36,7 @@ cd capstoneproject
 ### 3.2 Register Android App
 
 1. In Firebase Console, click "Add app" → "Android"
-2. Enter package name: `com.talibon.trikride`
+2. Enter package name: `com.tpc.trikride`
 3. Enter app nickname: `TrikRide`
 4. Get your SHA-1 fingerprint:
    ```bash

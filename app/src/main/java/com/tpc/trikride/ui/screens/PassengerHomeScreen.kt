@@ -1,4 +1,4 @@
-package com.talibon.trikride.ui.screens
+package com.tpc.trikride.ui.screens
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -35,13 +35,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.talibon.trikride.models.Location
-import com.talibon.trikride.models.Ride
-import com.talibon.trikride.models.RideStatus
-import com.talibon.trikride.utils.Constants
-import com.talibon.trikride.utils.FareCalculator
-import com.talibon.trikride.utils.LocationUtils
-import com.talibon.trikride.viewmodels.PassengerViewModel
+import com.tpc.trikride.models.Location
+import com.tpc.trikride.models.Ride
+import com.tpc.trikride.models.RideStatus
+import com.tpc.trikride.utils.Constants
+import com.tpc.trikride.utils.FareCalculator
+import com.tpc.trikride.utils.LocationUtils
+import com.tpc.trikride.viewmodels.PassengerViewModel
 
 @Composable
 fun PassengerHomeScreen(

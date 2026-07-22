@@ -1,4 +1,4 @@
-package com.talibon.trikride.ui.theme
+package com.tpc.trikride.ui.theme
 
 import androidx.compose.ui.graphics.Color
 

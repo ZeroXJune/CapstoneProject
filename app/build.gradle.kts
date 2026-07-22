@@ -23,11 +23,11 @@ val localProperties = Properties().apply {
 val mapsApiKey: String = localProperties.getProperty("MAPS_API_KEY") ?: "MISSING_MAPS_API_KEY"
 
 android {
-    namespace = "com.talibon.trikride"
+    namespace = "com.tpc.trikride"
     compileSdk = 35
 
     defaultConfig {
-        applicationId = "com.talibon.trikride"
+        applicationId = "com.tpc.trikride"
         minSdk = 24
         targetSdk = 34
         versionCode = 1

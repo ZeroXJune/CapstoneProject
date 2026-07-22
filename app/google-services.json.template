@@ -1,7 +1,7 @@
 {
   "_instructions": [
     "1. Go to https://console.firebase.google.com and create a project named 'TrikRide'.",
-    "2. Add an Android app with package name: com.talibon.trikride",
+    "2. Add an Android app with package name: com.tpc.trikride",
     "3. Download the real google-services.json from the Firebase console.",
     "4. Place it in this same directory (app/) as 'google-services.json'.",
     "5. Delete this template file or keep it as reference — the real file is gitignored.",
@@ -17,7 +17,7 @@
       "client_info": {
         "mobilesdk_app_id": "1:YOUR_PROJECT_NUMBER:android:YOUR_APP_ID",
         "android_client_info": {
-          "package_name": "com.talibon.trikride"
+          "package_name": "com.tpc.trikride"
         }
       },
       "oauth_client": [],

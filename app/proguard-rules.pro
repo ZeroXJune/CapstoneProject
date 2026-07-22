@@ -8,10 +8,10 @@
 -keep class kotlinx.** { *; }
 
 # Models
--keep class com.talibon.trikride.models.** { *; }
+-keep class com.tpc.trikride.models.** { *; }
 
 # Serialization
--keepclassmembers class com.talibon.trikride.models.** {
+-keepclassmembers class com.tpc.trikride.models.** {
     <init>(...);
 }
 

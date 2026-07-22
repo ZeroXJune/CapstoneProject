@@ -1,4 +1,4 @@
-package com.talibon.trikride.ui.screens
+package com.tpc.trikride.ui.screens
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -30,14 +30,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.talibon.trikride.models.Driver
-import com.talibon.trikride.models.Ride
-import com.talibon.trikride.models.RideRequest
-import com.talibon.trikride.models.RideStatus
-import com.talibon.trikride.models.VerificationStatus
-import com.talibon.trikride.utils.FareCalculator
-import com.talibon.trikride.utils.LocationUtils
-import com.talibon.trikride.viewmodels.DriverViewModel
+import com.tpc.trikride.models.Driver
+import com.tpc.trikride.models.Ride
+import com.tpc.trikride.models.RideRequest
+import com.tpc.trikride.models.RideStatus
+import com.tpc.trikride.models.VerificationStatus
+import com.tpc.trikride.utils.FareCalculator
+import com.tpc.trikride.utils.LocationUtils
+import com.tpc.trikride.viewmodels.DriverViewModel
 
 @Composable
 fun DriverHomeScreen(

@@ -1,11 +1,11 @@
-package com.talibon.trikride.viewmodels
+package com.tpc.trikride.viewmodels
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.talibon.trikride.models.Location
-import com.talibon.trikride.models.Ride
-import com.talibon.trikride.models.RideRequest
-import com.talibon.trikride.repositories.RideRepository
+import com.tpc.trikride.models.Location
+import com.tpc.trikride.models.Ride
+import com.tpc.trikride.models.RideRequest
+import com.tpc.trikride.repositories.RideRepository
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted

@@ -1,4 +1,4 @@
-package com.talibon.trikride.services
+package com.tpc.trikride.services
 
 import android.app.NotificationChannel
 import android.app.NotificationManager
@@ -8,8 +8,8 @@ import android.content.Intent
 import androidx.core.app.NotificationCompat
 import com.google.firebase.messaging.FirebaseMessagingService
 import com.google.firebase.messaging.RemoteMessage
-import com.talibon.trikride.MainActivity
-import com.talibon.trikride.R
+import com.tpc.trikride.MainActivity
+import com.tpc.trikride.R
 
 class TrikRideMessagingService : FirebaseMessagingService() {
 
