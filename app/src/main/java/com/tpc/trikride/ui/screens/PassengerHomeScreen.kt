@@ -37,6 +37,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.tpc.trikride.models.FareConfig
 import com.tpc.trikride.models.Location
 import com.tpc.trikride.models.Ride
 import com.tpc.trikride.models.RideStatus
@@ -49,7 +50,7 @@ import com.tpc.trikride.ui.theme.EmeraldGreen
 import com.tpc.trikride.ui.theme.ForestGreen
 import com.tpc.trikride.ui.theme.RatingColor
 import com.tpc.trikride.utils.Constants
-import com.tpc.trikride.utils.FareCalculator
+import com.tpc.trikride.utils.FareEngine
 import com.tpc.trikride.utils.LocationUtils
 import com.tpc.trikride.viewmodels.PassengerViewModel
 
@@ -66,6 +67,7 @@ fun PassengerHomeScreen(
     val activeRides by viewModel.activeRides.collectAsState()
     val pendingRequest by viewModel.pendingRequest.collectAsState()
     val error by viewModel.errorMessage.collectAsState()
+    val fareConfig by viewModel.fareConfig.collectAsState()
 
     var tab by remember { mutableStateOf(PassengerTab.HOME) }
     var showBooking by remember { mutableStateOf(false) }
@@ -98,6 +100,7 @@ fun PassengerHomeScreen(
                         pendingRequest != null -> SearchingContent(onCancel = viewModel::cancelPendingRequest)
                         showBooking -> BookingContent(
                             error = error,
+                            fareConfig = fareConfig,
                             onDismissError = viewModel::dismissError,
                             onConfirm = { p, d, count, luggage, notes ->
                                 viewModel.requestRide(p, d, count, luggage, notes)
@@ -272,6 +275,7 @@ private val LUGGAGE_OPTIONS = listOf(
 @Composable
 private fun BookingContent(
     error: String?,
+    fareConfig: FareConfig,
     onDismissError: () -> Unit,
     onConfirm: (Location, Location, Int, String, String) -> Unit,
     onBack: () -> Unit
@@ -385,16 +389,24 @@ private fun BookingContent(
         val valid = from != null && to != null && from.address != to.address
         if (valid && from != null && to != null) {
             val distanceKm = LocationUtils.distanceKm(from, to)
-            val distanceFare = FareCalculator.distanceFare(distanceKm)
-            val extraFare = FareCalculator.extraPassengerFare(passengerCount)
-            val total = FareCalculator.estimateFare(distanceKm, passengerCount)
+            val routeFare = FareEngine.routeFare(fareConfig, from.address, to.address)
+            val baseTotal = FareEngine.baseTotal(fareConfig, from.address, to.address, distanceKm)
+            val extraFare = FareEngine.extraPassengerFare(fareConfig, passengerCount)
+            val total = FareEngine.total(fareConfig, from.address, to.address, distanceKm, passengerCount)
             SectionCard {
                 Column {
                     Text("Fare Estimate", style = MaterialTheme.typography.titleSmall,
                         fontWeight = FontWeight.Bold)
                     Spacer(modifier = Modifier.height(8.dp))
-                    FareLine("Base fare", "₱%.2f".format(FareCalculator.BASE_FARE_PHP))
-                    FareLine("Distance (%.1f km)".format(distanceKm), "₱%.2f".format(distanceFare))
+                    if (routeFare != null) {
+                        FareLine("Fixed route fare", "₱%.2f".format(routeFare))
+                    } else {
+                        FareLine("Base fare", "₱%.2f".format(fareConfig.baseFare))
+                        FareLine(
+                            "Distance (%.1f km)".format(distanceKm),
+                            "₱%.2f".format(baseTotal - fareConfig.baseFare)
+                        )
+                    }
                     if (extraFare > 0) {
                         FareLine("Extra passengers (+${passengerCount - 1})", "₱%.2f".format(extraFare))
                     }

@@ -38,7 +38,6 @@ import com.tpc.trikride.ui.components.SimplePlaceholder
 import com.tpc.trikride.ui.components.TrikTextField
 import com.tpc.trikride.ui.theme.ErrorColor
 import com.tpc.trikride.ui.theme.RatingColor
-import com.tpc.trikride.utils.FareCalculator
 import com.tpc.trikride.utils.LocationUtils
 import kotlinx.coroutines.delay
 import androidx.compose.material.icons.filled.Badge
@@ -327,7 +326,7 @@ private fun RequestCard(
     onDecline: () -> Unit
 ) {
     val distanceKm = LocationUtils.distanceKm(request.pickupLocation, request.dropoffLocation)
-    val fare = FareCalculator.estimateFare(distanceKm, request.passengerCount)
+    val fare = request.estimatedFare
 
     SectionCard {
         Column {

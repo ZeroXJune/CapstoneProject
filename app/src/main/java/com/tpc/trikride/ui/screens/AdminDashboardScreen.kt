@@ -5,11 +5,14 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Groups
 import androidx.compose.material.icons.filled.Insights
+import androidx.compose.material.icons.filled.Payments
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.VerifiedUser
 import androidx.compose.material3.*
@@ -18,21 +21,27 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import kotlinx.coroutines.delay
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.tpc.trikride.models.Driver
+import com.tpc.trikride.models.FareConfig
 import com.tpc.trikride.models.Ride
 import com.tpc.trikride.models.RideStatus
+import com.tpc.trikride.models.RouteFare
 import com.tpc.trikride.models.User
 import com.tpc.trikride.models.VerificationStatus
+import com.tpc.trikride.ui.components.PrimaryButton
 import com.tpc.trikride.ui.components.SectionCard
 import com.tpc.trikride.ui.components.SettingsCard
+import com.tpc.trikride.utils.Constants
 import com.tpc.trikride.ui.theme.ErrorColor
 import com.tpc.trikride.ui.theme.SuccessColor
 import com.tpc.trikride.ui.theme.WarningColor
 import com.tpc.trikride.viewmodels.AdminViewModel
 
-private enum class AdminTab { VERIFY, MONITOR, PROFILE }
+private enum class AdminTab { VERIFY, MONITOR, FARES, PROFILE }
 
 @Composable
 fun AdminDashboardScreen(
@@ -42,6 +51,8 @@ fun AdminDashboardScreen(
     val drivers by viewModel.drivers.collectAsState()
     val users by viewModel.users.collectAsState()
     val rides by viewModel.rides.collectAsState()
+    val fareConfig by viewModel.fareConfig.collectAsState()
+    val fareSaved by viewModel.fareSaved.collectAsState()
 
     var tab by remember { mutableStateOf(AdminTab.VERIFY) }
     val usersById = remember(users) { users.associateBy { it.id } }
@@ -59,6 +70,12 @@ fun AdminDashboardScreen(
                     onReject = viewModel::rejectDriver
                 )
                 AdminTab.MONITOR -> MonitorContent(drivers = drivers, rides = rides)
+                AdminTab.FARES -> FareConfigContent(
+                    config = fareConfig,
+                    saved = fareSaved,
+                    onSave = viewModel::saveFareConfig,
+                    onAcknowledgeSaved = viewModel::acknowledgeFareSaved
+                )
                 AdminTab.PROFILE -> AdminProfileContent(onSignOut = onSignOut)
             }
         }
@@ -83,6 +100,12 @@ private fun AdminBottomBar(selected: AdminTab, onSelect: (AdminTab) -> Unit, pen
             onClick = { onSelect(AdminTab.MONITOR) },
             icon = { Icon(Icons.Filled.Insights, contentDescription = "Monitor") },
             label = { Text("Monitor") }
+        )
+        NavigationBarItem(
+            selected = selected == AdminTab.FARES,
+            onClick = { onSelect(AdminTab.FARES) },
+            icon = { Icon(Icons.Filled.Payments, contentDescription = "Fares") },
+            label = { Text("Fares") }
         )
         NavigationBarItem(
             selected = selected == AdminTab.PROFILE,
@@ -343,6 +366,193 @@ private fun StatTile(label: String, value: String, icon: androidx.compose.ui.gra
             Text(value, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
             Text(label, style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant)
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun FareConfigContent(
+    config: FareConfig,
+    saved: Boolean,
+    onSave: (FareConfig) -> Unit,
+    onAcknowledgeSaved: () -> Unit
+) {
+    var base by remember(config) { mutableStateOf(config.baseFare.toString()) }
+    var perKm by remember(config) { mutableStateOf(config.perKmRate.toString()) }
+    var perExtra by remember(config) { mutableStateOf(config.perExtraPassenger.toString()) }
+    val routes = remember(config) { mutableStateListOf<RouteFare>().apply { addAll(config.routes) } }
+
+    var newPickup by remember { mutableStateOf<String?>(null) }
+    var newDest by remember { mutableStateOf<String?>(null) }
+    var newFare by remember { mutableStateOf("") }
+
+    LaunchedEffect(saved) {
+        if (saved) {
+            delay(1500)
+            onAcknowledgeSaved()
+        }
+    }
+
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .verticalScroll(rememberScrollState())
+            .padding(20.dp)
+    ) {
+        Spacer(modifier = Modifier.height(8.dp))
+        Text("Fare Configuration", style = MaterialTheme.typography.headlineSmall,
+            fontWeight = FontWeight.Bold)
+        Text("Set the official pricing used for every ride.",
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant)
+        Spacer(modifier = Modifier.height(16.dp))
+
+        // Global rates
+        SectionCard {
+            Column {
+                Text("Default Rates", style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold)
+                Text("Used for routes without a fixed fare below.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Spacer(modifier = Modifier.height(12.dp))
+                MoneyField("Base fare (₱)", base) { base = it }
+                Spacer(modifier = Modifier.height(10.dp))
+                MoneyField("Per kilometre (₱)", perKm) { perKm = it }
+                Spacer(modifier = Modifier.height(10.dp))
+                MoneyField("Per extra passenger (₱)", perExtra) { perExtra = it }
+            }
+        }
+        Spacer(modifier = Modifier.height(12.dp))
+
+        // Fixed route fares
+        SectionCard {
+            Column {
+                Text("Fixed Route Fares", style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold)
+                Text("An exact price for a specific pickup → destination.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Spacer(modifier = Modifier.height(12.dp))
+
+                if (routes.isEmpty()) {
+                    Text("No fixed route fares yet.", style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant)
+                } else {
+                    routes.forEachIndexed { index, route ->
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(vertical = 4.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text("${route.pickup} → ${route.destination}",
+                                    style = MaterialTheme.typography.bodyMedium)
+                                Text("₱%.2f".format(route.fare),
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.primary)
+                            }
+                            IconButton(onClick = { routes.removeAt(index) }) {
+                                Icon(Icons.Filled.Delete, contentDescription = "Remove",
+                                    tint = ErrorColor)
+                            }
+                        }
+                        HorizontalDivider()
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(12.dp))
+                Text("Add a route fare", style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.Bold)
+                Spacer(modifier = Modifier.height(8.dp))
+                LocationDropdown("Pickup", newPickup) { newPickup = it }
+                Spacer(modifier = Modifier.height(8.dp))
+                LocationDropdown("Destination", newDest) { newDest = it }
+                Spacer(modifier = Modifier.height(8.dp))
+                MoneyField("Fare (₱)", newFare) { newFare = it }
+                Spacer(modifier = Modifier.height(10.dp))
+                OutlinedButton(
+                    onClick = {
+                        val p = newPickup
+                        val d = newDest
+                        val f = newFare.toDoubleOrNull()
+                        if (p != null && d != null && p != d && f != null) {
+                            routes.add(RouteFare(p, d, f))
+                            newPickup = null; newDest = null; newFare = ""
+                        }
+                    },
+                    shape = RoundedCornerShape(14.dp),
+                    modifier = Modifier.fillMaxWidth()
+                ) { Text("Add Route Fare") }
+            }
+        }
+        Spacer(modifier = Modifier.height(16.dp))
+
+        if (saved) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(Icons.Filled.CheckCircle, contentDescription = null,
+                    tint = MaterialTheme.colorScheme.primary)
+                Spacer(modifier = Modifier.width(8.dp))
+                Text("Fares saved.", color = MaterialTheme.colorScheme.primary)
+            }
+            Spacer(modifier = Modifier.height(12.dp))
+        }
+
+        PrimaryButton(
+            text = "Save Fares",
+            onClick = {
+                onSave(
+                    FareConfig(
+                        baseFare = base.toDoubleOrNull() ?: config.baseFare,
+                        perKmRate = perKm.toDoubleOrNull() ?: config.perKmRate,
+                        perExtraPassenger = perExtra.toDoubleOrNull() ?: config.perExtraPassenger,
+                        routes = routes.toList()
+                    )
+                )
+            }
+        )
+        Spacer(modifier = Modifier.height(16.dp))
+    }
+}
+
+@Composable
+private fun MoneyField(label: String, value: String, onChange: (String) -> Unit) {
+    OutlinedTextField(
+        value = value,
+        onValueChange = onChange,
+        label = { Text(label) },
+        singleLine = true,
+        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+        shape = RoundedCornerShape(14.dp),
+        modifier = Modifier.fillMaxWidth()
+    )
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun LocationDropdown(label: String, selected: String?, onSelected: (String) -> Unit) {
+    var expanded by remember { mutableStateOf(false) }
+    ExposedDropdownMenuBox(expanded = expanded, onExpandedChange = { expanded = it }) {
+        OutlinedTextField(
+            value = selected ?: "",
+            onValueChange = {},
+            readOnly = true,
+            label = { Text(label) },
+            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
+            shape = RoundedCornerShape(14.dp),
+            modifier = Modifier
+                .fillMaxWidth()
+                .menuAnchor()
+        )
+        ExposedDropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
+            Constants.CAMPUS_LOCATIONS.forEach { location ->
+                DropdownMenuItem(
+                    text = { Text(location.address) },
+                    onClick = { onSelected(location.address); expanded = false }
+                )
+            }
         }
     }
 }

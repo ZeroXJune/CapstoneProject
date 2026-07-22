@@ -2,10 +2,14 @@ package com.tpc.trikride.viewmodels
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.tpc.trikride.models.FareConfig
 import com.tpc.trikride.models.Location
 import com.tpc.trikride.models.Ride
 import com.tpc.trikride.models.RideRequest
+import com.tpc.trikride.repositories.FareRepository
 import com.tpc.trikride.repositories.RideRepository
+import com.tpc.trikride.utils.FareEngine
+import com.tpc.trikride.utils.LocationUtils
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -18,7 +22,8 @@ import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class PassengerViewModel(
-    private val rideRepository: RideRepository = RideRepository()
+    private val rideRepository: RideRepository = RideRepository(),
+    private val fareRepository: FareRepository = FareRepository()
 ) : ViewModel() {
 
     private val passengerId = MutableStateFlow<String?>(null)
@@ -29,6 +34,11 @@ class PassengerViewModel(
 
     private val _errorMessage = MutableStateFlow<String?>(null)
     val errorMessage: StateFlow<String?> = _errorMessage
+
+    /** Live admin-configured pricing used for fare estimates. */
+    val fareConfig: StateFlow<FareConfig> = fareRepository.fareConfig()
+        .catch { _errorMessage.value = it.message }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), FareConfig())
 
     /** Rides that have been accepted and are in progress for this passenger. */
     val activeRides: StateFlow<List<Ride>> = passengerId
@@ -49,10 +59,15 @@ class PassengerViewModel(
         notes: String = ""
     ) {
         val id = passengerId.value ?: return
+        val distanceKm = LocationUtils.distanceKm(pickup, dropoff)
+        val fare = FareEngine.total(
+            fareConfig.value, pickup.address, dropoff.address, distanceKm, passengerCount
+        )
         viewModelScope.launch {
             try {
-                _pendingRequest.value =
-                    rideRepository.requestRide(id, pickup, dropoff, passengerCount, luggage, notes)
+                _pendingRequest.value = rideRepository.requestRide(
+                    id, pickup, dropoff, passengerCount, luggage, fare, notes
+                )
                 _errorMessage.value = null
             } catch (e: Exception) {
                 _errorMessage.value = e.message ?: "Failed to request ride"

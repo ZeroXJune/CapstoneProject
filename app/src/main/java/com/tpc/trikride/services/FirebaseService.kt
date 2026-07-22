@@ -1,5 +1,6 @@
 package com.tpc.trikride.services
 
+import com.google.android.gms.tasks.Task
 import com.google.firebase.database.DataSnapshot
 import com.google.firebase.database.DatabaseError
 import com.google.firebase.database.FirebaseDatabase
@@ -8,9 +9,18 @@ import com.tpc.trikride.models.*
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
+import kotlinx.coroutines.suspendCancellableCoroutine
+import kotlin.coroutines.resume
+import kotlin.coroutines.resumeWithException
 
 class FirebaseService {
     private val database = FirebaseDatabase.getInstance()
+
+    /** Bridges a Google Play Services [Task] into a coroutine. */
+    private suspend fun <T> Task<T>.await(): T = suspendCancellableCoroutine { cont ->
+        addOnSuccessListener { cont.resume(it) }
+        addOnFailureListener { cont.resumeWithException(it) }
+    }
 
     // User Operations
     suspend fun createUser(userId: String, user: User) {
@@ -285,6 +295,34 @@ class FirebaseService {
         ref.addValueEventListener(listener)
 
         awaitClose { ref.removeEventListener(listener) }
+    }
+
+    // Fare Configuration (admin-managed pricing)
+    fun getFareConfigFlow(): Flow<FareConfig> = callbackFlow {
+        val listener = object : ValueEventListener {
+            override fun onDataChange(snapshot: DataSnapshot) {
+                val config = snapshot.getValue(FareConfig::class.java) ?: FareConfig()
+                trySend(config)
+            }
+
+            override fun onCancelled(error: DatabaseError) {
+                close(error.toException())
+            }
+        }
+
+        val ref = database.getReference("config").child("fare")
+        ref.addValueEventListener(listener)
+
+        awaitClose { ref.removeEventListener(listener) }
+    }
+
+    suspend fun getFareConfigOnce(): FareConfig {
+        val snapshot = database.getReference("config").child("fare").get().await()
+        return snapshot.getValue(FareConfig::class.java) ?: FareConfig()
+    }
+
+    suspend fun updateFareConfig(config: FareConfig) {
+        database.getReference("config").child("fare").setValue(config).await()
     }
 
     // Document Upload

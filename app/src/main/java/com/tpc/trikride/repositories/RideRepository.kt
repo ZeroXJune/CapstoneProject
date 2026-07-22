@@ -30,6 +30,7 @@ class RideRepository(
         dropoff: Location,
         passengerCount: Int = 1,
         luggage: String = "None",
+        estimatedFare: Double = 0.0,
         notes: String = ""
     ): RideRequest {
         val now = System.currentTimeMillis()
@@ -42,6 +43,7 @@ class RideRepository(
             expiresAt = (now + Constants.RIDE_REQUEST_TTL_MS).toString(),
             passengerCount = passengerCount,
             luggage = luggage,
+            estimatedFare = estimatedFare,
             notes = notes
         )
         firebase.createRideRequest(request)
@@ -78,7 +80,10 @@ class RideRepository(
             requestedAt = request.requestedAt,
             acceptedAt = System.currentTimeMillis().toString(),
             estimatedDuration = FareCalculator.estimateDurationMinutes(distanceKm),
-            estimatedFare = FareCalculator.estimateFare(distanceKm, request.passengerCount),
+            // Use the config-priced fare the passenger already saw; fall back
+            // to the distance formula only if none was supplied.
+            estimatedFare = if (request.estimatedFare > 0.0) request.estimatedFare
+            else FareCalculator.estimateFare(distanceKm, request.passengerCount),
             passengerCount = request.passengerCount,
             luggage = request.luggage,
             notes = request.notes

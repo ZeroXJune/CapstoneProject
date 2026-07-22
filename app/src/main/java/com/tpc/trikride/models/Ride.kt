@@ -59,6 +59,7 @@ data class RideRequest(
     val expiresAt: String = "",
     val passengerCount: Int = 1,
     val luggage: String = "None",
+    val estimatedFare: Double = 0.0,
     val notes: String = "",
     val preferredDriverId: String? = null
 )
