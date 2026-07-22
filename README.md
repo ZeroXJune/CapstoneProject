@@ -107,8 +107,8 @@ cd capstoneproject
 ## Authors
 
 - **Alber June M. Mumar** - Lead Developer
-- **Julebeth Hinlayagan** - Backend Developer
-- **Mardy Gonzaga** - UI/UX Developer
+- **Julebeth Hinlayagan** - Documentation
+- **Mardy Gonzaga** - Documentation
 
 ## Advisers
 
