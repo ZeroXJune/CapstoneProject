@@ -395,29 +395,6 @@ private fun AccountTypeCard(
 }
 
 @Composable
-fun AdminDashboardScreen(onSignOut: () -> Unit) {
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(24.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
-    ) {
-        Text("Admin Dashboard", style = MaterialTheme.typography.headlineMedium,
-            fontWeight = FontWeight.Bold)
-        Spacer(modifier = Modifier.height(8.dp))
-        Text(
-            "Driver verification and ride monitoring — coming in the next phase.",
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            textAlign = TextAlign.Center
-        )
-        Spacer(modifier = Modifier.height(24.dp))
-        OutlinedButton(onClick = onSignOut) { Text("Sign Out") }
-    }
-}
-
-@Composable
 private fun ErrorText(error: String?) {
     if (error != null) {
         Spacer(modifier = Modifier.height(12.dp))

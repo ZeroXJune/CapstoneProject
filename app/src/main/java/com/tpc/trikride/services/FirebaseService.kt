@@ -77,6 +77,63 @@ class FirebaseService {
         awaitClose { ref.removeEventListener(listener) }
     }
 
+    /** All registered drivers, regardless of availability (admin view). */
+    fun getAllDriversFlow(): Flow<List<Driver>> = callbackFlow {
+        val listener = object : ValueEventListener {
+            override fun onDataChange(snapshot: DataSnapshot) {
+                val drivers = snapshot.children.mapNotNull { it.getValue(Driver::class.java) }
+                trySend(drivers)
+            }
+
+            override fun onCancelled(error: DatabaseError) {
+                close(error.toException())
+            }
+        }
+
+        val ref = database.getReference("drivers")
+        ref.addValueEventListener(listener)
+
+        awaitClose { ref.removeEventListener(listener) }
+    }
+
+    /** All users (admin view — used to resolve driver names). */
+    fun getAllUsersFlow(): Flow<List<User>> = callbackFlow {
+        val listener = object : ValueEventListener {
+            override fun onDataChange(snapshot: DataSnapshot) {
+                val users = snapshot.children.mapNotNull { it.getValue(User::class.java) }
+                trySend(users)
+            }
+
+            override fun onCancelled(error: DatabaseError) {
+                close(error.toException())
+            }
+        }
+
+        val ref = database.getReference("users")
+        ref.addValueEventListener(listener)
+
+        awaitClose { ref.removeEventListener(listener) }
+    }
+
+    /** All rides across the system (admin monitoring). */
+    fun getAllRidesFlow(): Flow<List<Ride>> = callbackFlow {
+        val listener = object : ValueEventListener {
+            override fun onDataChange(snapshot: DataSnapshot) {
+                val rides = snapshot.children.mapNotNull { it.getValue(Ride::class.java) }
+                trySend(rides)
+            }
+
+            override fun onCancelled(error: DatabaseError) {
+                close(error.toException())
+            }
+        }
+
+        val ref = database.getReference("rides")
+        ref.addValueEventListener(listener)
+
+        awaitClose { ref.removeEventListener(listener) }
+    }
+
     suspend fun updateDriverLocation(driverId: String, location: Location) {
         database.getReference("drivers").child(driverId).child("currentLocation").setValue(location)
     }
