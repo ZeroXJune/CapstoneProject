@@ -39,9 +39,8 @@ import com.tpc.trikride.ui.components.TrikTextField
 import com.tpc.trikride.ui.theme.EmeraldGreen
 import com.tpc.trikride.ui.theme.ForestGreen
 import com.tpc.trikride.viewmodels.AuthViewModel
-import kotlinx.coroutines.delay
 
-private enum class AppScreen { SPLASH, LOGIN, REGISTER, ACCOUNT_SELECTION }
+private enum class AppScreen { LOGIN, REGISTER, ACCOUNT_SELECTION }
 
 private data class RegistrationData(
     val fullName: String,
@@ -54,8 +53,14 @@ private data class RegistrationData(
 @Composable
 fun MainAppScreen(authViewModel: AuthViewModel = viewModel()) {
     val state by authViewModel.state.collectAsState()
-    var screen by remember { mutableStateOf(AppScreen.SPLASH) }
+    var screen by remember { mutableStateOf(AppScreen.LOGIN) }
     var pendingReg by remember { mutableStateOf<RegistrationData?>(null) }
+
+    // Checking for an existing signed-in session → show the splash.
+    if (state.isBootstrapping) {
+        SplashScreen()
+        return
+    }
 
     // Signed in with a known account type → straight to the dashboard.
     if (state.userId != null && state.userType != null) {
@@ -86,7 +91,6 @@ fun MainAppScreen(authViewModel: AuthViewModel = viewModel()) {
     }
 
     when (screen) {
-        AppScreen.SPLASH -> SplashScreen(onFinish = { screen = AppScreen.LOGIN })
         AppScreen.LOGIN -> LoginScreen(
             isLoading = state.isLoading,
             error = state.error,
@@ -114,12 +118,7 @@ fun MainAppScreen(authViewModel: AuthViewModel = viewModel()) {
 }
 
 @Composable
-private fun SplashScreen(onFinish: () -> Unit) {
-    LaunchedEffect(Unit) {
-        delay(2200)
-        onFinish()
-    }
-
+private fun SplashScreen() {
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -157,6 +156,8 @@ private fun SplashScreen(onFinish: () -> Unit) {
                 color = Color.White.copy(alpha = 0.9f),
                 textAlign = TextAlign.Center
             )
+            Spacer(modifier = Modifier.height(28.dp))
+            CircularProgressIndicator(color = Color.White, strokeWidth = 3.dp)
         }
 
         Text(

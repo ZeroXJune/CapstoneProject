@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.tpc.trikride.models.UserType
 import com.tpc.trikride.repositories.AuthRepository
 import kotlinx.coroutines.TimeoutCancellationException
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.update
@@ -21,11 +22,50 @@ class AuthViewModel(
         val userId: String? = null,
         val userType: UserType? = null,
         // Authenticated but no stored account type yet (needs the picker).
-        val needsAccountType: Boolean = false
+        val needsAccountType: Boolean = false,
+        // True while we check for an existing signed-in session on launch.
+        val isBootstrapping: Boolean = true
     )
 
     private val _state = MutableStateFlow(AuthUiState())
     val state: StateFlow<AuthUiState> = _state
+
+    init {
+        bootstrap()
+    }
+
+    /**
+     * Firebase keeps the user signed in across app restarts, so on launch we
+     * check for an existing session and, if present, restore it straight to
+     * the dashboard — no re-login required.
+     */
+    private fun bootstrap() {
+        viewModelScope.launch {
+            val uid = repo.currentUserId
+            if (uid == null) {
+                delay(1200) // brief branded splash for logged-out users
+                _state.update { it.copy(isBootstrapping = false) }
+                return@launch
+            }
+            try {
+                val type = withTimeout(DB_TIMEOUT_MS) { repo.loadUserType(uid) }
+                _state.value = AuthUiState(
+                    isBootstrapping = false,
+                    userId = uid,
+                    userType = type,
+                    needsAccountType = type == null
+                )
+            } catch (e: Exception) {
+                // Session exists but we couldn't confirm the type; let them
+                // re-pick (or see the DB error) rather than getting stuck.
+                _state.value = AuthUiState(
+                    isBootstrapping = false,
+                    userId = uid,
+                    needsAccountType = true
+                )
+            }
+        }
+    }
 
     fun login(email: String, password: String) {
         if (email.isBlank() || password.isBlank()) return
@@ -35,6 +75,7 @@ class AuthViewModel(
                 val uid = withTimeout(DB_TIMEOUT_MS) { repo.login(email, password) }
                 val type = withTimeout(DB_TIMEOUT_MS) { repo.loadUserType(uid) }
                 _state.value = AuthUiState(
+                    isBootstrapping = false,
                     userId = uid,
                     userType = type,
                     needsAccountType = type == null
@@ -61,7 +102,7 @@ class AuthViewModel(
                 val uid = withTimeout(DB_TIMEOUT_MS) {
                     repo.register(fullName, idNumber, email, phone, password, userType)
                 }
-                _state.value = AuthUiState(userId = uid, userType = userType)
+                _state.value = AuthUiState(isBootstrapping = false, userId = uid, userType = userType)
             } catch (e: TimeoutCancellationException) {
                 _state.update { it.copy(isLoading = false, error = DB_UNREACHABLE) }
             } catch (e: Exception) {
@@ -90,7 +131,7 @@ class AuthViewModel(
 
     fun signOut() {
         repo.signOut()
-        _state.value = AuthUiState()
+        _state.value = AuthUiState(isBootstrapping = false)
     }
 
     fun clearError() = _state.update { it.copy(error = null) }
