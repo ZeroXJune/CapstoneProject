@@ -2,34 +2,42 @@ package com.tpc.trikride.ui.theme
 
 import androidx.compose.ui.graphics.Color
 
-// Primary Colors - TrikRide Brand
-val TrikRidePrimary = Color(0xFFFF6B35)    // Energetic Orange
-val TrikRideSecondary = Color(0xFF004E89)  // Deep Blue
-val TrikRideTertiary = Color(0xFF1B9CFC)   // Bright Blue
+// ---------------------------------------------------------------------------
+// TriGo TPC brand palette
+// ---------------------------------------------------------------------------
 
-// Background and Surface Colors
+// Brand greens & accents (shared across light and dark)
+val EmeraldGreen = Color(0xFF16A34A)   // primary (light)
+val ForestGreen = Color(0xFF166534)    // deep brand green / gradients
+val GreenBright = Color(0xFF22C55E)    // primary (dark mode, brighter for contrast)
+val AccentBlue = Color(0xFF2563EB)     // light accent
+val AccentBlueDark = Color(0xFF3B82F6) // dark accent
+
+// ---- Light theme surfaces ----
 val LightBackground = Color(0xFFFFFFFF)
-val DarkBackground = Color(0xFF121212)
-
 val LightSurface = Color(0xFFF5F5F5)
-val DarkSurface = Color(0xFF1E1E1E)
+val LightCard = Color(0xFFFFFFFF)
+val LightTextPrimary = Color(0xFF0F172A)
+val LightTextSecondary = Color(0xFF64748B)
+val LightDivider = Color(0xFFE2E8F0)
 
-// Status Colors
-val SuccessColor = Color(0xFF4CAF50)
-val WarningColor = Color(0xFFFFC107)
-val ErrorColor = Color(0xFFF44336)
-val InfoColor = Color(0xFF2196F3)
+// ---- Dark theme surfaces (Uber / Spotify inspired) ----
+val DarkBackground = Color(0xFF0F172A)
+val DarkSurface = Color(0xFF1E293B)
+val DarkCard = Color(0xFF1F2937)
+val DarkTextPrimary = Color(0xFFFFFFFF)
+val DarkTextSecondary = Color(0xFF94A3B8)
+val DarkDivider = Color(0xFF334155)
 
-// Additional Colors
-val NeutralGray = Color(0xFF757575)
-val LightGray = Color(0xFFEEEEEE)
-val DarkGray = Color(0xFF424242)
+// ---- Status colors (shared) ----
+val SuccessColor = Color(0xFF22C55E)
+val WarningColor = Color(0xFFF59E0B)
+val ErrorColor = Color(0xFFEF4444)
+val InfoColor = Color(0xFF3B82F6)
+val RatingColor = Color(0xFFFBBF24)
 
-// Specific Status Colors
-val RideAcceptedColor = Color(0xFF4CAF50)
-val RideInProgressColor = Color(0xFF2196F3)
-val RideCompletedColor = Color(0xFF4CAF50)
-val RideCancelledColor = Color(0xFFF44336)
-
-// Rating Colors
-val RatingColor = Color(0xFFFFB800)
+// ---- Ride status accents ----
+val RideAcceptedColor = Color(0xFF22C55E)
+val RideInProgressColor = Color(0xFF3B82F6)
+val RideCompletedColor = Color(0xFF16A34A)
+val RideCancelledColor = Color(0xFFEF4444)

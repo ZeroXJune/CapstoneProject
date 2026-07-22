@@ -1,14 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- TrikRide launcher icon: orange badge with a simple tricycle mark -->
+<!-- TrikRide launcher icon: green badge with a simple tricycle mark -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="108dp"
     android:height="108dp"
     android:viewportWidth="108"
     android:viewportHeight="108">
 
-    <!-- Orange circular background -->
+    <!-- Emerald circular background -->
     <path
-        android:fillColor="#FF6B35"
+        android:fillColor="#16A34A"
         android:pathData="M54,54m-50,0a50,50 0,1 1,100 0a50,50 0,1 1,-100 0" />
 
     <!-- Cab / body -->
@@ -18,17 +18,17 @@
 
     <!-- Window cutout -->
     <path
-        android:fillColor="#FF6B35"
+        android:fillColor="#16A34A"
         android:pathData="M33,43 L59,43 L59,52 L33,52 Z" />
 
     <!-- Rear wheel (left) -->
     <path
-        android:fillColor="#004E89"
+        android:fillColor="#166534"
         android:pathData="M36,68m-8,0a8,8 0,1 1,16 0a8,8 0,1 1,-16 0" />
 
     <!-- Front wheel (right) -->
     <path
-        android:fillColor="#004E89"
+        android:fillColor="#166534"
         android:pathData="M74,68m-8,0a8,8 0,1 1,16 0a8,8 0,1 1,-16 0" />
 
     <!-- Wheel hubs -->
