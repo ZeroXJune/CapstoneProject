@@ -92,7 +92,10 @@ fun MainAppScreen(authViewModel: AuthViewModel = viewModel()) {
                 userId = state.userId!!,
                 onSignOut = authViewModel::signOut
             )
-            UserType.ADMIN -> AdminDashboardScreen(onSignOut = authViewModel::signOut)
+            UserType.ADMIN -> AdminDashboardScreen(
+                userId = state.userId!!,
+                onSignOut = authViewModel::signOut
+            )
             null -> Unit
         }
         return

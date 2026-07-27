@@ -34,7 +34,6 @@ import com.tpc.trikride.models.User
 import com.tpc.trikride.models.VerificationStatus
 import com.tpc.trikride.ui.components.PrimaryButton
 import com.tpc.trikride.ui.components.SectionCard
-import com.tpc.trikride.ui.components.SettingsCard
 import com.tpc.trikride.utils.Constants
 import com.tpc.trikride.ui.theme.ErrorColor
 import com.tpc.trikride.ui.theme.SuccessColor
@@ -45,6 +44,7 @@ private enum class AdminTab { VERIFY, MONITOR, FARES, PROFILE }
 
 @Composable
 fun AdminDashboardScreen(
+    userId: String,
     onSignOut: () -> Unit,
     viewModel: AdminViewModel = viewModel()
 ) {
@@ -76,7 +76,12 @@ fun AdminDashboardScreen(
                     onSave = viewModel::saveFareConfig,
                     onAcknowledgeSaved = viewModel::acknowledgeFareSaved
                 )
-                AdminTab.PROFILE -> AdminProfileContent(onSignOut = onSignOut)
+                AdminTab.PROFILE -> SettingsScreen(
+                    userId = userId,
+                    userType = com.tpc.trikride.models.UserType.ADMIN,
+                    subtitle = "Talibon Polytechnic College",
+                    onSignOut = onSignOut
+                )
             }
         }
     }
@@ -557,31 +562,3 @@ private fun LocationDropdown(label: String, selected: String?, onSelected: (Stri
     }
 }
 
-@Composable
-private fun AdminProfileContent(onSignOut: () -> Unit) {
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .verticalScroll(rememberScrollState())
-            .padding(20.dp),
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        Spacer(modifier = Modifier.height(16.dp))
-        Box(
-            modifier = Modifier
-                .size(88.dp)
-                .clip(CircleShape)
-                .background(MaterialTheme.colorScheme.primaryContainer),
-            contentAlignment = Alignment.Center
-        ) {
-            Icon(Icons.Filled.VerifiedUser, contentDescription = null,
-                tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(44.dp))
-        }
-        Spacer(modifier = Modifier.height(12.dp))
-        Text("Administrator", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
-        Text("Talibon Polytechnic College", style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant)
-        Spacer(modifier = Modifier.height(20.dp))
-        SettingsCard(onSignOut = onSignOut)
-    }
-}

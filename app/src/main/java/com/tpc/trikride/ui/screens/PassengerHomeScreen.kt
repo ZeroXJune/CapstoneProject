@@ -44,7 +44,6 @@ import com.tpc.trikride.models.RideStatus
 import com.tpc.trikride.ui.components.PrimaryButton
 import com.tpc.trikride.ui.components.SecondaryButton
 import com.tpc.trikride.ui.components.SectionCard
-import com.tpc.trikride.ui.components.SettingsCard
 import com.tpc.trikride.ui.components.SimplePlaceholder
 import com.tpc.trikride.ui.theme.EmeraldGreen
 import com.tpc.trikride.ui.theme.ForestGreen
@@ -117,7 +116,12 @@ fun PassengerHomeScreen(
                     message = "Your completed and cancelled rides will appear here."
                 )
                 PassengerTab.SUPPORT -> SupportContent()
-                PassengerTab.PROFILE -> PassengerProfileContent(onSignOut = onSignOut)
+                PassengerTab.PROFILE -> SettingsScreen(
+                    userId = userId,
+                    userType = com.tpc.trikride.models.UserType.PASSENGER,
+                    subtitle = "Talibon Polytechnic College",
+                    onSignOut = onSignOut
+                )
             }
         }
     }
@@ -783,35 +787,6 @@ private fun ContactRow(icon: ImageVector, label: String, value: String) {
         Text(label, style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.weight(1f))
         Text(value, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold)
-    }
-}
-
-@Composable
-private fun PassengerProfileContent(onSignOut: () -> Unit) {
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .verticalScroll(rememberScrollState())
-            .padding(20.dp),
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        Spacer(modifier = Modifier.height(16.dp))
-        Box(
-            modifier = Modifier
-                .size(88.dp)
-                .clip(CircleShape)
-                .background(MaterialTheme.colorScheme.primaryContainer),
-            contentAlignment = Alignment.Center
-        ) {
-            Icon(Icons.Filled.Person, contentDescription = null,
-                tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(44.dp))
-        }
-        Spacer(modifier = Modifier.height(12.dp))
-        Text("Passenger", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
-        Text("Talibon Polytechnic College", style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant)
-        Spacer(modifier = Modifier.height(20.dp))
-        SettingsCard(onSignOut = onSignOut)
     }
 }
 

@@ -65,6 +65,27 @@ class AuthRepository(
         return auth.currentUser?.isEmailVerified == true
     }
 
+    /** Loads the full profile record for a user. */
+    suspend fun loadUser(uid: String): User? {
+        val snapshot = database.getReference("users").child(uid).get().await()
+        return snapshot.getValue(User::class.java)
+    }
+
+    suspend fun updateProfile(uid: String, fullName: String, phone: String) {
+        val updates = mapOf<String, Any?>(
+            "firstName" to fullName,
+            "phoneNumber" to phone,
+            "updatedAt" to System.currentTimeMillis().toString()
+        )
+        database.getReference("users").child(uid).updateChildren(updates).await()
+    }
+
+    /** Sends a password-reset email to the signed-in user's address. */
+    suspend fun sendPasswordReset() {
+        val email = auth.currentUser?.email ?: error("No email on this account")
+        auth.sendPasswordResetEmail(email).await()
+    }
+
     /** Returns the stored account type for a user, or null if not set. */
     suspend fun loadUserType(uid: String): UserType? {
         val snapshot = database.getReference("users").child(uid).child("userType").get().await()

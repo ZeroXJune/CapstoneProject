@@ -33,7 +33,6 @@ import com.tpc.trikride.models.RideStatus
 import com.tpc.trikride.models.VerificationStatus
 import com.tpc.trikride.ui.components.PrimaryButton
 import com.tpc.trikride.ui.components.SectionCard
-import com.tpc.trikride.ui.components.SettingsCard
 import com.tpc.trikride.ui.components.SimplePlaceholder
 import com.tpc.trikride.ui.components.TrikTextField
 import com.tpc.trikride.ui.theme.ErrorColor
@@ -101,7 +100,13 @@ fun DriverHomeScreen(
                     title = "Ride History",
                     message = "Your completed trips and earnings will appear here."
                 )
-                DriverTab.PROFILE -> DriverProfileContent(driver = profile, onSignOut = onSignOut)
+                DriverTab.PROFILE -> SettingsScreen(
+                    userId = userId,
+                    userType = com.tpc.trikride.models.UserType.DRIVER,
+                    subtitle = "Tricycle #${profile.tricycleNumber}",
+                    onSignOut = onSignOut,
+                    extraContent = { DriverCredentialsCard(driver = profile) }
+                )
             }
         }
     }
@@ -477,38 +482,25 @@ private fun ActiveRideContent(ride: Ride, onAdvance: () -> Unit) {
 }
 
 @Composable
-private fun DriverProfileContent(driver: Driver, onSignOut: () -> Unit) {
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .verticalScroll(rememberScrollState())
-            .padding(20.dp),
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        Spacer(modifier = Modifier.height(16.dp))
-        Box(
-            modifier = Modifier
-                .size(88.dp)
-                .clip(CircleShape)
-                .background(MaterialTheme.colorScheme.primaryContainer),
-            contentAlignment = Alignment.Center
-        ) {
-            Icon(Icons.Filled.Person, contentDescription = null,
-                tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(44.dp))
-        }
-        Spacer(modifier = Modifier.height(12.dp))
-        Text("Registered Driver", style = MaterialTheme.typography.titleLarge,
-            fontWeight = FontWeight.Bold)
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Icon(Icons.Filled.Star, contentDescription = null, tint = RatingColor,
-                modifier = Modifier.size(18.dp))
-            Text(" %.1f  •  ${driver.totalRides} trips".format(driver.rating),
-                color = MaterialTheme.colorScheme.onSurfaceVariant)
-        }
-        Spacer(modifier = Modifier.height(20.dp))
-
+private fun DriverCredentialsCard(driver: Driver) {
+    Column {
+        Spacer(modifier = Modifier.height(8.dp))
+        Text(
+            "VEHICLE & CREDENTIALS",
+            style = MaterialTheme.typography.labelMedium,
+            fontWeight = FontWeight.Bold,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+        Spacer(modifier = Modifier.height(8.dp))
         SectionCard {
             Column {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(Icons.Filled.Star, contentDescription = null, tint = RatingColor,
+                        modifier = Modifier.size(18.dp))
+                    Text(" %.1f  •  ${driver.totalRides} trips".format(driver.rating),
+                        color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+                HorizontalDivider(modifier = Modifier.padding(vertical = 10.dp))
                 InfoRow(Icons.Filled.Badge, "License Number", driver.licenseNumber)
                 HorizontalDivider(modifier = Modifier.padding(vertical = 10.dp))
                 InfoRow(Icons.Filled.DateRange, "License Expiry", driver.licenseExpiry)
@@ -518,8 +510,6 @@ private fun DriverProfileContent(driver: Driver, onSignOut: () -> Unit) {
                 InfoRow(Icons.Filled.CheckCircle, "Verification", driver.verificationStatus.name)
             }
         }
-        Spacer(modifier = Modifier.height(16.dp))
-        SettingsCard(onSignOut = onSignOut)
     }
 }
 

@@ -45,6 +45,15 @@ class FirebaseService {
         awaitClose { ref.removeEventListener(listener) }
     }
 
+    suspend fun updateUserProfile(userId: String, firstName: String, phoneNumber: String) {
+        val updates = mapOf<String, Any?>(
+            "firstName" to firstName,
+            "phoneNumber" to phoneNumber,
+            "updatedAt" to System.currentTimeMillis().toString()
+        )
+        database.getReference("users").child(userId).updateChildren(updates).await()
+    }
+
     // Driver Operations
     suspend fun registerDriver(userId: String, driver: Driver) {
         database.getReference("drivers").child(userId).setValue(driver)
