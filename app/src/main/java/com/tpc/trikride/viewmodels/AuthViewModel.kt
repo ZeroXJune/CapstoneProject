@@ -24,7 +24,8 @@ class AuthViewModel(
         // Authenticated but no stored account type yet (needs the picker).
         val needsAccountType: Boolean = false,
         // True while we check for an existing signed-in session on launch.
-        val isBootstrapping: Boolean = true
+        val isBootstrapping: Boolean = true,
+        val emailVerified: Boolean = false
     )
 
     private val _state = MutableStateFlow(AuthUiState())
@@ -53,7 +54,8 @@ class AuthViewModel(
                     isBootstrapping = false,
                     userId = uid,
                     userType = type,
-                    needsAccountType = type == null
+                    needsAccountType = type == null,
+                    emailVerified = repo.isEmailVerified
                 )
             } catch (e: Exception) {
                 // Session exists but we couldn't confirm the type; let them
@@ -61,7 +63,8 @@ class AuthViewModel(
                 _state.value = AuthUiState(
                     isBootstrapping = false,
                     userId = uid,
-                    needsAccountType = true
+                    needsAccountType = true,
+                    emailVerified = repo.isEmailVerified
                 )
             }
         }
@@ -78,7 +81,8 @@ class AuthViewModel(
                     isBootstrapping = false,
                     userId = uid,
                     userType = type,
-                    needsAccountType = type == null
+                    needsAccountType = type == null,
+                    emailVerified = repo.isEmailVerified
                 )
             } catch (e: TimeoutCancellationException) {
                 _state.update { it.copy(isLoading = false, error = DB_UNREACHABLE) }
@@ -91,6 +95,7 @@ class AuthViewModel(
     fun register(
         fullName: String,
         idNumber: String,
+        birthDate: String,
         email: String,
         phone: String,
         password: String,
@@ -100,9 +105,12 @@ class AuthViewModel(
             _state.update { it.copy(isLoading = true, error = null) }
             try {
                 val uid = withTimeout(DB_TIMEOUT_MS) {
-                    repo.register(fullName, idNumber, email, phone, password, userType)
+                    repo.register(fullName, idNumber, birthDate, email, phone, password, userType)
                 }
-                _state.value = AuthUiState(isBootstrapping = false, userId = uid, userType = userType)
+                // Freshly registered accounts are never verified yet.
+                _state.value = AuthUiState(
+                    isBootstrapping = false, userId = uid, userType = userType, emailVerified = false
+                )
             } catch (e: TimeoutCancellationException) {
                 _state.update { it.copy(isLoading = false, error = DB_UNREACHABLE) }
             } catch (e: Exception) {
@@ -125,6 +133,28 @@ class AuthViewModel(
                 _state.update { it.copy(isLoading = false, error = DB_UNREACHABLE) }
             } catch (e: Exception) {
                 _state.update { it.copy(isLoading = false, error = friendly(e)) }
+            }
+        }
+    }
+
+    fun resendVerification() {
+        viewModelScope.launch {
+            try {
+                repo.resendVerification()
+            } catch (e: Exception) {
+                _state.update { it.copy(error = friendly(e)) }
+            }
+        }
+    }
+
+    /** Reloads the account and updates whether the email is now verified. */
+    fun refreshVerification() {
+        viewModelScope.launch {
+            try {
+                val verified = withTimeout(DB_TIMEOUT_MS) { repo.refreshEmailVerified() }
+                _state.update { it.copy(emailVerified = verified) }
+            } catch (e: Exception) {
+                _state.update { it.copy(error = friendly(e)) }
             }
         }
     }

@@ -7,6 +7,7 @@ data class User(
     val firstName: String = "",
     val lastName: String = "",
     val idNumber: String = "",
+    val birthDate: String = "",
     val userType: UserType = UserType.PASSENGER,
     val profileImageUrl: String = "",
     val createdAt: String = "",

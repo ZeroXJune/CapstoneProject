@@ -20,6 +20,7 @@ class AuthRepository(
     private val database: FirebaseDatabase = FirebaseDatabase.getInstance()
 ) {
     val currentUserId: String? get() = auth.currentUser?.uid
+    val isEmailVerified: Boolean get() = auth.currentUser?.isEmailVerified == true
 
     suspend fun login(email: String, password: String): String {
         val result = auth.signInWithEmailAndPassword(email.trim(), password).await()
@@ -29,6 +30,7 @@ class AuthRepository(
     suspend fun register(
         fullName: String,
         idNumber: String,
+        birthDate: String,
         email: String,
         phone: String,
         password: String,
@@ -36,17 +38,31 @@ class AuthRepository(
     ): String {
         val result = auth.createUserWithEmailAndPassword(email.trim(), password).await()
         val uid = result.user?.uid ?: error("Registration failed")
+        // Send the email-verification link.
+        runCatching { result.user?.sendEmailVerification()?.await() }
         val user = User(
             id = uid,
             email = email.trim(),
             phoneNumber = phone,
             firstName = fullName,
             idNumber = idNumber,
+            birthDate = birthDate,
             userType = userType,
             createdAt = System.currentTimeMillis().toString()
         )
         database.getReference("users").child(uid).setValue(user).await()
         return uid
+    }
+
+    /** Re-sends the verification email to the signed-in user. */
+    suspend fun resendVerification() {
+        auth.currentUser?.sendEmailVerification()?.await()
+    }
+
+    /** Reloads the user and returns the latest verification status. */
+    suspend fun refreshEmailVerified(): Boolean {
+        auth.currentUser?.reload()?.await()
+        return auth.currentUser?.isEmailVerified == true
     }
 
     /** Returns the stored account type for a user, or null if not set. */

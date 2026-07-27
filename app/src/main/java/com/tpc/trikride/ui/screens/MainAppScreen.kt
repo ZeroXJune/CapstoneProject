@@ -2,6 +2,7 @@ package com.tpc.trikride.ui.screens
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -11,11 +12,13 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Badge
+import androidx.compose.material.icons.filled.CalendarMonth
 import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.material.icons.filled.DirectionsWalk
 import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.LocalTaxi
+import androidx.compose.material.icons.filled.MarkEmailRead
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Phone
 import androidx.compose.material3.*
@@ -48,6 +51,7 @@ private enum class AppScreen { LOGIN, REGISTER, ACCOUNT_SELECTION }
 private data class RegistrationData(
     val fullName: String,
     val idNumber: String,
+    val birthDate: String,
     val email: String,
     val phone: String,
     val password: String
@@ -62,6 +66,18 @@ fun MainAppScreen(authViewModel: AuthViewModel = viewModel()) {
     // Checking for an existing signed-in session → show the splash.
     if (state.isBootstrapping) {
         SplashScreen()
+        return
+    }
+
+    // Signed in but email not verified yet → non-blocking prompt.
+    var verifyDismissed by remember { mutableStateOf(false) }
+    if (state.userId != null && state.userType != null && !state.emailVerified && !verifyDismissed) {
+        VerifyEmailScreen(
+            onResend = authViewModel::resendVerification,
+            onRefresh = authViewModel::refreshVerification,
+            onContinue = { verifyDismissed = true },
+            onSignOut = authViewModel::signOut
+        )
         return
     }
 
@@ -112,7 +128,10 @@ fun MainAppScreen(authViewModel: AuthViewModel = viewModel()) {
             onSelect = { type ->
                 val reg = pendingReg
                 if (reg != null) {
-                    authViewModel.register(reg.fullName, reg.idNumber, reg.email, reg.phone, reg.password, type)
+                    authViewModel.register(
+                        reg.fullName, reg.idNumber, reg.birthDate,
+                        reg.email, reg.phone, reg.password, type
+                    )
                 }
             },
             onBack = { authViewModel.clearError(); screen = AppScreen.REGISTER }
@@ -254,6 +273,7 @@ private fun LoginScreen(
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun RegisterScreen(
     isLoading: Boolean,
@@ -263,12 +283,14 @@ private fun RegisterScreen(
 ) {
     var fullName by remember { mutableStateOf("") }
     var idNumber by remember { mutableStateOf("") }
+    var birthDate by remember { mutableStateOf("") }
     var email by remember { mutableStateOf("") }
     var phone by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var confirm by remember { mutableStateOf("") }
     var accepted by remember { mutableStateOf(false) }
     var showDoc by remember { mutableStateOf<LegalDoc?>(null) }
+    var showDatePicker by remember { mutableStateOf(false) }
 
     // Show a legal doc as an overlay without losing the typed form.
     showDoc?.let { doc ->
@@ -276,10 +298,28 @@ private fun RegisterScreen(
         return
     }
 
+    if (showDatePicker) {
+        val datePickerState = rememberDatePickerState()
+        DatePickerDialog(
+            onDismissRequest = { showDatePicker = false },
+            confirmButton = {
+                TextButton(onClick = {
+                    datePickerState.selectedDateMillis?.let { birthDate = formatBirthdate(it) }
+                    showDatePicker = false
+                }) { Text("OK") }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDatePicker = false }) { Text("Cancel") }
+            }
+        ) {
+            DatePicker(state = datePickerState)
+        }
+    }
+
     val passwordsMatch = password.isNotBlank() && password == confirm
     val strong = PasswordRules.isStrong(password)
     val canSubmit = !isLoading && fullName.isNotBlank() && email.isNotBlank() &&
-        phone.isNotBlank() && passwordsMatch && strong && accepted
+        phone.isNotBlank() && birthDate.isNotBlank() && passwordsMatch && strong && accepted
 
     Column(
         modifier = Modifier
@@ -307,6 +347,12 @@ private fun RegisterScreen(
         TrikTextField(fullName, { fullName = it }, "Full Name", Icons.Filled.Person)
         Spacer(modifier = Modifier.height(14.dp))
         TrikTextField(idNumber, { idNumber = it }, "Student ID / Driver ID", Icons.Filled.Badge)
+        Spacer(modifier = Modifier.height(14.dp))
+        DateField(
+            label = "Birthdate",
+            value = birthDate,
+            onClick = { showDatePicker = true }
+        )
         Spacer(modifier = Modifier.height(14.dp))
         TrikTextField(email, { email = it }, "Email", Icons.Filled.Email, keyboardType = KeyboardType.Email)
         Spacer(modifier = Modifier.height(14.dp))
@@ -366,7 +412,12 @@ private fun RegisterScreen(
         PrimaryButton(
             text = "Continue",
             onClick = {
-                onNext(RegistrationData(fullName.trim(), idNumber.trim(), email.trim(), phone.trim(), password))
+                onNext(
+                    RegistrationData(
+                        fullName.trim(), idNumber.trim(), birthDate,
+                        email.trim(), phone.trim(), password
+                    )
+                )
             },
             enabled = canSubmit
         )
@@ -482,6 +533,89 @@ private fun AccountTypeCard(
                 tint = MaterialTheme.colorScheme.onSurfaceVariant)
         }
     }
+}
+
+@Composable
+private fun DateField(label: String, value: String, onClick: () -> Unit) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(14.dp))
+            .border(1.dp, MaterialTheme.colorScheme.outline, RoundedCornerShape(14.dp))
+            .clickable(onClick = onClick)
+            .padding(horizontal = 16.dp, vertical = 16.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Icon(
+            Icons.Filled.CalendarMonth,
+            contentDescription = null,
+            tint = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+        Spacer(modifier = Modifier.width(12.dp))
+        Text(
+            text = value.ifBlank { label },
+            style = MaterialTheme.typography.bodyLarge,
+            color = if (value.isBlank()) MaterialTheme.colorScheme.onSurfaceVariant
+            else MaterialTheme.colorScheme.onSurface
+        )
+    }
+}
+
+@Composable
+private fun VerifyEmailScreen(
+    onResend: () -> Unit,
+    onRefresh: () -> Unit,
+    onContinue: () -> Unit,
+    onSignOut: () -> Unit
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(24.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
+    ) {
+        Box(
+            modifier = Modifier
+                .size(88.dp)
+                .clip(CircleShape)
+                .background(MaterialTheme.colorScheme.primaryContainer),
+            contentAlignment = Alignment.Center
+        ) {
+            Icon(
+                Icons.Filled.MarkEmailRead,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.size(44.dp)
+            )
+        }
+        Spacer(modifier = Modifier.height(20.dp))
+        Text("Verify your email", style = MaterialTheme.typography.headlineSmall,
+            fontWeight = FontWeight.Bold)
+        Spacer(modifier = Modifier.height(8.dp))
+        Text(
+            "We sent a verification link to your email. Please tap it, then " +
+                "come back and refresh. You can also continue and verify later.",
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            textAlign = TextAlign.Center
+        )
+        Spacer(modifier = Modifier.height(28.dp))
+        PrimaryButton(text = "I've verified — Refresh", onClick = onRefresh)
+        Spacer(modifier = Modifier.height(10.dp))
+        TextButton(onClick = onResend) { Text("Resend verification email") }
+        Spacer(modifier = Modifier.height(4.dp))
+        TextButton(onClick = onContinue) { Text("Continue for now") }
+        Spacer(modifier = Modifier.height(4.dp))
+        TextButton(onClick = onSignOut) {
+            Text("Sign out", color = MaterialTheme.colorScheme.error)
+        }
+    }
+}
+
+private fun formatBirthdate(millis: Long): String {
+    val sdf = java.text.SimpleDateFormat("MMM d, yyyy", java.util.Locale.getDefault())
+    return sdf.format(java.util.Date(millis))
 }
 
 @Composable
