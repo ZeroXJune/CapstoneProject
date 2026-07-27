@@ -25,6 +25,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
@@ -38,6 +39,8 @@ import com.tpc.trikride.ui.components.SectionCard
 import com.tpc.trikride.ui.components.TrikTextField
 import com.tpc.trikride.ui.theme.EmeraldGreen
 import com.tpc.trikride.ui.theme.ForestGreen
+import com.tpc.trikride.utils.AuthPrefs
+import com.tpc.trikride.utils.PasswordRules
 import com.tpc.trikride.viewmodels.AuthViewModel
 
 private enum class AppScreen { LOGIN, REGISTER, ACCOUNT_SELECTION }
@@ -178,8 +181,10 @@ private fun LoginScreen(
     onLogin: (String, String) -> Unit,
     onRegisterClick: () -> Unit
 ) {
-    var email by remember { mutableStateOf("") }
+    val context = LocalContext.current
+    var email by remember { mutableStateOf(AuthPrefs.rememberedEmail(context)) }
     var password by remember { mutableStateOf("") }
+    var rememberMe by remember { mutableStateOf(email.isNotBlank()) }
 
     Column(
         modifier = Modifier
@@ -201,9 +206,18 @@ private fun LoginScreen(
         TrikTextField(email, { email = it }, "Email", Icons.Filled.Email, keyboardType = KeyboardType.Email)
         Spacer(modifier = Modifier.height(16.dp))
         TrikTextField(password, { password = it }, "Password", Icons.Filled.Lock, isPassword = true)
-        Spacer(modifier = Modifier.height(8.dp))
-        TextButton(onClick = { }, modifier = Modifier.align(Alignment.End)) {
-            Text("Forgot Password?", color = MaterialTheme.colorScheme.primary)
+        Spacer(modifier = Modifier.height(4.dp))
+
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Checkbox(checked = rememberMe, onCheckedChange = { rememberMe = it })
+            Text("Remember me", style = MaterialTheme.typography.bodyMedium)
+            Spacer(modifier = Modifier.weight(1f))
+            TextButton(onClick = { }) {
+                Text("Forgot Password?", color = MaterialTheme.colorScheme.primary)
+            }
         }
 
         ErrorText(error)
@@ -211,7 +225,11 @@ private fun LoginScreen(
 
         PrimaryButton(
             text = if (isLoading) "Logging in..." else "Login",
-            onClick = { onLogin(email, password) },
+            onClick = {
+                if (rememberMe) AuthPrefs.setRememberedEmail(context, email.trim())
+                else AuthPrefs.clearRememberedEmail(context)
+                onLogin(email, password)
+            },
             enabled = !isLoading && email.isNotBlank() && password.isNotBlank()
         )
         Spacer(modifier = Modifier.height(16.dp))
@@ -249,10 +267,19 @@ private fun RegisterScreen(
     var phone by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var confirm by remember { mutableStateOf("") }
+    var accepted by remember { mutableStateOf(false) }
+    var showDoc by remember { mutableStateOf<LegalDoc?>(null) }
+
+    // Show a legal doc as an overlay without losing the typed form.
+    showDoc?.let { doc ->
+        LegalScreen(doc = doc, onBack = { showDoc = null })
+        return
+    }
 
     val passwordsMatch = password.isNotBlank() && password == confirm
+    val strong = PasswordRules.isStrong(password)
     val canSubmit = !isLoading && fullName.isNotBlank() && email.isNotBlank() &&
-        phone.isNotBlank() && passwordsMatch
+        phone.isNotBlank() && passwordsMatch && strong && accepted
 
     Column(
         modifier = Modifier
@@ -286,6 +313,27 @@ private fun RegisterScreen(
         TrikTextField(phone, { phone = it }, "Phone Number", Icons.Filled.Phone, keyboardType = KeyboardType.Phone)
         Spacer(modifier = Modifier.height(14.dp))
         TrikTextField(password, { password = it }, "Password", Icons.Filled.Lock, isPassword = true)
+
+        if (password.isNotBlank()) {
+            Spacer(modifier = Modifier.height(8.dp))
+            PasswordRules.evaluate(password).forEach { check ->
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(
+                        if (check.passed) "✓ " else "• ",
+                        color = if (check.passed) MaterialTheme.colorScheme.primary
+                        else MaterialTheme.colorScheme.onSurfaceVariant,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Text(
+                        check.label,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = if (check.passed) MaterialTheme.colorScheme.onSurface
+                        else MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            }
+        }
+
         Spacer(modifier = Modifier.height(14.dp))
         TrikTextField(confirm, { confirm = it }, "Confirm Password", Icons.Filled.Lock, isPassword = true)
 
@@ -293,6 +341,23 @@ private fun RegisterScreen(
             Spacer(modifier = Modifier.height(6.dp))
             Text("Passwords do not match", style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.error)
+        }
+
+        Spacer(modifier = Modifier.height(12.dp))
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Checkbox(checked = accepted, onCheckedChange = { accepted = it })
+            Column {
+                Text("I agree to TrikRide's", style = MaterialTheme.typography.bodySmall)
+                Row {
+                    Text("Terms", style = MaterialTheme.typography.bodySmall,
+                        fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.clickable { showDoc = LegalDoc.TERMS })
+                    Text(" and ", style = MaterialTheme.typography.bodySmall)
+                    Text("Privacy Policy", style = MaterialTheme.typography.bodySmall,
+                        fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.clickable { showDoc = LegalDoc.PRIVACY })
+                }
+            }
         }
 
         ErrorText(error)

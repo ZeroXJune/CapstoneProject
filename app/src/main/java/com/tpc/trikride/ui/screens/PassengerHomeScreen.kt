@@ -203,21 +203,6 @@ private fun PassengerDashboard(onBookRide: () -> Unit) {
             }
         }
         Spacer(modifier = Modifier.height(24.dp))
-
-        Text(
-            text = "Quick Actions",
-            style = MaterialTheme.typography.titleMedium,
-            fontWeight = FontWeight.Bold
-        )
-        Spacer(modifier = Modifier.height(12.dp))
-        Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-            QuickAction(Icons.Filled.DirectionsBike, "Book Ride", Modifier.weight(1f), onBookRide)
-            QuickAction(Icons.Filled.History, "History", Modifier.weight(1f)) {}
-            QuickAction(Icons.Filled.Notifications, "Alerts", Modifier.weight(1f)) {}
-            QuickAction(Icons.Filled.Person, "Profile", Modifier.weight(1f)) {}
-        }
-
-        Spacer(modifier = Modifier.height(24.dp))
         Text(
             text = "Recent Rides",
             style = MaterialTheme.typography.titleMedium,
@@ -241,32 +226,6 @@ private fun PassengerDashboard(onBookRide: () -> Unit) {
     }
 }
 
-@Composable
-private fun QuickAction(
-    icon: ImageVector,
-    label: String,
-    modifier: Modifier = Modifier,
-    onClick: () -> Unit
-) {
-    Column(
-        modifier = modifier.clickable(onClick = onClick),
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        Box(
-            modifier = Modifier
-                .size(56.dp)
-                .clip(RoundedCornerShape(16.dp))
-                .background(MaterialTheme.colorScheme.primaryContainer),
-            contentAlignment = Alignment.Center
-        ) {
-            Icon(icon, contentDescription = label, tint = MaterialTheme.colorScheme.primary)
-        }
-        Spacer(modifier = Modifier.height(6.dp))
-        Text(label, style = MaterialTheme.typography.labelMedium, maxLines = 1)
-    }
-}
-
-@OptIn(ExperimentalMaterial3Api::class)
 private val LUGGAGE_OPTIONS = listOf(
     "Backpack", "Large Bag", "Shopping Bags", "Box / Package", "Market Goods"
 )
