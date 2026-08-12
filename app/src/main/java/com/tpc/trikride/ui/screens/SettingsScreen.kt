@@ -31,6 +31,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.tpc.trikride.models.User
 import com.tpc.trikride.models.UserType
+import com.tpc.trikride.ui.components.AvatarPicker
 import com.tpc.trikride.ui.components.PrimaryButton
 import com.tpc.trikride.ui.components.SectionCard
 import com.tpc.trikride.ui.components.SkeletonBox
@@ -67,6 +68,8 @@ fun SettingsScreen(
         EditProfileContent(
             user = state.user,
             isSaving = state.isSaving,
+            isUploadingPhoto = state.isUploadingPhoto,
+            onPickPhoto = viewModel::uploadPhoto,
             onSave = { name, phone ->
                 viewModel.saveProfile(name, phone)
                 editing = false
@@ -92,20 +95,13 @@ fun SettingsScreen(
         } else {
             SectionCard {
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Box(
-                        modifier = Modifier
-                            .size(56.dp)
-                            .clip(CircleShape)
-                            .background(MaterialTheme.colorScheme.primaryContainer),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Text(
-                            initials(state.user?.firstName),
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.primary
-                        )
-                    }
+                    AvatarPicker(
+                        imageUrl = state.user?.profileImageUrl,
+                        initials = initials(state.user?.firstName),
+                        isUploading = state.isUploadingPhoto,
+                        onImagePicked = viewModel::uploadPhoto,
+                        size = 56.dp
+                    )
                     Spacer(modifier = Modifier.width(14.dp))
                     Column(modifier = Modifier.weight(1f)) {
                         Text(
@@ -209,6 +205,8 @@ fun SettingsScreen(
 private fun EditProfileContent(
     user: User?,
     isSaving: Boolean,
+    isUploadingPhoto: Boolean,
+    onPickPhoto: (android.net.Uri) -> Unit,
     onSave: (String, String) -> Unit,
     onBack: () -> Unit
 ) {
@@ -231,22 +229,22 @@ private fun EditProfileContent(
         }
         Spacer(modifier = Modifier.height(20.dp))
 
-        Box(
-            modifier = Modifier
-                .size(88.dp)
-                .clip(CircleShape)
-                .background(MaterialTheme.colorScheme.primaryContainer)
-                .align(Alignment.CenterHorizontally),
-            contentAlignment = Alignment.Center
-        ) {
-            Text(
-                initials(name),
-                style = MaterialTheme.typography.headlineSmall,
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.primary
-            )
-        }
-        Spacer(modifier = Modifier.height(24.dp))
+        AvatarPicker(
+            imageUrl = user?.profileImageUrl,
+            initials = initials(name),
+            isUploading = isUploadingPhoto,
+            onImagePicked = onPickPhoto,
+            size = 96.dp,
+            modifier = Modifier.align(Alignment.CenterHorizontally)
+        )
+        Spacer(modifier = Modifier.height(8.dp))
+        Text(
+            "Tap the photo to change it",
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.align(Alignment.CenterHorizontally)
+        )
+        Spacer(modifier = Modifier.height(20.dp))
 
         TrikTextField(name, { name = it }, "Full Name", Icons.Filled.Person)
         Spacer(modifier = Modifier.height(14.dp))

@@ -1,5 +1,6 @@
 package com.tpc.trikride.viewmodels
 
+import android.net.Uri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.tpc.trikride.models.User
@@ -17,6 +18,7 @@ class ProfileViewModel(
     data class ProfileUiState(
         val isLoading: Boolean = true,
         val isSaving: Boolean = false,
+        val isUploadingPhoto: Boolean = false,
         val user: User? = null,
         val message: String? = null,
         val error: String? = null
@@ -61,6 +63,30 @@ class ProfileViewModel(
                 }
             } catch (e: Exception) {
                 _state.update { it.copy(isSaving = false, error = e.message ?: "Failed to save") }
+            }
+        }
+    }
+
+    fun uploadPhoto(uri: Uri) {
+        val uid = boundId ?: return
+        viewModelScope.launch {
+            _state.update { it.copy(isUploadingPhoto = true, error = null, message = null) }
+            try {
+                val url = repo.uploadProfilePhoto(uid, uri)
+                _state.update {
+                    it.copy(
+                        isUploadingPhoto = false,
+                        user = it.user?.copy(profileImageUrl = url),
+                        message = "Photo updated"
+                    )
+                }
+            } catch (e: Exception) {
+                _state.update {
+                    it.copy(
+                        isUploadingPhoto = false,
+                        error = e.message ?: "Could not upload the photo"
+                    )
+                }
             }
         }
     }

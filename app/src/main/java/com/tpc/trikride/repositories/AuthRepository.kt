@@ -1,8 +1,10 @@
 package com.tpc.trikride.repositories
 
+import android.net.Uri
 import com.google.android.gms.tasks.Task
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.FirebaseDatabase
+import com.google.firebase.storage.FirebaseStorage
 import com.tpc.trikride.models.User
 import com.tpc.trikride.models.UserType
 import kotlinx.coroutines.suspendCancellableCoroutine
@@ -17,7 +19,8 @@ import kotlin.coroutines.resumeWithException
  */
 class AuthRepository(
     private val auth: FirebaseAuth = FirebaseAuth.getInstance(),
-    private val database: FirebaseDatabase = FirebaseDatabase.getInstance()
+    private val database: FirebaseDatabase = FirebaseDatabase.getInstance(),
+    private val storage: FirebaseStorage = FirebaseStorage.getInstance()
 ) {
     val currentUserId: String? get() = auth.currentUser?.uid
 
@@ -53,6 +56,18 @@ class AuthRepository(
     suspend fun loadUser(uid: String): User? {
         val snapshot = database.getReference("users").child(uid).get().await()
         return snapshot.getValue(User::class.java)
+    }
+
+    /**
+     * Uploads a profile photo to Cloud Storage and saves the download URL on
+     * the user record. Returns the URL.
+     */
+    suspend fun uploadProfilePhoto(uid: String, imageUri: Uri): String {
+        val ref = storage.reference.child("profile_photos/$uid.jpg")
+        ref.putFile(imageUri).await()
+        val url = ref.downloadUrl.await().toString()
+        database.getReference("users").child(uid).child("profileImageUrl").setValue(url).await()
+        return url
     }
 
     suspend fun updateProfile(uid: String, fullName: String, phone: String) {

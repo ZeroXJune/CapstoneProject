@@ -12,15 +12,30 @@ if (file("google-services.json").exists()) {
     apply(plugin = "com.google.gms.google-services")
 }
 
-// Read the Google Maps API key from local.properties (never committed to git).
-// Add a line like: MAPS_API_KEY=AIza... to local.properties in the project root.
+// Secrets come from `.env` in the project root (gitignored). See .env.example.
+// local.properties is still read as a fallback so existing setups keep working.
+val envProperties = Properties().apply {
+    val envFile = rootProject.file(".env")
+    if (envFile.exists()) {
+        envFile.inputStream().use { load(it) }
+    }
+}
 val localProperties = Properties().apply {
     val propsFile = rootProject.file("local.properties")
     if (propsFile.exists()) {
         propsFile.inputStream().use { load(it) }
     }
 }
-val mapsApiKey: String = localProperties.getProperty("MAPS_API_KEY") ?: "MISSING_MAPS_API_KEY"
+
+/** Looks a key up in .env first, then local.properties, then the default. */
+fun secret(key: String, default: String = ""): String =
+    envProperties.getProperty(key)?.takeIf { it.isNotBlank() }
+        ?: localProperties.getProperty(key)?.takeIf { it.isNotBlank() }
+        ?: default
+
+val mapsApiKey: String = secret("MAPS_API_KEY", "MISSING_MAPS_API_KEY")
+val supportHotline: String = secret("SUPPORT_HOTLINE", "0966-749-7561")
+val supportEmail: String = secret("SUPPORT_EMAIL", "trikride@tpc.edu.ph")
 
 android {
     namespace = "com.tpc.trikride"
@@ -39,6 +54,8 @@ android {
         }
 
         manifestPlaceholders["MAPS_API_KEY"] = mapsApiKey
+        buildConfigField("String", "SUPPORT_HOTLINE", "\"$supportHotline\"")
+        buildConfigField("String", "SUPPORT_EMAIL", "\"$supportEmail\"")
     }
 
     buildTypes {
@@ -62,6 +79,7 @@ android {
 
     buildFeatures {
         compose = true
+        buildConfig = true
     }
 }
 

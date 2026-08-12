@@ -37,6 +37,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.tpc.trikride.BuildConfig
 import com.tpc.trikride.models.COMPLAINT_CATEGORIES
 import com.tpc.trikride.models.FareConfig
 import com.tpc.trikride.models.Location
@@ -963,9 +964,9 @@ private fun SupportContent(userId: String, viewModel: SupportViewModel) {
             Column {
                 Text("Contact", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
                 Spacer(modifier = Modifier.height(12.dp))
-                ContactRow(Icons.Filled.Phone, "Hotline", "0966-749-7561")
+                ContactRow(Icons.Filled.Phone, "Hotline", BuildConfig.SUPPORT_HOTLINE)
                 Spacer(modifier = Modifier.height(8.dp))
-                ContactRow(Icons.Filled.SupportAgent, "Email", "trikride@tpc.edu.ph")
+                ContactRow(Icons.Filled.SupportAgent, "Email", BuildConfig.SUPPORT_EMAIL)
                 Spacer(modifier = Modifier.height(8.dp))
                 ContactRow(Icons.Filled.History, "Hours", "6:00 AM - 9:00 PM")
             }
