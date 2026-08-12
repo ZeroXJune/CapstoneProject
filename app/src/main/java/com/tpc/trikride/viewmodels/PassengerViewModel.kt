@@ -47,8 +47,28 @@ class PassengerViewModel(
         .catch { _errorMessage.value = it.message }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
 
+    /** Finished rides, newest first. */
+    val rideHistory: StateFlow<List<Ride>> = passengerId
+        .filterNotNull()
+        .flatMapLatest { rideRepository.passengerRideHistory(it) }
+        .catch { _errorMessage.value = it.message }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
+
+    private val _loadingHistory = MutableStateFlow(true)
+    val loadingHistory: StateFlow<Boolean> = _loadingHistory
+
     fun bind(userId: String) {
         passengerId.value = userId
+        viewModelScope.launch {
+            kotlinx.coroutines.delay(600)
+            _loadingHistory.value = false
+        }
+    }
+
+    /** Firebase streams are already live; this just clears any stale error. */
+    fun refresh() {
+        _errorMessage.value = null
+        _loadingHistory.value = false
     }
 
     fun requestRide(

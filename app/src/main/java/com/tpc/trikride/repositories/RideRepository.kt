@@ -57,6 +57,12 @@ class RideRepository(
     fun passengerActiveRides(passengerId: String): Flow<List<Ride>> =
         firebase.getActiveRidesFlow(passengerId)
 
+    fun passengerRideHistory(passengerId: String): Flow<List<Ride>> =
+        firebase.getPassengerRideHistoryFlow(passengerId)
+
+    fun driverRideHistory(driverId: String): Flow<List<Ride>> =
+        firebase.getDriverRideHistoryFlow(driverId)
+
     // ---- Driver side ----
 
     fun openRideRequests(): Flow<List<RideRequest>> = firebase.getOpenRideRequestsFlow()

@@ -13,6 +13,7 @@ import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Groups
 import androidx.compose.material.icons.filled.Insights
 import androidx.compose.material.icons.filled.Payments
+import androidx.compose.material.icons.filled.ReportProblem
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.VerifiedUser
 import androidx.compose.material3.*
@@ -25,6 +26,8 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.delay
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.tpc.trikride.models.Complaint
+import com.tpc.trikride.models.ComplaintStatus
 import com.tpc.trikride.models.Driver
 import com.tpc.trikride.models.FareConfig
 import com.tpc.trikride.models.Ride
@@ -40,7 +43,7 @@ import com.tpc.trikride.ui.theme.SuccessColor
 import com.tpc.trikride.ui.theme.WarningColor
 import com.tpc.trikride.viewmodels.AdminViewModel
 
-private enum class AdminTab { VERIFY, MONITOR, FARES, PROFILE }
+private enum class AdminTab { VERIFY, CONCERNS, MONITOR, FARES, PROFILE }
 
 @Composable
 fun AdminDashboardScreen(
@@ -53,13 +56,22 @@ fun AdminDashboardScreen(
     val rides by viewModel.rides.collectAsState()
     val fareConfig by viewModel.fareConfig.collectAsState()
     val fareSaved by viewModel.fareSaved.collectAsState()
+    val complaints by viewModel.complaints.collectAsState()
 
     var tab by remember { mutableStateOf(AdminTab.VERIFY) }
     val usersById = remember(users) { users.associateBy { it.id } }
     val pendingCount = drivers.count { it.verificationStatus == VerificationStatus.PENDING }
+    val openConcerns = complaints.count { it.status != ComplaintStatus.RESOLVED }
 
     Scaffold(
-        bottomBar = { AdminBottomBar(selected = tab, onSelect = { tab = it }, pending = pendingCount) }
+        bottomBar = {
+            AdminBottomBar(
+                selected = tab,
+                onSelect = { tab = it },
+                pending = pendingCount,
+                concerns = openConcerns
+            )
+        }
     ) { innerPadding ->
         Box(modifier = Modifier.padding(innerPadding)) {
             when (tab) {
@@ -68,6 +80,11 @@ fun AdminDashboardScreen(
                     usersById = usersById,
                     onApprove = viewModel::approveDriver,
                     onReject = viewModel::rejectDriver
+                )
+                AdminTab.CONCERNS -> ConcernsContent(
+                    complaints = complaints,
+                    usersById = usersById,
+                    onUpdate = viewModel::updateComplaint
                 )
                 AdminTab.MONITOR -> MonitorContent(drivers = drivers, rides = rides)
                 AdminTab.FARES -> FareConfigContent(
@@ -88,7 +105,12 @@ fun AdminDashboardScreen(
 }
 
 @Composable
-private fun AdminBottomBar(selected: AdminTab, onSelect: (AdminTab) -> Unit, pending: Int) {
+private fun AdminBottomBar(
+    selected: AdminTab,
+    onSelect: (AdminTab) -> Unit,
+    pending: Int,
+    concerns: Int
+) {
     NavigationBar(containerColor = MaterialTheme.colorScheme.surface) {
         NavigationBarItem(
             selected = selected == AdminTab.VERIFY,
@@ -99,6 +121,16 @@ private fun AdminBottomBar(selected: AdminTab, onSelect: (AdminTab) -> Unit, pen
                 }
             },
             label = { Text("Verify") }
+        )
+        NavigationBarItem(
+            selected = selected == AdminTab.CONCERNS,
+            onClick = { onSelect(AdminTab.CONCERNS) },
+            icon = {
+                BadgedBox(badge = { if (concerns > 0) Badge { Text("$concerns") } }) {
+                    Icon(Icons.Filled.ReportProblem, contentDescription = "Concerns")
+                }
+            },
+            label = { Text("Concerns") }
         )
         NavigationBarItem(
             selected = selected == AdminTab.MONITOR,
@@ -118,6 +150,158 @@ private fun AdminBottomBar(selected: AdminTab, onSelect: (AdminTab) -> Unit, pen
             icon = { Icon(Icons.Filled.Person, contentDescription = "Profile") },
             label = { Text("Profile") }
         )
+    }
+}
+
+@Composable
+private fun ConcernsContent(
+    complaints: List<Complaint>,
+    usersById: Map<String, User>,
+    onUpdate: (Complaint, ComplaintStatus, String) -> Unit
+) {
+    val open = complaints.filter { it.status != ComplaintStatus.RESOLVED }
+        .sortedByDescending { it.createdAt.toLongOrNull() ?: 0L }
+    val resolved = complaints.filter { it.status == ComplaintStatus.RESOLVED }
+        .sortedByDescending { it.createdAt.toLongOrNull() ?: 0L }
+
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .verticalScroll(rememberScrollState())
+            .padding(20.dp)
+    ) {
+        Spacer(modifier = Modifier.height(8.dp))
+        Text("Concerns & Complaints", style = MaterialTheme.typography.headlineSmall,
+            fontWeight = FontWeight.Bold)
+        Text("Reports submitted by passengers and drivers.",
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant)
+        Spacer(modifier = Modifier.height(20.dp))
+
+        Text("Open (${open.size})", style = MaterialTheme.typography.titleMedium,
+            fontWeight = FontWeight.Bold)
+        Spacer(modifier = Modifier.height(10.dp))
+        if (open.isEmpty()) {
+            SectionCard {
+                Text("No open concerns.", style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant)
+            }
+        } else {
+            open.forEach { c ->
+                ComplaintCard(c, usersById[c.reporterId], onUpdate)
+                Spacer(modifier = Modifier.height(10.dp))
+            }
+        }
+
+        if (resolved.isNotEmpty()) {
+            Spacer(modifier = Modifier.height(12.dp))
+            Text("Resolved (${resolved.size})", style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold)
+            Spacer(modifier = Modifier.height(10.dp))
+            resolved.forEach { c ->
+                ComplaintCard(c, usersById[c.reporterId], onUpdate)
+                Spacer(modifier = Modifier.height(10.dp))
+            }
+        }
+    }
+}
+
+@Composable
+private fun ComplaintCard(
+    complaint: Complaint,
+    reporter: User?,
+    onUpdate: (Complaint, ComplaintStatus, String) -> Unit
+) {
+    var note by remember(complaint.id) { mutableStateOf(complaint.adminNote) }
+    var expanded by remember(complaint.id) { mutableStateOf(false) }
+
+    SectionCard {
+        Column {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(complaint.category, style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold)
+                    val who = reporter?.firstName?.takeIf { it.isNotBlank() }
+                        ?: complaint.reporterName.takeIf { it.isNotBlank() }
+                        ?: "Unknown"
+                    val role = complaint.reporterType.name.lowercase()
+                        .replaceFirstChar { it.uppercase() }
+                    Text(
+                        "$who ($role)",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+                ComplaintStatusChip(complaint.status)
+            }
+            Spacer(modifier = Modifier.height(10.dp))
+            Text(complaint.description, style = MaterialTheme.typography.bodyMedium)
+
+            if (complaint.adminNote.isNotBlank() && !expanded) {
+                Spacer(modifier = Modifier.height(8.dp))
+                Text("Note: ${complaint.adminNote}", style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant)
+            }
+
+            Spacer(modifier = Modifier.height(12.dp))
+            if (!expanded) {
+                OutlinedButton(
+                    onClick = { expanded = true },
+                    shape = RoundedCornerShape(14.dp),
+                    modifier = Modifier.fillMaxWidth()
+                ) { Text("Respond") }
+            } else {
+                OutlinedTextField(
+                    value = note,
+                    onValueChange = { note = it },
+                    label = { Text("Note to the reporter") },
+                    shape = RoundedCornerShape(14.dp),
+                    modifier = Modifier.fillMaxWidth(),
+                    minLines = 2
+                )
+                Spacer(modifier = Modifier.height(10.dp))
+                Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                    OutlinedButton(
+                        onClick = {
+                            onUpdate(complaint, ComplaintStatus.IN_REVIEW, note.trim())
+                            expanded = false
+                        },
+                        shape = RoundedCornerShape(14.dp),
+                        modifier = Modifier.weight(1f)
+                    ) { Text("In review") }
+                    Button(
+                        onClick = {
+                            onUpdate(complaint, ComplaintStatus.RESOLVED, note.trim())
+                            expanded = false
+                        },
+                        shape = RoundedCornerShape(14.dp),
+                        modifier = Modifier.weight(1f)
+                    ) { Text("Resolve") }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun ComplaintStatusChip(status: ComplaintStatus) {
+    val (color, label) = when (status) {
+        ComplaintStatus.OPEN -> WarningColor to "Open"
+        ComplaintStatus.IN_REVIEW -> SuccessColor to "In review"
+        ComplaintStatus.RESOLVED -> SuccessColor to "Resolved"
+    }
+    Box(
+        modifier = Modifier
+            .clip(RoundedCornerShape(50))
+            .background(color.copy(alpha = 0.15f))
+            .padding(horizontal = 12.dp, vertical = 6.dp)
+    ) {
+        Text(label, style = MaterialTheme.typography.labelMedium,
+            fontWeight = FontWeight.Bold, color = color)
     }
 }
 

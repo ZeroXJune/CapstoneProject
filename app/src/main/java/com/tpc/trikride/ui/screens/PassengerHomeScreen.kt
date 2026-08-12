@@ -37,14 +37,17 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.tpc.trikride.models.COMPLAINT_CATEGORIES
 import com.tpc.trikride.models.FareConfig
 import com.tpc.trikride.models.Location
 import com.tpc.trikride.models.Ride
 import com.tpc.trikride.models.RideStatus
+import com.tpc.trikride.models.UserType
 import com.tpc.trikride.ui.components.PrimaryButton
+import com.tpc.trikride.ui.components.RefreshableBox
 import com.tpc.trikride.ui.components.SecondaryButton
 import com.tpc.trikride.ui.components.SectionCard
-import com.tpc.trikride.ui.components.SimplePlaceholder
+import com.tpc.trikride.ui.components.SkeletonCard
 import com.tpc.trikride.ui.theme.EmeraldGreen
 import com.tpc.trikride.ui.theme.ForestGreen
 import com.tpc.trikride.ui.theme.RatingColor
@@ -52,6 +55,7 @@ import com.tpc.trikride.utils.Constants
 import com.tpc.trikride.utils.FareEngine
 import com.tpc.trikride.utils.LocationUtils
 import com.tpc.trikride.viewmodels.PassengerViewModel
+import com.tpc.trikride.viewmodels.SupportViewModel
 
 private enum class PassengerTab { HOME, HISTORY, SUPPORT, PROFILE }
 
@@ -59,17 +63,25 @@ private enum class PassengerTab { HOME, HISTORY, SUPPORT, PROFILE }
 fun PassengerHomeScreen(
     userId: String,
     onSignOut: () -> Unit,
-    viewModel: PassengerViewModel = viewModel()
+    viewModel: PassengerViewModel = viewModel(),
+    supportViewModel: SupportViewModel = viewModel()
 ) {
-    LaunchedEffect(userId) { viewModel.bind(userId) }
+    LaunchedEffect(userId) {
+        viewModel.bind(userId)
+        supportViewModel.bind(userId)
+    }
 
     val activeRides by viewModel.activeRides.collectAsState()
     val pendingRequest by viewModel.pendingRequest.collectAsState()
     val error by viewModel.errorMessage.collectAsState()
     val fareConfig by viewModel.fareConfig.collectAsState()
 
+    val notifications by supportViewModel.notifications.collectAsState()
+    val unreadCount = notifications.count { !it.read }
+
     var tab by remember { mutableStateOf(PassengerTab.HOME) }
     var showBooking by remember { mutableStateOf(false) }
+    var showNotifications by remember { mutableStateOf(false) }
     var completedRide by remember { mutableStateOf<Ride?>(null) }
     var lastActive by remember { mutableStateOf<Ride?>(null) }
 
@@ -81,6 +93,15 @@ fun PassengerHomeScreen(
             completedRide = lastActive
         }
         viewModel.clearPendingRequestIfMatched()
+    }
+
+    if (showNotifications) {
+        NotificationsScreen(
+            userId = userId,
+            viewModel = supportViewModel,
+            onBack = { showNotifications = false }
+        )
+        return
     }
 
     Scaffold(
@@ -107,15 +128,17 @@ fun PassengerHomeScreen(
                             },
                             onBack = { showBooking = false }
                         )
-                        else -> PassengerDashboard(onBookRide = { showBooking = true })
+                        else -> PassengerDashboard(
+                            rides = activeRides,
+                            unreadCount = unreadCount,
+                            onBookRide = { showBooking = true },
+                            onOpenNotifications = { showNotifications = true },
+                            onRefresh = viewModel::refresh
+                        )
                     }
                 }
-                PassengerTab.HISTORY -> SimplePlaceholder(
-                    icon = Icons.Filled.History,
-                    title = "Ride History",
-                    message = "Your completed and cancelled rides will appear here."
-                )
-                PassengerTab.SUPPORT -> SupportContent()
+                PassengerTab.HISTORY -> RideHistoryContent(viewModel)
+                PassengerTab.SUPPORT -> SupportContent(userId, supportViewModel)
                 PassengerTab.PROFILE -> SettingsScreen(
                     userId = userId,
                     userType = com.tpc.trikride.models.UserType.PASSENGER,
@@ -158,74 +181,167 @@ private fun PassengerBottomBar(selected: PassengerTab, onSelect: (PassengerTab) 
 }
 
 @Composable
-private fun PassengerDashboard(onBookRide: () -> Unit) {
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .verticalScroll(rememberScrollState())
-            .padding(20.dp)
-    ) {
-        Spacer(modifier = Modifier.height(8.dp))
-        Text(
-            text = "Hello! 👋",
-            style = MaterialTheme.typography.headlineSmall,
-            fontWeight = FontWeight.Bold
-        )
-        Text(
-            text = "Where are you headed today?",
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
-        )
-        Spacer(modifier = Modifier.height(20.dp))
-
-        // "Where to?" hero card
-        Card(
-            shape = RoundedCornerShape(22.dp),
+private fun PassengerDashboard(
+    rides: List<Ride>,
+    unreadCount: Int,
+    onBookRide: () -> Unit,
+    onOpenNotifications: () -> Unit,
+    onRefresh: () -> Unit
+) {
+    RefreshableBox(isRefreshing = false, onRefresh = onRefresh) {
+        Column(
             modifier = Modifier
-                .fillMaxWidth()
-                .clickable(onClick = onBookRide)
+                .fillMaxSize()
+                .verticalScroll(rememberScrollState())
+                .padding(20.dp)
         ) {
-            Box(
+            Spacer(modifier = Modifier.height(8.dp))
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = "Hello!",
+                        style = MaterialTheme.typography.headlineSmall,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Text(
+                        text = "Where are you headed today?",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+                IconButton(onClick = onOpenNotifications) {
+                    BadgedBox(badge = { if (unreadCount > 0) Badge { Text("$unreadCount") } }) {
+                        Icon(Icons.Filled.Notifications, contentDescription = "Notifications")
+                    }
+                }
+            }
+            Spacer(modifier = Modifier.height(20.dp))
+
+            Card(
+                shape = RoundedCornerShape(22.dp),
                 modifier = Modifier
                     .fillMaxWidth()
-                    .background(Brush.horizontalGradient(listOf(ForestGreen, EmeraldGreen)))
-                    .padding(24.dp)
+                    .clickable(onClick = onBookRide)
             ) {
-                Column {
-                    Text(
-                        text = "Where to?",
-                        style = MaterialTheme.typography.titleLarge,
-                        fontWeight = FontWeight.Bold,
-                        color = Color.White
-                    )
-                    Text(
-                        text = "Book a ride now",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = Color.White.copy(alpha = 0.9f)
-                    )
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(Brush.horizontalGradient(listOf(ForestGreen, EmeraldGreen)))
+                        .padding(24.dp)
+                ) {
+                    Column {
+                        Text(
+                            text = "Where to?",
+                            style = MaterialTheme.typography.titleLarge,
+                            fontWeight = FontWeight.Bold,
+                            color = Color.White
+                        )
+                        Text(
+                            text = "Book a ride now",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = Color.White.copy(alpha = 0.9f)
+                        )
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(24.dp))
+            Text(
+                text = "Recent Rides",
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold
+            )
+            Spacer(modifier = Modifier.height(12.dp))
+            if (rides.isEmpty()) {
+                SectionCard {
+                    Column {
+                        Text(
+                            "No rides yet",
+                            style = MaterialTheme.typography.titleSmall,
+                            fontWeight = FontWeight.Bold
+                        )
+                        Text(
+                            "Book your first tricycle ride around campus.",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                }
+            } else {
+                rides.take(3).forEach { ride ->
+                    RideRow(ride)
+                    Spacer(modifier = Modifier.height(8.dp))
                 }
             }
         }
-        Spacer(modifier = Modifier.height(24.dp))
-        Text(
-            text = "Recent Rides",
-            style = MaterialTheme.typography.titleMedium,
-            fontWeight = FontWeight.Bold
-        )
-        Spacer(modifier = Modifier.height(12.dp))
-        SectionCard {
-            Column {
+    }
+}
+
+@Composable
+private fun RideHistoryContent(viewModel: PassengerViewModel) {
+    val history by viewModel.rideHistory.collectAsState()
+    val loading by viewModel.loadingHistory.collectAsState()
+
+    RefreshableBox(isRefreshing = false, onRefresh = viewModel::refresh) {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .verticalScroll(rememberScrollState())
+                .padding(20.dp)
+        ) {
+            Spacer(modifier = Modifier.height(8.dp))
+            Text("Ride History", style = MaterialTheme.typography.headlineSmall,
+                fontWeight = FontWeight.Bold)
+            Text("Your past trips", style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Spacer(modifier = Modifier.height(16.dp))
+
+            when {
+                loading -> repeat(3) {
+                    SkeletonCard(lines = 2)
+                    Spacer(modifier = Modifier.height(10.dp))
+                }
+                history.isEmpty() -> SectionCard {
+                    Text(
+                        "No completed rides yet.",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+                else -> history.forEach { ride ->
+                    RideRow(ride)
+                    Spacer(modifier = Modifier.height(8.dp))
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun RideRow(ride: Ride) {
+    SectionCard {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Column(modifier = Modifier.weight(1f)) {
                 Text(
-                    "No rides yet",
-                    style = MaterialTheme.typography.titleSmall,
-                    fontWeight = FontWeight.Bold
+                    "${ride.pickupLocation.address} to ${ride.dropoffLocation.address}",
+                    style = MaterialTheme.typography.bodyMedium,
+                    fontWeight = FontWeight.SemiBold
                 )
                 Text(
-                    "Book your first tricycle ride around campus.",
+                    ride.status.name.replace('_', ' '),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
+            Text(
+                "P%.2f".format(ride.estimatedFare),
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.primary
+            )
         }
     }
 }
@@ -712,10 +828,19 @@ private fun MapPlaceholder(height: Dp) {
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun SupportContent() {
+private fun SupportContent(userId: String, viewModel: SupportViewModel) {
+    var category by remember { mutableStateOf(COMPLAINT_CATEGORIES.first()) }
     var description by remember { mutableStateOf("") }
-    var submitted by remember { mutableStateOf(false) }
+    var expanded by remember { mutableStateOf(false) }
+
+    val submitting by viewModel.submitting.collectAsState()
+    val submitted by viewModel.submitted.collectAsState()
+    val error by viewModel.error.collectAsState()
+    val myComplaints by viewModel.myComplaints.collectAsState()
+
+    LaunchedEffect(userId) { viewModel.bind(userId) }
 
     Column(
         modifier = Modifier
@@ -725,24 +850,53 @@ private fun SupportContent() {
     ) {
         Spacer(modifier = Modifier.height(8.dp))
         Text("Support", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
-        Text("We're here to help", style = MaterialTheme.typography.bodyMedium,
+        Text("Report a concern and an administrator will review it.",
+            style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant)
         Spacer(modifier = Modifier.height(20.dp))
 
         SectionCard {
             Column {
-                Text("Report an Issue", style = MaterialTheme.typography.titleMedium,
+                Text("Report a Concern", style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold)
                 Spacer(modifier = Modifier.height(12.dp))
+
                 if (submitted) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Icon(Icons.Filled.CheckCircle, contentDescription = null,
                             tint = MaterialTheme.colorScheme.primary)
                         Spacer(modifier = Modifier.width(8.dp))
-                        Text("Report submitted. Thank you!",
+                        Text("Report sent. An administrator will review it.",
                             color = MaterialTheme.colorScheme.primary)
                     }
+                    Spacer(modifier = Modifier.height(10.dp))
+                    SecondaryButton(text = "Report another", onClick = {
+                        description = ""
+                        viewModel.resetSubmitted()
+                    })
                 } else {
+                    ExposedDropdownMenuBox(expanded = expanded, onExpandedChange = { expanded = it }) {
+                        OutlinedTextField(
+                            value = category,
+                            onValueChange = {},
+                            readOnly = true,
+                            label = { Text("Category") },
+                            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
+                            shape = RoundedCornerShape(14.dp),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .menuAnchor()
+                        )
+                        ExposedDropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
+                            COMPLAINT_CATEGORIES.forEach { option ->
+                                DropdownMenuItem(
+                                    text = { Text(option) },
+                                    onClick = { category = option; expanded = false }
+                                )
+                            }
+                        }
+                    }
+                    Spacer(modifier = Modifier.height(12.dp))
                     OutlinedTextField(
                         value = description,
                         onValueChange = { description = it },
@@ -751,16 +905,59 @@ private fun SupportContent() {
                         modifier = Modifier.fillMaxWidth(),
                         minLines = 3
                     )
+                    error?.let {
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text(it, color = MaterialTheme.colorScheme.error,
+                            style = MaterialTheme.typography.bodySmall)
+                    }
                     Spacer(modifier = Modifier.height(12.dp))
                     PrimaryButton(
-                        text = "Submit Report",
-                        onClick = { submitted = true },
-                        enabled = description.isNotBlank()
+                        text = if (submitting) "Sending..." else "Submit Report",
+                        onClick = {
+                            viewModel.submitComplaint(
+                                reporterName = "",
+                                reporterType = UserType.PASSENGER,
+                                category = category,
+                                description = description.trim()
+                            )
+                        },
+                        enabled = !submitting && description.isNotBlank()
                     )
                 }
             }
         }
         Spacer(modifier = Modifier.height(12.dp))
+
+        if (myComplaints.isNotEmpty()) {
+            Text("My Reports", style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold)
+            Spacer(modifier = Modifier.height(8.dp))
+            myComplaints.sortedByDescending { it.createdAt.toLongOrNull() ?: 0L }.forEach { c ->
+                SectionCard {
+                    Column {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Text(c.category, fontWeight = FontWeight.SemiBold)
+                            Text(
+                                c.status.name.replace('_', ' '),
+                                style = MaterialTheme.typography.labelMedium,
+                                color = MaterialTheme.colorScheme.primary
+                            )
+                        }
+                        Text(c.description, style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        if (c.adminNote.isNotBlank()) {
+                            Spacer(modifier = Modifier.height(6.dp))
+                            Text("Admin: ${c.adminNote}", style = MaterialTheme.typography.bodySmall)
+                        }
+                    }
+                }
+                Spacer(modifier = Modifier.height(8.dp))
+            }
+            Spacer(modifier = Modifier.height(8.dp))
+        }
 
         SectionCard {
             Column {
@@ -770,7 +967,7 @@ private fun SupportContent() {
                 Spacer(modifier = Modifier.height(8.dp))
                 ContactRow(Icons.Filled.SupportAgent, "Email", "trikride@tpc.edu.ph")
                 Spacer(modifier = Modifier.height(8.dp))
-                ContactRow(Icons.Filled.History, "Hours", "6:00 AM – 9:00 PM")
+                ContactRow(Icons.Filled.History, "Hours", "6:00 AM - 9:00 PM")
             }
         }
     }

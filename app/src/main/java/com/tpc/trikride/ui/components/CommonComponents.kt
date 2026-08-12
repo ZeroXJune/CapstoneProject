@@ -36,9 +36,11 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import com.tpc.trikride.ui.theme.ThemeState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -158,6 +160,27 @@ fun SkeletonCard(lines: Int = 3, modifier: Modifier = Modifier) {
                 if (index != lines - 1) Spacer(modifier = Modifier.height(10.dp))
             }
         }
+    }
+}
+
+/**
+ * Wraps scrollable content with swipe-down-to-refresh. [onRefresh] should
+ * kick off the reload; flip [isRefreshing] back to false when it finishes.
+ */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun RefreshableBox(
+    isRefreshing: Boolean,
+    onRefresh: () -> Unit,
+    modifier: Modifier = Modifier,
+    content: @Composable () -> Unit
+) {
+    PullToRefreshBox(
+        isRefreshing = isRefreshing,
+        onRefresh = onRefresh,
+        modifier = modifier.fillMaxSize()
+    ) {
+        content()
     }
 }
 

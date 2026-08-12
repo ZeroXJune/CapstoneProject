@@ -11,14 +11,12 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.Badge
 import androidx.compose.material.icons.filled.CalendarMonth
 import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.material.icons.filled.DirectionsWalk
 import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.LocalTaxi
-import androidx.compose.material.icons.filled.MarkEmailRead
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Phone
 import androidx.compose.material3.*
@@ -50,7 +48,6 @@ private enum class AppScreen { LOGIN, REGISTER, ACCOUNT_SELECTION }
 
 private data class RegistrationData(
     val fullName: String,
-    val idNumber: String,
     val birthDate: String,
     val email: String,
     val phone: String,
@@ -66,18 +63,6 @@ fun MainAppScreen(authViewModel: AuthViewModel = viewModel()) {
     // Checking for an existing signed-in session → show the splash.
     if (state.isBootstrapping) {
         SplashScreen()
-        return
-    }
-
-    // Signed in but email not verified yet → non-blocking prompt.
-    var verifyDismissed by remember { mutableStateOf(false) }
-    if (state.userId != null && state.userType != null && !state.emailVerified && !verifyDismissed) {
-        VerifyEmailScreen(
-            onResend = authViewModel::resendVerification,
-            onRefresh = authViewModel::refreshVerification,
-            onContinue = { verifyDismissed = true },
-            onSignOut = authViewModel::signOut
-        )
         return
     }
 
@@ -132,7 +117,7 @@ fun MainAppScreen(authViewModel: AuthViewModel = viewModel()) {
                 val reg = pendingReg
                 if (reg != null) {
                     authViewModel.register(
-                        reg.fullName, reg.idNumber, reg.birthDate,
+                        reg.fullName, reg.birthDate,
                         reg.email, reg.phone, reg.password, type
                     )
                 }
@@ -285,7 +270,6 @@ private fun RegisterScreen(
     onLoginClick: () -> Unit
 ) {
     var fullName by remember { mutableStateOf("") }
-    var idNumber by remember { mutableStateOf("") }
     var birthDate by remember { mutableStateOf("") }
     var email by remember { mutableStateOf("") }
     var phone by remember { mutableStateOf("") }
@@ -348,8 +332,6 @@ private fun RegisterScreen(
         Spacer(modifier = Modifier.height(24.dp))
 
         TrikTextField(fullName, { fullName = it }, "Full Name", Icons.Filled.Person)
-        Spacer(modifier = Modifier.height(14.dp))
-        TrikTextField(idNumber, { idNumber = it }, "Student ID / Driver ID", Icons.Filled.Badge)
         Spacer(modifier = Modifier.height(14.dp))
         DateField(
             label = "Birthdate",
@@ -417,7 +399,7 @@ private fun RegisterScreen(
             onClick = {
                 onNext(
                     RegistrationData(
-                        fullName.trim(), idNumber.trim(), birthDate,
+                        fullName.trim(), birthDate,
                         email.trim(), phone.trim(), password
                     )
                 )
@@ -561,58 +543,6 @@ private fun DateField(label: String, value: String, onClick: () -> Unit) {
             color = if (value.isBlank()) MaterialTheme.colorScheme.onSurfaceVariant
             else MaterialTheme.colorScheme.onSurface
         )
-    }
-}
-
-@Composable
-private fun VerifyEmailScreen(
-    onResend: () -> Unit,
-    onRefresh: () -> Unit,
-    onContinue: () -> Unit,
-    onSignOut: () -> Unit
-) {
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(24.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
-    ) {
-        Box(
-            modifier = Modifier
-                .size(88.dp)
-                .clip(CircleShape)
-                .background(MaterialTheme.colorScheme.primaryContainer),
-            contentAlignment = Alignment.Center
-        ) {
-            Icon(
-                Icons.Filled.MarkEmailRead,
-                contentDescription = null,
-                tint = MaterialTheme.colorScheme.primary,
-                modifier = Modifier.size(44.dp)
-            )
-        }
-        Spacer(modifier = Modifier.height(20.dp))
-        Text("Verify your email", style = MaterialTheme.typography.headlineSmall,
-            fontWeight = FontWeight.Bold)
-        Spacer(modifier = Modifier.height(8.dp))
-        Text(
-            "We sent a verification link to your email. Please tap it, then " +
-                "come back and refresh. You can also continue and verify later.",
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            textAlign = TextAlign.Center
-        )
-        Spacer(modifier = Modifier.height(28.dp))
-        PrimaryButton(text = "I've verified — Refresh", onClick = onRefresh)
-        Spacer(modifier = Modifier.height(10.dp))
-        TextButton(onClick = onResend) { Text("Resend verification email") }
-        Spacer(modifier = Modifier.height(4.dp))
-        TextButton(onClick = onContinue) { Text("Continue for now") }
-        Spacer(modifier = Modifier.height(4.dp))
-        TextButton(onClick = onSignOut) {
-            Text("Sign out", color = MaterialTheme.colorScheme.error)
-        }
     }
 }
 

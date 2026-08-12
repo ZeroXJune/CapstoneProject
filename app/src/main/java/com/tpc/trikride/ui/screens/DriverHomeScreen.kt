@@ -13,6 +13,7 @@ import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.Inbox
 import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.MyLocation
+import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Payments
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Star
@@ -32,8 +33,9 @@ import com.tpc.trikride.models.RideRequest
 import com.tpc.trikride.models.RideStatus
 import com.tpc.trikride.models.VerificationStatus
 import com.tpc.trikride.ui.components.PrimaryButton
+import com.tpc.trikride.ui.components.RefreshableBox
 import com.tpc.trikride.ui.components.SectionCard
-import com.tpc.trikride.ui.components.SimplePlaceholder
+import com.tpc.trikride.ui.components.SkeletonCard
 import com.tpc.trikride.ui.components.TrikTextField
 import com.tpc.trikride.ui.theme.ErrorColor
 import com.tpc.trikride.ui.theme.RatingColor
@@ -43,6 +45,7 @@ import androidx.compose.material.icons.filled.Badge
 import androidx.compose.material.icons.filled.CreditCard
 import androidx.compose.material.icons.filled.DateRange
 import com.tpc.trikride.viewmodels.DriverViewModel
+import com.tpc.trikride.viewmodels.SupportViewModel
 
 private enum class DriverTab { DASHBOARD, REQUESTS, HISTORY, PROFILE }
 
@@ -50,15 +53,20 @@ private enum class DriverTab { DASHBOARD, REQUESTS, HISTORY, PROFILE }
 fun DriverHomeScreen(
     userId: String,
     onSignOut: () -> Unit,
-    viewModel: DriverViewModel = viewModel()
+    viewModel: DriverViewModel = viewModel(),
+    supportViewModel: SupportViewModel = viewModel()
 ) {
-    LaunchedEffect(userId) { viewModel.bind(userId) }
+    LaunchedEffect(userId) {
+        viewModel.bind(userId)
+        supportViewModel.bind(userId)
+    }
 
     val driver by viewModel.driverProfile.collectAsState()
     val openRequests by viewModel.openRequests.collectAsState()
     val activeRides by viewModel.activeRides.collectAsState()
     val isRegistering by viewModel.isRegistering.collectAsState()
     val error by viewModel.errorMessage.collectAsState()
+    val earnings by viewModel.earnings.collectAsState()
 
     val profile = driver
     if (profile == null) {
@@ -71,7 +79,20 @@ fun DriverHomeScreen(
         return
     }
 
+    val notifications by supportViewModel.notifications.collectAsState()
+    val unreadCount = notifications.count { !it.read }
+
     var tab by remember { mutableStateOf(DriverTab.DASHBOARD) }
+    var showNotifications by remember { mutableStateOf(false) }
+
+    if (showNotifications) {
+        NotificationsScreen(
+            userId = userId,
+            viewModel = supportViewModel,
+            onBack = { showNotifications = false }
+        )
+        return
+    }
 
     Scaffold(
         bottomBar = { DriverBottomBar(selected = tab, onSelect = { tab = it }, requestCount = openRequests.size) }
@@ -86,7 +107,11 @@ fun DriverHomeScreen(
                         DriverDashboard(
                             driver = profile,
                             activeCount = activeRides.size,
-                            onToggleOnline = viewModel::setAvailability
+                            earnings = earnings,
+                            unreadCount = unreadCount,
+                            onToggleOnline = viewModel::setAvailability,
+                            onOpenNotifications = { showNotifications = true },
+                            onRefresh = viewModel::refresh
                         )
                     }
                 }
@@ -95,11 +120,7 @@ fun DriverHomeScreen(
                     requests = openRequests,
                     onAccept = viewModel::acceptRequest
                 )
-                DriverTab.HISTORY -> SimplePlaceholder(
-                    icon = Icons.Filled.History,
-                    title = "Ride History",
-                    message = "Your completed trips and earnings will appear here."
-                )
+                DriverTab.HISTORY -> DriverHistoryContent(viewModel)
                 DriverTab.PROFILE -> SettingsScreen(
                     userId = userId,
                     userType = com.tpc.trikride.models.UserType.DRIVER,
@@ -156,8 +177,13 @@ private fun DriverBottomBar(
 private fun DriverDashboard(
     driver: Driver,
     activeCount: Int,
-    onToggleOnline: (Boolean) -> Unit
+    earnings: Double,
+    unreadCount: Int,
+    onToggleOnline: (Boolean) -> Unit,
+    onOpenNotifications: () -> Unit,
+    onRefresh: () -> Unit
 ) {
+  RefreshableBox(isRefreshing = false, onRefresh = onRefresh) {
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -165,8 +191,15 @@ private fun DriverDashboard(
             .padding(20.dp)
     ) {
         Spacer(modifier = Modifier.height(8.dp))
-        Text("Driver Dashboard", style = MaterialTheme.typography.headlineSmall,
-            fontWeight = FontWeight.Bold)
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Text("Driver Dashboard", style = MaterialTheme.typography.headlineSmall,
+                fontWeight = FontWeight.Bold, modifier = Modifier.weight(1f))
+            IconButton(onClick = onOpenNotifications) {
+                BadgedBox(badge = { if (unreadCount > 0) Badge { Text("$unreadCount") } }) {
+                    Icon(Icons.Filled.Notifications, contentDescription = "Notifications")
+                }
+            }
+        }
         Spacer(modifier = Modifier.height(16.dp))
 
         // Profile + rating + online switch
@@ -232,7 +265,7 @@ private fun DriverDashboard(
                 Column {
                     Text("Earnings Today", style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    Text("₱0.00", style = MaterialTheme.typography.headlineSmall,
+                    Text("₱%.2f".format(earnings), style = MaterialTheme.typography.headlineSmall,
                         fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
                 }
             }
@@ -256,6 +289,83 @@ private fun DriverDashboard(
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
+    }
+  }
+}
+
+@Composable
+private fun DriverHistoryContent(viewModel: DriverViewModel) {
+    val history by viewModel.rideHistory.collectAsState()
+    val loading by viewModel.loadingHistory.collectAsState()
+    val earnings by viewModel.earnings.collectAsState()
+
+    RefreshableBox(isRefreshing = false, onRefresh = viewModel::refresh) {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .verticalScroll(rememberScrollState())
+                .padding(20.dp)
+        ) {
+            Spacer(modifier = Modifier.height(8.dp))
+            Text("Ride History", style = MaterialTheme.typography.headlineSmall,
+                fontWeight = FontWeight.Bold)
+            Text("Completed and cancelled trips",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Spacer(modifier = Modifier.height(16.dp))
+
+            SectionCard {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(Icons.Filled.Payments, contentDescription = null,
+                        tint = MaterialTheme.colorScheme.primary)
+                    Spacer(modifier = Modifier.width(12.dp))
+                    Column {
+                        Text("Total Earned", style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Text("₱%.2f".format(earnings),
+                            style = MaterialTheme.typography.headlineSmall,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.primary)
+                    }
+                }
+            }
+            Spacer(modifier = Modifier.height(16.dp))
+
+            when {
+                loading -> repeat(3) {
+                    SkeletonCard(lines = 2)
+                    Spacer(modifier = Modifier.height(10.dp))
+                }
+                history.isEmpty() -> SectionCard {
+                    Text("No trips yet.", style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+                else -> history.forEach { ride ->
+                    SectionCard {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text(
+                                    "${ride.pickupLocation.address} to ${ride.dropoffLocation.address}",
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    fontWeight = FontWeight.SemiBold
+                                )
+                                Text(ride.status.name.replace('_', ' '),
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            }
+                            Text("₱%.2f".format(ride.estimatedFare),
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.primary)
+                        }
+                    }
+                    Spacer(modifier = Modifier.height(8.dp))
+                }
+            }
+        }
     }
 }
 

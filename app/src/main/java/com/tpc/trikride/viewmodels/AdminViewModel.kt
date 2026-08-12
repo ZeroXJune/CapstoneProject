@@ -6,8 +6,11 @@ import com.tpc.trikride.models.Driver
 import com.tpc.trikride.models.FareConfig
 import com.tpc.trikride.models.Ride
 import com.tpc.trikride.models.User
+import com.tpc.trikride.models.Complaint
+import com.tpc.trikride.models.ComplaintStatus
 import com.tpc.trikride.repositories.AdminRepository
 import com.tpc.trikride.repositories.FareRepository
+import com.tpc.trikride.repositories.SupportRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -17,7 +20,8 @@ import kotlinx.coroutines.launch
 
 class AdminViewModel(
     private val repo: AdminRepository = AdminRepository(),
-    private val fareRepo: FareRepository = FareRepository()
+    private val fareRepo: FareRepository = FareRepository(),
+    private val supportRepo: SupportRepository = SupportRepository()
 ) : ViewModel() {
 
     private val _error = MutableStateFlow<String?>(null)
@@ -41,6 +45,20 @@ class AdminViewModel(
     val rides: StateFlow<List<Ride>> = repo.rides()
         .catch { _error.value = it.message }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
+
+    val complaints: StateFlow<List<Complaint>> = supportRepo.allComplaints()
+        .catch { _error.value = it.message }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
+
+    fun updateComplaint(complaint: Complaint, status: ComplaintStatus, note: String) {
+        viewModelScope.launch {
+            try {
+                supportRepo.updateComplaint(complaint, status, note)
+            } catch (e: Exception) {
+                _error.value = e.message ?: "Failed to update the report"
+            }
+        }
+    }
 
     fun approveDriver(driverId: String) {
         viewModelScope.launch {

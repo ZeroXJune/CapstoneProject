@@ -282,6 +282,46 @@ class FirebaseService {
         awaitClose { ref.removeEventListener(listener) }
     }
 
+    fun getPassengerRideHistoryFlow(passengerId: String): Flow<List<Ride>> = callbackFlow {
+        val finished = setOf(RideStatus.COMPLETED, RideStatus.CANCELLED, RideStatus.NO_SHOW)
+        val listener = object : ValueEventListener {
+            override fun onDataChange(snapshot: DataSnapshot) {
+                trySend(
+                    snapshot.children.mapNotNull { it.getValue(Ride::class.java) }
+                        .filter { it.passengerId == passengerId && it.status in finished }
+                        .sortedByDescending { it.requestedAt.toLongOrNull() ?: 0L }
+                )
+            }
+
+            override fun onCancelled(error: DatabaseError) {
+                close(error.toException())
+            }
+        }
+        val ref = database.getReference("rides")
+        ref.addValueEventListener(listener)
+        awaitClose { ref.removeEventListener(listener) }
+    }
+
+    fun getDriverRideHistoryFlow(driverId: String): Flow<List<Ride>> = callbackFlow {
+        val finished = setOf(RideStatus.COMPLETED, RideStatus.CANCELLED, RideStatus.NO_SHOW)
+        val listener = object : ValueEventListener {
+            override fun onDataChange(snapshot: DataSnapshot) {
+                trySend(
+                    snapshot.children.mapNotNull { it.getValue(Ride::class.java) }
+                        .filter { it.driverId == driverId && it.status in finished }
+                        .sortedByDescending { it.requestedAt.toLongOrNull() ?: 0L }
+                )
+            }
+
+            override fun onCancelled(error: DatabaseError) {
+                close(error.toException())
+            }
+        }
+        val ref = database.getReference("rides")
+        ref.addValueEventListener(listener)
+        awaitClose { ref.removeEventListener(listener) }
+    }
+
     // Review Operations
     suspend fun submitReview(review: RideReview) {
         database.getReference("reviews").child(review.id).setValue(review)
@@ -304,6 +344,89 @@ class FirebaseService {
         ref.addValueEventListener(listener)
 
         awaitClose { ref.removeEventListener(listener) }
+    }
+
+    // Complaints
+    suspend fun submitComplaint(complaint: Complaint) {
+        database.getReference("complaints").child(complaint.id).setValue(complaint).await()
+    }
+
+    fun getAllComplaintsFlow(): Flow<List<Complaint>> = callbackFlow {
+        val listener = object : ValueEventListener {
+            override fun onDataChange(snapshot: DataSnapshot) {
+                trySend(snapshot.children.mapNotNull { it.getValue(Complaint::class.java) })
+            }
+
+            override fun onCancelled(error: DatabaseError) {
+                close(error.toException())
+            }
+        }
+        val ref = database.getReference("complaints")
+        ref.addValueEventListener(listener)
+        awaitClose { ref.removeEventListener(listener) }
+    }
+
+    fun getUserComplaintsFlow(userId: String): Flow<List<Complaint>> = callbackFlow {
+        val listener = object : ValueEventListener {
+            override fun onDataChange(snapshot: DataSnapshot) {
+                trySend(
+                    snapshot.children.mapNotNull { it.getValue(Complaint::class.java) }
+                        .filter { it.reporterId == userId }
+                )
+            }
+
+            override fun onCancelled(error: DatabaseError) {
+                close(error.toException())
+            }
+        }
+        val ref = database.getReference("complaints")
+        ref.addValueEventListener(listener)
+        awaitClose { ref.removeEventListener(listener) }
+    }
+
+    suspend fun updateComplaintStatus(id: String, status: ComplaintStatus, note: String) {
+        val updates = mutableMapOf<String, Any?>(
+            "status" to status.name,
+            "adminNote" to note
+        )
+        if (status == ComplaintStatus.RESOLVED) {
+            updates["resolvedAt"] = System.currentTimeMillis().toString()
+        }
+        database.getReference("complaints").child(id).updateChildren(updates).await()
+    }
+
+    // Notifications
+    suspend fun pushNotification(notification: AppNotification) {
+        database.getReference("notifications")
+            .child(notification.userId)
+            .child(notification.id)
+            .setValue(notification)
+            .await()
+    }
+
+    fun getNotificationsFlow(userId: String): Flow<List<AppNotification>> = callbackFlow {
+        val listener = object : ValueEventListener {
+            override fun onDataChange(snapshot: DataSnapshot) {
+                trySend(snapshot.children.mapNotNull { it.getValue(AppNotification::class.java) })
+            }
+
+            override fun onCancelled(error: DatabaseError) {
+                close(error.toException())
+            }
+        }
+        val ref = database.getReference("notifications").child(userId)
+        ref.addValueEventListener(listener)
+        awaitClose { ref.removeEventListener(listener) }
+    }
+
+    suspend fun markNotificationRead(userId: String, id: String) {
+        database.getReference("notifications").child(userId).child(id)
+            .child("read").setValue(true).await()
+    }
+
+    suspend fun markAllNotificationsRead(userId: String, ids: List<String>) {
+        val ref = database.getReference("notifications").child(userId)
+        ids.forEach { ref.child(it).child("read").setValue(true) }
     }
 
     // Fare Configuration (admin-managed pricing)
