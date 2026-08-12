@@ -123,4 +123,4 @@ This is a capstone project for Talibon Polytechnic College. All rights reserved.
 ## Status
 
 **Current Phase:** Development Setup
-**Target Completion:** May 2026
+**Target Completion:** August 2026
