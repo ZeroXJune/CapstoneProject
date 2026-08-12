@@ -494,8 +494,9 @@ private fun BookingContent(
                 Text("Number of Passengers", style = MaterialTheme.typography.titleSmall,
                     fontWeight = FontWeight.Bold)
                 Text(
-                    if (fareConfig.chargePerPassenger) "Max 3 per tricycle, fare is per head"
-                    else "Max 3 per tricycle",
+                    if (fareConfig.chargePerPassenger)
+                        "Up to ${Constants.MAX_PASSENGERS} per tricycle, fare is per head"
+                    else "Up to ${Constants.MAX_PASSENGERS} per tricycle",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -512,8 +513,10 @@ private fun BookingContent(
                         modifier = Modifier.padding(horizontal = 20.dp)
                     )
                     FilledTonalIconButton(
-                        onClick = { if (passengerCount < 3) passengerCount++ },
-                        enabled = passengerCount < 3
+                        onClick = {
+                            if (passengerCount < Constants.MAX_PASSENGERS) passengerCount++
+                        },
+                        enabled = passengerCount < Constants.MAX_PASSENGERS
                     ) { Icon(Icons.Filled.Add, contentDescription = "More") }
                 }
             }

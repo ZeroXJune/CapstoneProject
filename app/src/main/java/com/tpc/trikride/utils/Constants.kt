@@ -7,6 +7,9 @@ object Constants {
     /** How long a ride request stays open before expiring, in milliseconds. */
     const val RIDE_REQUEST_TTL_MS = 5 * 60 * 1000L
 
+    /** Seats a tricycle can take on one booking. */
+    const val MAX_PASSENGERS = 5
+
     /**
      * Common pickup/dropoff points around Talibon Polytechnic College.
      * Coordinates are approximate landmarks in Talibon, Bohol; refine them
