@@ -24,10 +24,14 @@ class AuthViewModel(
         // Authenticated but no stored account type yet (needs the picker).
         val needsAccountType: Boolean = false,
         // True while we check for an existing signed-in session on launch.
-        val isBootstrapping: Boolean = true
+        val isBootstrapping: Boolean = true,
+        // Known synchronously at startup: is someone already signed in?
+        val hasExistingSession: Boolean = false
     )
 
-    private val _state = MutableStateFlow(AuthUiState())
+    private val _state = MutableStateFlow(
+        AuthUiState(hasExistingSession = repo.currentUserId != null)
+    )
     val state: StateFlow<AuthUiState> = _state
 
     init {

@@ -57,12 +57,26 @@ private data class RegistrationData(
 @Composable
 fun MainAppScreen(authViewModel: AuthViewModel = viewModel()) {
     val state by authViewModel.state.collectAsState()
+    val context = LocalContext.current
     var screen by remember { mutableStateOf(AppScreen.LOGIN) }
     var pendingReg by remember { mutableStateOf<RegistrationData?>(null) }
+    var seenOnboarding by remember { mutableStateOf(AuthPrefs.hasSeenOnboarding(context)) }
 
-    // Checking for an existing signed-in session → show the splash.
+    // Checking for an existing signed-in session. Returning users get the
+    // welcome artwork; everyone else sees the branded splash.
     if (state.isBootstrapping) {
-        SplashScreen()
+        if (state.hasExistingSession) WelcomeBackScreen() else SplashScreen()
+        return
+    }
+
+    // First launch for a signed-out user: run the carousel once.
+    if (state.userId == null && !seenOnboarding) {
+        OnboardingScreen(
+            onFinish = {
+                AuthPrefs.setSeenOnboarding(context)
+                seenOnboarding = true
+            }
+        )
         return
     }
 

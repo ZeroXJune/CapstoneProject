@@ -6,6 +6,7 @@ import android.content.Context
 object AuthPrefs {
     private const val FILE = "trikride_auth"
     private const val KEY_EMAIL = "remembered_email"
+    private const val KEY_SEEN_ONBOARDING = "seen_onboarding"
 
     private fun prefs(context: Context) =
         context.getSharedPreferences(FILE, Context.MODE_PRIVATE)
@@ -19,5 +20,13 @@ object AuthPrefs {
 
     fun clearRememberedEmail(context: Context) {
         prefs(context).edit().remove(KEY_EMAIL).apply()
+    }
+
+    /** The onboarding carousel is shown once, on the first launch. */
+    fun hasSeenOnboarding(context: Context): Boolean =
+        prefs(context).getBoolean(KEY_SEEN_ONBOARDING, false)
+
+    fun setSeenOnboarding(context: Context) {
+        prefs(context).edit().putBoolean(KEY_SEEN_ONBOARDING, true).apply()
     }
 }
