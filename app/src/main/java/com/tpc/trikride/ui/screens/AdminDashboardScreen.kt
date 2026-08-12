@@ -1,7 +1,11 @@
 package com.tpc.trikride.ui.screens
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -9,11 +13,13 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CheckCircle
-import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Groups
 import androidx.compose.material.icons.filled.Insights
 import androidx.compose.material.icons.filled.Payments
 import androidx.compose.material.icons.filled.ReportProblem
+import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.WarningAmber
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.VerifiedUser
 import androidx.compose.material3.*
@@ -23,6 +29,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.delay
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -30,14 +37,14 @@ import com.tpc.trikride.models.Complaint
 import com.tpc.trikride.models.ComplaintStatus
 import com.tpc.trikride.models.Driver
 import com.tpc.trikride.models.FareConfig
+import com.tpc.trikride.models.FareStop
 import com.tpc.trikride.models.Ride
 import com.tpc.trikride.models.RideStatus
-import com.tpc.trikride.models.RouteFare
 import com.tpc.trikride.models.User
 import com.tpc.trikride.models.VerificationStatus
 import com.tpc.trikride.ui.components.PrimaryButton
 import com.tpc.trikride.ui.components.SectionCard
-import com.tpc.trikride.utils.Constants
+import com.tpc.trikride.utils.FareSeed
 import com.tpc.trikride.ui.theme.ErrorColor
 import com.tpc.trikride.ui.theme.SuccessColor
 import com.tpc.trikride.ui.theme.WarningColor
@@ -55,7 +62,9 @@ fun AdminDashboardScreen(
     val users by viewModel.users.collectAsState()
     val rides by viewModel.rides.collectAsState()
     val fareConfig by viewModel.fareConfig.collectAsState()
+    val fareStops by viewModel.fareStops.collectAsState()
     val fareSaved by viewModel.fareSaved.collectAsState()
+    val importing by viewModel.importing.collectAsState()
     val complaints by viewModel.complaints.collectAsState()
 
     var tab by remember { mutableStateOf(AdminTab.VERIFY) }
@@ -86,11 +95,21 @@ fun AdminDashboardScreen(
                     usersById = usersById,
                     onUpdate = viewModel::updateComplaint
                 )
-                AdminTab.MONITOR -> MonitorContent(drivers = drivers, rides = rides)
+                AdminTab.MONITOR -> MonitorContent(
+                    drivers = drivers,
+                    rides = rides,
+                    complaints = complaints,
+                    usersById = usersById
+                )
                 AdminTab.FARES -> FareConfigContent(
                     config = fareConfig,
+                    stops = fareStops,
                     saved = fareSaved,
-                    onSave = viewModel::saveFareConfig,
+                    importing = importing,
+                    onSaveConfig = viewModel::saveFareConfig,
+                    onSaveStop = viewModel::saveFareStop,
+                    onDeleteStop = viewModel::deleteFareStop,
+                    onImport = viewModel::importOfficialRates,
                     onAcknowledgeSaved = viewModel::acknowledgeFareSaved
                 )
                 AdminTab.PROFILE -> SettingsScreen(
@@ -475,7 +494,42 @@ private fun StatusChip(status: VerificationStatus) {
 }
 
 @Composable
-private fun MonitorContent(drivers: List<Driver>, rides: List<Ride>) {
+private fun MonitorContent(
+    drivers: List<Driver>,
+    rides: List<Ride>,
+    complaints: List<Complaint>,
+    usersById: Map<String, User>
+) {
+    var showReports by remember { mutableStateOf(false) }
+
+    Column(modifier = Modifier.fillMaxSize()) {
+        TabRow(selectedTabIndex = if (showReports) 1 else 0) {
+            Tab(
+                selected = !showReports,
+                onClick = { showReports = false },
+                text = { Text("Live") }
+            )
+            Tab(
+                selected = showReports,
+                onClick = { showReports = true },
+                text = { Text("Reports") }
+            )
+        }
+        if (showReports) {
+            AdminReportsContent(
+                rides = rides,
+                drivers = drivers,
+                complaints = complaints,
+                usersById = usersById
+            )
+        } else {
+            LiveMonitorContent(drivers = drivers, rides = rides)
+        }
+    }
+}
+
+@Composable
+private fun LiveMonitorContent(drivers: List<Driver>, rides: List<Ride>) {
     val approved = drivers.count { it.verificationStatus == VerificationStatus.APPROVED }
     val pending = drivers.count { it.verificationStatus == VerificationStatus.PENDING }
     val activeRides = rides.count {
@@ -559,22 +613,34 @@ private fun StatTile(label: String, value: String, icon: androidx.compose.ui.gra
     }
 }
 
+/**
+ * The fare table, as posted by FeTODAT.
+ *
+ * There are 240 stops, so the list is lazy and the admin filters down to what
+ * they want rather than scrolling: type part of a stop name, narrow to a zone,
+ * or switch to the flagged rows, which are the ones that came out of the
+ * transcription with a problem worth checking against the physical sheet.
+ */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun FareConfigContent(
     config: FareConfig,
+    stops: List<FareStop>,
     saved: Boolean,
-    onSave: (FareConfig) -> Unit,
+    importing: Boolean,
+    onSaveConfig: (FareConfig) -> Unit,
+    onSaveStop: (FareStop) -> Unit,
+    onDeleteStop: (String) -> Unit,
+    onImport: () -> Unit,
     onAcknowledgeSaved: () -> Unit
 ) {
-    var base by remember(config) { mutableStateOf(config.baseFare.toString()) }
-    var perKm by remember(config) { mutableStateOf(config.perKmRate.toString()) }
-    var perExtra by remember(config) { mutableStateOf(config.perExtraPassenger.toString()) }
-    val routes = remember(config) { mutableStateListOf<RouteFare>().apply { addAll(config.routes) } }
-
-    var newPickup by remember { mutableStateOf<String?>(null) }
-    var newDest by remember { mutableStateOf<String?>(null) }
-    var newFare by remember { mutableStateOf("") }
+    var query by remember { mutableStateOf("") }
+    var zoneFilter by remember { mutableStateOf<String?>(null) }
+    var flaggedOnly by remember { mutableStateOf(false) }
+    var editing by remember { mutableStateOf<FareStop?>(null) }
+    var addingNew by remember { mutableStateOf(false) }
+    var confirmImport by remember { mutableStateOf(false) }
+    var showGlobals by remember { mutableStateOf(false) }
 
     LaunchedEffect(saved) {
         if (saved) {
@@ -583,127 +649,490 @@ private fun FareConfigContent(
         }
     }
 
+    val zones = remember(stops) { stops.map { it.zone }.distinct().sorted() }
+    val flaggedCount = remember(stops) { stops.count { it.needsReview } }
+
+    val visible = remember(stops, query, zoneFilter, flaggedOnly) {
+        val q = query.trim().lowercase()
+        stops.asSequence()
+            .filter { zoneFilter == null || it.zone == zoneFilter }
+            .filter { !flaggedOnly || it.needsReview }
+            .filter {
+                q.isEmpty() || it.name.lowercase().contains(q) || it.zone.lowercase().contains(q)
+            }
+            .sortedWith(compareBy<FareStop>({ it.zone }, { it.name }))
+            .toList()
+    }
+
+    Column(modifier = Modifier.fillMaxSize()) {
+        Column(modifier = Modifier.padding(start = 20.dp, end = 20.dp, top = 16.dp)) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Column(modifier = Modifier.weight(1f)) {
+                    Text("Fares", style = MaterialTheme.typography.headlineSmall,
+                        fontWeight = FontWeight.Bold)
+                    Text(
+                        if (stops.isEmpty()) "No rate table loaded yet."
+                        else "${stops.size} stops across ${zones.size} zones",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+                IconButton(onClick = { addingNew = true }) {
+                    Icon(Icons.Filled.Add, contentDescription = "Add a stop")
+                }
+            }
+            Spacer(modifier = Modifier.height(12.dp))
+
+            OutlinedTextField(
+                value = query,
+                onValueChange = { query = it },
+                label = { Text("Search stops") },
+                leadingIcon = { Icon(Icons.Filled.Search, contentDescription = null) },
+                singleLine = true,
+                shape = RoundedCornerShape(14.dp),
+                modifier = Modifier.fillMaxWidth()
+            )
+            Spacer(modifier = Modifier.height(10.dp))
+
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .horizontalScroll(rememberScrollState()),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                FilterChip(
+                    selected = zoneFilter == null && !flaggedOnly,
+                    onClick = { zoneFilter = null; flaggedOnly = false },
+                    label = { Text("All") }
+                )
+                if (flaggedCount > 0) {
+                    FilterChip(
+                        selected = flaggedOnly,
+                        onClick = { flaggedOnly = !flaggedOnly },
+                        label = { Text("Needs review ($flaggedCount)") },
+                        leadingIcon = {
+                            Icon(Icons.Filled.WarningAmber, contentDescription = null,
+                                modifier = Modifier.size(16.dp))
+                        }
+                    )
+                }
+                zones.forEach { zone ->
+                    FilterChip(
+                        selected = zoneFilter == zone,
+                        onClick = { zoneFilter = if (zoneFilter == zone) null else zone },
+                        label = { Text(zone) }
+                    )
+                }
+            }
+            Spacer(modifier = Modifier.height(6.dp))
+
+            TextButton(onClick = { showGlobals = true }) {
+                Text("Minimums and flat rates")
+            }
+
+            if (saved) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(Icons.Filled.CheckCircle, contentDescription = null,
+                        tint = MaterialTheme.colorScheme.primary)
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text("Saved.", color = MaterialTheme.colorScheme.primary)
+                }
+            }
+        }
+
+        if (stops.isEmpty()) {
+            EmptyFareTable(importing = importing, onImport = { confirmImport = true })
+        } else {
+            LazyColumn(
+                modifier = Modifier.fillMaxSize(),
+                contentPadding = PaddingValues(start = 20.dp, end = 20.dp, top = 8.dp, bottom = 24.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                if (visible.isEmpty()) {
+                    item {
+                        Text(
+                            "Nothing matches that.",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                }
+                items(visible, key = { it.id }) { stop ->
+                    FareStopRow(stop = stop, onClick = { editing = stop })
+                }
+                item {
+                    Spacer(modifier = Modifier.height(8.dp))
+                    OutlinedButton(
+                        onClick = { confirmImport = true },
+                        enabled = !importing,
+                        shape = RoundedCornerShape(14.dp),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text(
+                            if (importing) "Loading the official table..."
+                            else "Reload the official FeTODAT table"
+                        )
+                    }
+                    Spacer(modifier = Modifier.height(6.dp))
+                    Text(
+                        config.source,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            }
+        }
+    }
+
+    editing?.let { stop ->
+        FareStopDialog(
+            stop = stop,
+            isNew = false,
+            onDismiss = { editing = null },
+            onSave = { updated -> onSaveStop(updated); editing = null },
+            onDelete = { onDeleteStop(stop.id); editing = null }
+        )
+    }
+
+    if (addingNew) {
+        FareStopDialog(
+            stop = FareStop(zone = zoneFilter ?: zones.firstOrNull().orEmpty()),
+            isNew = true,
+            onDismiss = { addingNew = false },
+            onSave = { created -> onSaveStop(created); addingNew = false },
+            onDelete = null
+        )
+    }
+
+    if (showGlobals) {
+        GlobalRatesDialog(
+            config = config,
+            onDismiss = { showGlobals = false },
+            onSave = { updated -> onSaveConfig(updated); showGlobals = false }
+        )
+    }
+
+    if (confirmImport) {
+        AlertDialog(
+            onDismissRequest = { confirmImport = false },
+            title = { Text("Load the official table?") },
+            text = {
+                Text(
+                    "This writes all ${FareSeed.STOPS.size} stops from the posted FeTODAT " +
+                        "sheet into the database. Any stop with the same name is overwritten, " +
+                        "so hand-made corrections to those rows are lost. Stops you added " +
+                        "yourself are left alone."
+                )
+            },
+            confirmButton = {
+                TextButton(onClick = { confirmImport = false; onImport() }) { Text("Load") }
+            },
+            dismissButton = {
+                TextButton(onClick = { confirmImport = false }) { Text("Cancel") }
+            }
+        )
+    }
+}
+
+@Composable
+private fun EmptyFareTable(importing: Boolean, onImport: () -> Unit) {
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .verticalScroll(rememberScrollState())
-            .padding(20.dp)
+            .padding(24.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
     ) {
-        Spacer(modifier = Modifier.height(8.dp))
-        Text("Fare Configuration", style = MaterialTheme.typography.headlineSmall,
-            fontWeight = FontWeight.Bold)
-        Text("Set the official pricing used for every ride.",
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant)
+        Icon(
+            Icons.Filled.Payments,
+            contentDescription = null,
+            modifier = Modifier.size(56.dp),
+            tint = MaterialTheme.colorScheme.primary
+        )
         Spacer(modifier = Modifier.height(16.dp))
+        Text("No fares loaded", style = MaterialTheme.typography.titleLarge,
+            fontWeight = FontWeight.Bold)
+        Spacer(modifier = Modifier.height(8.dp))
+        Text(
+            "Load the ${FareSeed.STOPS.size} stops transcribed from the posted FeTODAT " +
+                "sheet, then correct anything that reads wrong. Rides cannot be priced " +
+                "until this is done.",
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            textAlign = TextAlign.Center
+        )
+        Spacer(modifier = Modifier.height(20.dp))
+        PrimaryButton(
+            text = if (importing) "Loading..." else "Load official rates",
+            onClick = onImport,
+            enabled = !importing
+        )
+    }
+}
 
-        // Global rates
-        SectionCard {
-            Column {
-                Text("Default Rates", style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold)
-                Text("Used for routes without a fixed fare below.",
+@Composable
+private fun FareStopRow(stop: FareStop, onClick: () -> Unit) {
+    SectionCard(modifier = Modifier.clickable(onClick = onClick)) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Column(modifier = Modifier.weight(1f)) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(
+                        stop.name,
+                        style = MaterialTheme.typography.bodyLarge,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                    if (stop.needsReview) {
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Icon(
+                            Icons.Filled.WarningAmber,
+                            contentDescription = "Needs review",
+                            tint = WarningColor,
+                            modifier = Modifier.size(16.dp)
+                        )
+                    }
+                }
+                Text(
+                    if (stop.active) stop.zone else "${stop.zone} — inactive",
                     style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant)
-                Spacer(modifier = Modifier.height(12.dp))
-                MoneyField("Base fare (₱)", base) { base = it }
-                Spacer(modifier = Modifier.height(10.dp))
-                MoneyField("Per kilometre (₱)", perKm) { perKm = it }
-                Spacer(modifier = Modifier.height(10.dp))
-                MoneyField("Per extra passenger (₱)", perExtra) { perExtra = it }
+                    color = if (stop.active) MaterialTheme.colorScheme.onSurfaceVariant
+                    else ErrorColor
+                )
+            }
+            Column(horizontalAlignment = Alignment.End) {
+                Text(
+                    "₱%.2f".format(stop.regularFare),
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.primary
+                )
+                Text(
+                    "₱%.2f discounted".format(stop.discountedFare),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
             }
         }
-        Spacer(modifier = Modifier.height(12.dp))
+    }
+}
 
-        // Fixed route fares
-        SectionCard {
-            Column {
-                Text("Fixed Route Fares", style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold)
-                Text("An exact price for a specific pickup → destination.",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant)
-                Spacer(modifier = Modifier.height(12.dp))
+@Composable
+private fun FareStopDialog(
+    stop: FareStop,
+    isNew: Boolean,
+    onDismiss: () -> Unit,
+    onSave: (FareStop) -> Unit,
+    onDelete: (() -> Unit)?
+) {
+    var name by remember { mutableStateOf(stop.name) }
+    var zone by remember { mutableStateOf(stop.zone) }
+    var regular by remember { mutableStateOf(if (stop.regularFare == 0.0) "" else "%.2f".format(stop.regularFare)) }
+    var discounted by remember { mutableStateOf(if (stop.discountedFare == 0.0) "" else "%.2f".format(stop.discountedFare)) }
+    var active by remember { mutableStateOf(stop.active) }
+    var reviewed by remember { mutableStateOf(!stop.needsReview) }
 
-                if (routes.isEmpty()) {
-                    Text("No fixed route fares yet.", style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant)
-                } else {
-                    routes.forEachIndexed { index, route ->
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(vertical = 4.dp),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Column(modifier = Modifier.weight(1f)) {
-                                Text("${route.pickup} → ${route.destination}",
-                                    style = MaterialTheme.typography.bodyMedium)
-                                Text("₱%.2f".format(route.fare),
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = MaterialTheme.colorScheme.primary)
-                            }
-                            IconButton(onClick = { routes.removeAt(index) }) {
-                                Icon(Icons.Filled.Delete, contentDescription = "Remove",
-                                    tint = ErrorColor)
-                            }
+    val regularValue = regular.toDoubleOrNull()
+    val discountedValue = discounted.toDoubleOrNull()
+    val canSave = name.isNotBlank() && zone.isNotBlank() &&
+        regularValue != null && discountedValue != null
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(if (isNew) "Add a stop" else stop.name) },
+        text = {
+            Column(modifier = Modifier.verticalScroll(rememberScrollState())) {
+                if (stop.note.isNotBlank()) {
+                    SectionCard {
+                        Row(verticalAlignment = Alignment.Top) {
+                            Icon(
+                                Icons.Filled.WarningAmber,
+                                contentDescription = null,
+                                tint = WarningColor,
+                                modifier = Modifier.size(18.dp)
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text(stop.note, style = MaterialTheme.typography.bodySmall)
                         }
-                        HorizontalDivider()
                     }
+                    Spacer(modifier = Modifier.height(12.dp))
+                }
+
+                OutlinedTextField(
+                    value = name,
+                    onValueChange = { name = it },
+                    label = { Text("Stop name") },
+                    singleLine = true,
+                    shape = RoundedCornerShape(14.dp),
+                    modifier = Modifier.fillMaxWidth()
+                )
+                Spacer(modifier = Modifier.height(10.dp))
+                OutlinedTextField(
+                    value = zone,
+                    onValueChange = { zone = it },
+                    label = { Text("Zone") },
+                    singleLine = true,
+                    shape = RoundedCornerShape(14.dp),
+                    modifier = Modifier.fillMaxWidth()
+                )
+                Spacer(modifier = Modifier.height(10.dp))
+                MoneyField("Regular fare (₱)", regular) { regular = it }
+                Spacer(modifier = Modifier.height(10.dp))
+                MoneyField("Senior / PWD / Student (₱)", discounted) { discounted = it }
+
+                if (regularValue != null && discountedValue != null && discountedValue > regularValue) {
+                    Spacer(modifier = Modifier.height(6.dp))
+                    Text(
+                        "The discounted rate is higher than the regular one.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = WarningColor
+                    )
                 }
 
                 Spacer(modifier = Modifier.height(12.dp))
-                Text("Add a route fare", style = MaterialTheme.typography.titleSmall,
-                    fontWeight = FontWeight.Bold)
-                Spacer(modifier = Modifier.height(8.dp))
-                LocationDropdown("Pickup", newPickup) { newPickup = it }
-                Spacer(modifier = Modifier.height(8.dp))
-                LocationDropdown("Destination", newDest) { newDest = it }
-                Spacer(modifier = Modifier.height(8.dp))
-                MoneyField("Fare (₱)", newFare) { newFare = it }
-                Spacer(modifier = Modifier.height(10.dp))
-                OutlinedButton(
-                    onClick = {
-                        val p = newPickup
-                        val d = newDest
-                        val f = newFare.toDoubleOrNull()
-                        if (p != null && d != null && p != d && f != null) {
-                            routes.add(RouteFare(p, d, f))
-                            newPickup = null; newDest = null; newFare = ""
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text("Bookable", style = MaterialTheme.typography.bodyMedium)
+                        Text(
+                            "Passengers can pick this stop",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                    Switch(checked = active, onCheckedChange = { active = it })
+                }
+
+                if (stop.needsReview) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text("Checked against the sheet",
+                                style = MaterialTheme.typography.bodyMedium)
+                            Text(
+                                "Clears the review flag",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
                         }
-                    },
-                    shape = RoundedCornerShape(14.dp),
-                    modifier = Modifier.fillMaxWidth()
-                ) { Text("Add Route Fare") }
+                        Switch(checked = reviewed, onCheckedChange = { reviewed = it })
+                    }
+                }
+            }
+        },
+        confirmButton = {
+            TextButton(
+                enabled = canSave,
+                onClick = {
+                    val id = stop.id.ifBlank {
+                        (zone + "__" + name).lowercase()
+                            .replace(Regex("[^a-z0-9]+"), "_")
+                            .trim('_')
+                    }
+                    onSave(
+                        stop.copy(
+                            id = id,
+                            name = name.trim(),
+                            zone = zone.trim(),
+                            regularFare = regularValue ?: 0.0,
+                            discountedFare = discountedValue ?: 0.0,
+                            active = active,
+                            needsReview = stop.needsReview && !reviewed
+                        )
+                    )
+                }
+            ) { Text("Save") }
+        },
+        dismissButton = {
+            Row {
+                if (onDelete != null) {
+                    TextButton(onClick = onDelete) { Text("Delete", color = ErrorColor) }
+                }
+                TextButton(onClick = onDismiss) { Text("Cancel") }
             }
         }
-        Spacer(modifier = Modifier.height(16.dp))
+    )
+}
 
-        if (saved) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Icon(Icons.Filled.CheckCircle, contentDescription = null,
-                    tint = MaterialTheme.colorScheme.primary)
-                Spacer(modifier = Modifier.width(8.dp))
-                Text("Fares saved.", color = MaterialTheme.colorScheme.primary)
+/** Minimum fares and the two flat rates that are not tied to a stop. */
+@Composable
+private fun GlobalRatesDialog(
+    config: FareConfig,
+    onDismiss: () -> Unit,
+    onSave: (FareConfig) -> Unit
+) {
+    var minRegular by remember(config) { mutableStateOf("%.2f".format(config.minimumRegular)) }
+    var minDiscounted by remember(config) { mutableStateOf("%.2f".format(config.minimumDiscounted)) }
+    var poblacion by remember(config) { mutableStateOf("%.2f".format(config.poblacionFlat)) }
+    var terminal by remember(config) { mutableStateOf("%.2f".format(config.terminalRoundTrip)) }
+    var perHead by remember(config) { mutableStateOf(config.chargePerPassenger) }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Minimums and flat rates") },
+        text = {
+            Column(modifier = Modifier.verticalScroll(rememberScrollState())) {
+                Text(
+                    "A stop can never price below the minimum for its rate column.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                Spacer(modifier = Modifier.height(12.dp))
+                MoneyField("Minimum regular fare (₱)", minRegular) { minRegular = it }
+                Spacer(modifier = Modifier.height(10.dp))
+                MoneyField("Minimum senior / PWD / student (₱)", minDiscounted) { minDiscounted = it }
+                Spacer(modifier = Modifier.height(10.dp))
+                MoneyField("${FareConfig.POBLACION_LABEL} (₱)", poblacion) { poblacion = it }
+                Spacer(modifier = Modifier.height(10.dp))
+                MoneyField("${FareConfig.TERMINAL_ROUND_TRIP_LABEL} (₱)", terminal) { terminal = it }
+                Spacer(modifier = Modifier.height(12.dp))
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text("Charge per passenger", style = MaterialTheme.typography.bodyMedium)
+                        Text(
+                            "Off means one fare covers the whole tricycle",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                    Switch(checked = perHead, onCheckedChange = { perHead = it })
+                }
             }
-            Spacer(modifier = Modifier.height(12.dp))
-        }
-
-        PrimaryButton(
-            text = "Save Fares",
-            onClick = {
+        },
+        confirmButton = {
+            TextButton(onClick = {
                 onSave(
-                    FareConfig(
-                        baseFare = base.toDoubleOrNull() ?: config.baseFare,
-                        perKmRate = perKm.toDoubleOrNull() ?: config.perKmRate,
-                        perExtraPassenger = perExtra.toDoubleOrNull() ?: config.perExtraPassenger,
-                        routes = routes.toList()
+                    config.copy(
+                        minimumRegular = minRegular.toDoubleOrNull() ?: config.minimumRegular,
+                        minimumDiscounted = minDiscounted.toDoubleOrNull()
+                            ?: config.minimumDiscounted,
+                        poblacionFlat = poblacion.toDoubleOrNull() ?: config.poblacionFlat,
+                        terminalRoundTrip = terminal.toDoubleOrNull() ?: config.terminalRoundTrip,
+                        chargePerPassenger = perHead
                     )
                 )
-            }
-        )
-        Spacer(modifier = Modifier.height(16.dp))
-    }
+            }) { Text("Save") }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) { Text("Cancel") }
+        }
+    )
 }
 
 @Composable
@@ -713,36 +1142,8 @@ private fun MoneyField(label: String, value: String, onChange: (String) -> Unit)
         onValueChange = onChange,
         label = { Text(label) },
         singleLine = true,
-        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
         shape = RoundedCornerShape(14.dp),
         modifier = Modifier.fillMaxWidth()
     )
 }
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-private fun LocationDropdown(label: String, selected: String?, onSelected: (String) -> Unit) {
-    var expanded by remember { mutableStateOf(false) }
-    ExposedDropdownMenuBox(expanded = expanded, onExpandedChange = { expanded = it }) {
-        OutlinedTextField(
-            value = selected ?: "",
-            onValueChange = {},
-            readOnly = true,
-            label = { Text(label) },
-            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
-            shape = RoundedCornerShape(14.dp),
-            modifier = Modifier
-                .fillMaxWidth()
-                .menuAnchor()
-        )
-        ExposedDropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
-            Constants.CAMPUS_LOCATIONS.forEach { location ->
-                DropdownMenuItem(
-                    text = { Text(location.address) },
-                    onClick = { onSelected(location.address); expanded = false }
-                )
-            }
-        }
-    }
-}
-

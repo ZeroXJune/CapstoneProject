@@ -1,13 +1,12 @@
 package com.tpc.trikride.repositories
 
+import com.tpc.trikride.models.FareType
 import com.tpc.trikride.models.Location
 import com.tpc.trikride.models.Ride
 import com.tpc.trikride.models.RideRequest
 import com.tpc.trikride.models.RideStatus
 import com.tpc.trikride.services.FirebaseService
 import com.tpc.trikride.utils.Constants
-import com.tpc.trikride.utils.FareCalculator
-import com.tpc.trikride.utils.LocationUtils
 import kotlinx.coroutines.flow.Flow
 import java.util.UUID
 
@@ -31,6 +30,8 @@ class RideRepository(
         passengerCount: Int = 1,
         luggage: String = "None",
         estimatedFare: Double = 0.0,
+        fareStopId: String = "",
+        fareType: FareType = FareType.REGULAR,
         notes: String = ""
     ): RideRequest {
         val now = System.currentTimeMillis()
@@ -44,6 +45,8 @@ class RideRepository(
             passengerCount = passengerCount,
             luggage = luggage,
             estimatedFare = estimatedFare,
+            fareStopId = fareStopId,
+            fareType = fareType,
             notes = notes
         )
         firebase.createRideRequest(request)
@@ -75,7 +78,9 @@ class RideRepository(
      * so other drivers no longer see it.
      */
     suspend fun acceptRequest(driverId: String, request: RideRequest): Ride {
-        val distanceKm = LocationUtils.distanceKm(request.pickupLocation, request.dropoffLocation)
+        // Destinations come from the posted fare table, which carries no
+        // coordinates, so the ride keeps the price the passenger already agreed
+        // to rather than recomputing anything from a distance.
         val ride = Ride(
             id = UUID.randomUUID().toString(),
             passengerId = request.passengerId,
@@ -85,13 +90,11 @@ class RideRepository(
             status = RideStatus.ACCEPTED,
             requestedAt = request.requestedAt,
             acceptedAt = System.currentTimeMillis().toString(),
-            estimatedDuration = FareCalculator.estimateDurationMinutes(distanceKm),
-            // Use the config-priced fare the passenger already saw; fall back
-            // to the distance formula only if none was supplied.
-            estimatedFare = if (request.estimatedFare > 0.0) request.estimatedFare
-            else FareCalculator.estimateFare(distanceKm, request.passengerCount),
+            estimatedFare = request.estimatedFare,
             passengerCount = request.passengerCount,
             luggage = request.luggage,
+            fareStopId = request.fareStopId,
+            fareType = request.fareType,
             notes = request.notes
         )
         firebase.createRide(ride)

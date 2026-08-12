@@ -20,6 +20,9 @@ data class Ride(
     val route: List<Location> = emptyList(),
     val passengerCount: Int = 1,
     val luggage: String = "None",
+    // Which row of the posted fare table priced this ride, and which column.
+    val fareStopId: String = "",
+    val fareType: FareType = FareType.REGULAR,
     val notes: String = ""
 )
 
@@ -60,6 +63,8 @@ data class RideRequest(
     val passengerCount: Int = 1,
     val luggage: String = "None",
     val estimatedFare: Double = 0.0,
+    val fareStopId: String = "",
+    val fareType: FareType = FareType.REGULAR,
     val notes: String = "",
     val preferredDriverId: String? = null
 )

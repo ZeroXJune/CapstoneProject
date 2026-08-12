@@ -2,7 +2,10 @@ package com.tpc.trikride.ui.screens
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -22,6 +25,7 @@ import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Phone
 import androidx.compose.material.icons.filled.Remove
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.SupportAgent
 import androidx.compose.material3.*
@@ -36,10 +40,14 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.tpc.trikride.BuildConfig
 import com.tpc.trikride.models.COMPLAINT_CATEGORIES
 import com.tpc.trikride.models.FareConfig
+import com.tpc.trikride.models.FareStop
+import com.tpc.trikride.models.FareType
 import com.tpc.trikride.models.Location
 import com.tpc.trikride.models.Ride
 import com.tpc.trikride.models.RideStatus
@@ -54,7 +62,6 @@ import com.tpc.trikride.ui.theme.ForestGreen
 import com.tpc.trikride.ui.theme.RatingColor
 import com.tpc.trikride.utils.Constants
 import com.tpc.trikride.utils.FareEngine
-import com.tpc.trikride.utils.LocationUtils
 import com.tpc.trikride.viewmodels.PassengerViewModel
 import com.tpc.trikride.viewmodels.SupportViewModel
 
@@ -76,6 +83,7 @@ fun PassengerHomeScreen(
     val pendingRequest by viewModel.pendingRequest.collectAsState()
     val error by viewModel.errorMessage.collectAsState()
     val fareConfig by viewModel.fareConfig.collectAsState()
+    val fareStops by viewModel.fareStops.collectAsState()
 
     val notifications by supportViewModel.notifications.collectAsState()
     val unreadCount = notifications.count { !it.read }
@@ -122,9 +130,10 @@ fun PassengerHomeScreen(
                         showBooking -> BookingContent(
                             error = error,
                             fareConfig = fareConfig,
+                            fareStops = fareStops,
                             onDismissError = viewModel::dismissError,
-                            onConfirm = { p, d, count, luggage, notes ->
-                                viewModel.requestRide(p, d, count, luggage, notes)
+                            onConfirm = { p, stop, fareType, count, luggage, notes ->
+                                viewModel.requestRide(p, stop, fareType, count, luggage, notes)
                                 showBooking = false
                             },
                             onBack = { showBooking = false }
@@ -356,15 +365,24 @@ private val LUGGAGE_OPTIONS = listOf(
 private fun BookingContent(
     error: String?,
     fareConfig: FareConfig,
+    fareStops: List<FareStop>,
     onDismissError: () -> Unit,
-    onConfirm: (Location, Location, Int, String, String) -> Unit,
+    onConfirm: (Location, FareStop, FareType, Int, String, String) -> Unit,
     onBack: () -> Unit
 ) {
     var pickup by remember { mutableStateOf<Location?>(null) }
-    var dropoff by remember { mutableStateOf<Location?>(null) }
+    var destination by remember { mutableStateOf<FareStop?>(null) }
+    var fareType by remember { mutableStateOf(FareType.REGULAR) }
     var passengerCount by remember { mutableStateOf(1) }
     val selectedLuggage = remember { mutableStateListOf<String>() }
     var notes by remember { mutableStateOf("") }
+    var pickingDestination by remember { mutableStateOf(false) }
+
+    // The sheet carries two rates that are not tied to a numbered stop, so they
+    // are offered alongside the rest rather than being admin-only trivia.
+    val bookable = remember(fareStops, fareConfig) {
+        FareEngine.flatStops(fareConfig) + fareStops.filter { it.active }
+    }
 
     Column(
         modifier = Modifier
@@ -397,18 +415,90 @@ private fun BookingContent(
             Spacer(modifier = Modifier.height(12.dp))
         }
 
+        if (bookable.isEmpty()) {
+            SectionCard {
+                Column {
+                    Text(
+                        "Destinations are not available yet",
+                        style = MaterialTheme.typography.titleSmall,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Text(
+                        "The fare table has not been loaded. Ask the administrator to " +
+                            "publish the official FeTODAT rates.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            }
+            Spacer(modifier = Modifier.height(16.dp))
+        }
+
         LocationField("Pickup Location", Icons.Filled.MyLocation, pickup) { pickup = it }
         Spacer(modifier = Modifier.height(12.dp))
-        LocationField("Destination", Icons.Filled.LocationOn, dropoff) { dropoff = it }
+
+        // 240 stops is too many for a dropdown, so this opens a searchable list.
+        OutlinedTextField(
+            value = destination?.label ?: "",
+            onValueChange = {},
+            readOnly = true,
+            enabled = false,
+            label = { Text("Destination") },
+            placeholder = { Text("Choose a stop") },
+            leadingIcon = { Icon(Icons.Filled.LocationOn, contentDescription = null) },
+            trailingIcon = { Icon(Icons.Filled.Search, contentDescription = null) },
+            shape = RoundedCornerShape(14.dp),
+            colors = OutlinedTextFieldDefaults.colors(
+                disabledTextColor = MaterialTheme.colorScheme.onSurface,
+                disabledBorderColor = MaterialTheme.colorScheme.outline,
+                disabledLabelColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                disabledLeadingIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                disabledTrailingIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                disabledPlaceholderColor = MaterialTheme.colorScheme.onSurfaceVariant
+            ),
+            modifier = Modifier
+                .fillMaxWidth()
+                .clickable(enabled = bookable.isNotEmpty()) { pickingDestination = true }
+        )
         Spacer(modifier = Modifier.height(16.dp))
+
+        // Rate column. The driver checks the ID at pickup, the app only records it.
+        SectionCard {
+            Column {
+                Text("Fare Type", style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.Bold)
+                Text(
+                    "Senior citizens, persons with disabilities and students pay the " +
+                        "discounted rate. Bring your ID — the driver will ask for it.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    FareType.entries.forEach { type ->
+                        FilterChip(
+                            selected = fareType == type,
+                            onClick = { fareType = type },
+                            label = { Text(if (type == FareType.REGULAR) "Regular" else "Senior / PWD / Student") }
+                        )
+                    }
+                }
+            }
+        }
+        Spacer(modifier = Modifier.height(12.dp))
 
         // Passenger count
         SectionCard {
             Column {
                 Text("Number of Passengers", style = MaterialTheme.typography.titleSmall,
                     fontWeight = FontWeight.Bold)
-                Text("Max 3 per tricycle", style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text(
+                    if (fareConfig.chargePerPassenger) "Max 3 per tricycle, fare is per head"
+                    else "Max 3 per tricycle",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
                 Spacer(modifier = Modifier.height(8.dp))
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     FilledTonalIconButton(
@@ -465,40 +555,50 @@ private fun BookingContent(
         Spacer(modifier = Modifier.height(16.dp))
 
         val from = pickup
-        val to = dropoff
-        val valid = from != null && to != null && from.address != to.address
-        if (valid && from != null && to != null) {
-            val distanceKm = LocationUtils.distanceKm(from, to)
-            val routeFare = FareEngine.routeFare(fareConfig, from.address, to.address)
-            val baseTotal = FareEngine.baseTotal(fareConfig, from.address, to.address, distanceKm)
-            val extraFare = FareEngine.extraPassengerFare(fareConfig, passengerCount)
-            val total = FareEngine.total(fareConfig, from.address, to.address, distanceKm, passengerCount)
+        val to = destination
+        val valid = from != null && to != null
+
+        if (from != null && to != null) {
+            val quote = FareEngine.quote(fareConfig, to, fareType, passengerCount)
             SectionCard {
                 Column {
-                    Text("Fare Estimate", style = MaterialTheme.typography.titleSmall,
+                    Text("Fare", style = MaterialTheme.typography.titleSmall,
                         fontWeight = FontWeight.Bold)
+                    Text(
+                        if (fareType == FareType.REGULAR) "Regular rate"
+                        else "Senior / PWD / student rate",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
                     Spacer(modifier = Modifier.height(8.dp))
-                    if (routeFare != null) {
-                        FareLine("Fixed route fare", "₱%.2f".format(routeFare))
-                    } else {
-                        FareLine("Base fare", "₱%.2f".format(fareConfig.baseFare))
+                    FareLine(to.name, "₱%.2f".format(quote.perPassenger))
+                    if (quote.minimumApplied) {
                         FareLine(
-                            "Distance (%.1f km)".format(distanceKm),
-                            "₱%.2f".format(baseTotal - fareConfig.baseFare)
+                            "Minimum fare applied",
+                            "₱%.2f".format(FareEngine.minimumFor(fareConfig, fareType))
                         )
                     }
-                    if (extraFare > 0) {
-                        FareLine("Extra passengers (+${passengerCount - 1})", "₱%.2f".format(extraFare))
+                    if (quote.passengers > 1 && fareConfig.chargePerPassenger) {
+                        FareLine(
+                            "${quote.passengers} passengers",
+                            "× ${quote.passengers}"
+                        )
                     }
                     HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
-                        Text("Total Estimate", fontWeight = FontWeight.Bold)
-                        Text("₱%.2f".format(total), style = MaterialTheme.typography.titleLarge,
+                        Text("Total", fontWeight = FontWeight.Bold)
+                        Text("₱%.2f".format(quote.total), style = MaterialTheme.typography.titleLarge,
                             fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
                     }
+                    Spacer(modifier = Modifier.height(6.dp))
+                    Text(
+                        "Cash on arrival. Rates are the ones posted by FeTODAT.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
                 }
             }
             Spacer(modifier = Modifier.height(16.dp))
@@ -509,12 +609,152 @@ private fun BookingContent(
             onClick = {
                 if (from != null && to != null) {
                     val luggage = if (selectedLuggage.isEmpty()) "None" else selectedLuggage.joinToString(", ")
-                    onConfirm(from, to, passengerCount, luggage, notes)
+                    onConfirm(from, to, fareType, passengerCount, luggage, notes)
                 }
             },
             enabled = valid
         )
         Spacer(modifier = Modifier.height(16.dp))
+    }
+
+    if (pickingDestination) {
+        DestinationPicker(
+            stops = bookable,
+            fareType = fareType,
+            onDismiss = { pickingDestination = false },
+            onPick = { destination = it; pickingDestination = false }
+        )
+    }
+}
+
+/**
+ * Full-screen searchable list of the posted stops.
+ *
+ * A dropdown does not work at this size, and neither does asking someone to
+ * remember which zone their destination sits in, so the search matches both
+ * the stop name and the zone, and the price for the selected rate column is
+ * shown on every row.
+ */
+@Composable
+private fun DestinationPicker(
+    stops: List<FareStop>,
+    fareType: FareType,
+    onDismiss: () -> Unit,
+    onPick: (FareStop) -> Unit
+) {
+    var query by remember { mutableStateOf("") }
+    var zone by remember { mutableStateOf<String?>(null) }
+    val zones = remember(stops) { stops.map { it.zone }.distinct().sorted() }
+
+    val results = remember(stops, query, zone) {
+        val q = query.trim().lowercase()
+        stops.asSequence()
+            .filter { zone == null || it.zone == zone }
+            .filter { q.isEmpty() || it.name.lowercase().contains(q) || it.zone.lowercase().contains(q) }
+            .sortedWith(compareBy<FareStop>({ it.zone }, { it.name }))
+            .toList()
+    }
+
+    Dialog(
+        onDismissRequest = onDismiss,
+        properties = DialogProperties(usePlatformDefaultWidth = false)
+    ) {
+        Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
+            Column(modifier = Modifier.fillMaxSize()) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(start = 4.dp, end = 16.dp, top = 8.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    IconButton(onClick = onDismiss) {
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Close")
+                    }
+                    Text(
+                        "Where to?",
+                        style = MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+
+                OutlinedTextField(
+                    value = query,
+                    onValueChange = { query = it },
+                    label = { Text("Search stop or zone") },
+                    leadingIcon = { Icon(Icons.Filled.Search, contentDescription = null) },
+                    singleLine = true,
+                    shape = RoundedCornerShape(14.dp),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 20.dp)
+                )
+                Spacer(modifier = Modifier.height(10.dp))
+
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .horizontalScroll(rememberScrollState())
+                        .padding(horizontal = 20.dp),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    FilterChip(
+                        selected = zone == null,
+                        onClick = { zone = null },
+                        label = { Text("All zones") }
+                    )
+                    zones.forEach { z ->
+                        FilterChip(
+                            selected = zone == z,
+                            onClick = { zone = if (zone == z) null else z },
+                            label = { Text(z) }
+                        )
+                    }
+                }
+                Spacer(modifier = Modifier.height(8.dp))
+
+                if (results.isEmpty()) {
+                    Text(
+                        "No stop matches that.",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.padding(20.dp)
+                    )
+                } else {
+                    LazyColumn(
+                        contentPadding = PaddingValues(
+                            start = 20.dp, end = 20.dp, top = 4.dp, bottom = 24.dp
+                        ),
+                        verticalArrangement = Arrangement.spacedBy(6.dp)
+                    ) {
+                        items(results, key = { it.id }) { stop ->
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clickable { onPick(stop) }
+                                    .padding(vertical = 12.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Column(modifier = Modifier.weight(1f)) {
+                                    Text(stop.name, style = MaterialTheme.typography.bodyLarge)
+                                    Text(
+                                        stop.zone,
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                }
+                                Text(
+                                    "₱%.2f".format(FareEngine.rateFor(stop, fareType)),
+                                    style = MaterialTheme.typography.titleMedium,
+                                    fontWeight = FontWeight.Bold,
+                                    color = MaterialTheme.colorScheme.primary
+                                )
+                            }
+                            HorizontalDivider()
+                        }
+                    }
+                }
+            }
+        }
     }
 }
 

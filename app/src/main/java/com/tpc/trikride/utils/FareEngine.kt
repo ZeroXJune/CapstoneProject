@@ -1,39 +1,75 @@
 package com.tpc.trikride.utils
 
 import com.tpc.trikride.models.FareConfig
-import kotlin.math.ceil
+import com.tpc.trikride.models.FareQuote
+import com.tpc.trikride.models.FareStop
+import com.tpc.trikride.models.FareType
 
 /**
- * Prices a ride from the admin-configured [FareConfig].
+ * Prices a ride against the posted FeTODAT fare table.
  *
- *  - If a fixed route fare exists for the pickup→destination pair, that
- *    official price is used.
- *  - Otherwise it falls back to base fare + per-km distance surcharge.
- *  - Extra passengers add the configured surcharge on top.
+ * The sheet gives a flat amount per stop, one column for the regular rate and
+ * one for the senior, PWD and student rate, so pricing is a lookup rather than
+ * a calculation. Two things sit on top of the lookup: the ordinance minimum
+ * fare, which a stop rate can never fall below, and the per-head multiplier,
+ * since a tricycle fare is charged per passenger.
  */
 object FareEngine {
 
-    private const val BASE_DISTANCE_KM = 2.0
-
-    fun routeFare(config: FareConfig, pickup: String, destination: String): Double? =
-        config.routes.firstOrNull { it.pickup == pickup && it.destination == destination }?.fare
-
-    /** Fare before the extra-passenger surcharge. */
-    fun baseTotal(config: FareConfig, pickup: String, destination: String, distanceKm: Double): Double {
-        routeFare(config, pickup, destination)?.let { return it }
-        val extraKm = ceil((distanceKm - BASE_DISTANCE_KM).coerceAtLeast(0.0))
-        return config.baseFare + extraKm * config.perKmRate
+    fun minimumFor(config: FareConfig, fareType: FareType): Double = when (fareType) {
+        FareType.REGULAR -> config.minimumRegular
+        FareType.DISCOUNTED -> config.minimumDiscounted
     }
 
-    fun extraPassengerFare(config: FareConfig, passengerCount: Int): Double =
-        (passengerCount - 1).coerceAtLeast(0) * config.perExtraPassenger
+    fun rateFor(stop: FareStop, fareType: FareType): Double = when (fareType) {
+        FareType.REGULAR -> stop.regularFare
+        FareType.DISCOUNTED -> stop.discountedFare
+    }
 
-    fun total(
+    fun quote(
         config: FareConfig,
-        pickup: String,
-        destination: String,
-        distanceKm: Double,
+        stop: FareStop,
+        fareType: FareType,
         passengerCount: Int
-    ): Double = baseTotal(config, pickup, destination, distanceKm) +
-        extraPassengerFare(config, passengerCount)
+    ): FareQuote {
+        val minimum = minimumFor(config, fareType)
+        val posted = rateFor(stop, fareType)
+        val perPassenger = maxOf(posted, minimum)
+        val heads = if (config.chargePerPassenger) passengerCount.coerceAtLeast(1) else 1
+        return FareQuote(
+            perPassenger = perPassenger,
+            passengers = passengerCount.coerceAtLeast(1),
+            total = perPassenger * heads,
+            fareType = fareType,
+            minimumApplied = posted < minimum,
+            stopLabel = stop.label
+        )
+    }
+
+    /**
+     * The two rates on the sheet that are not tied to a numbered stop, shaped
+     * as stops so the picker and the pricing path treat them like any other
+     * destination. Neither is split by rate column on the posted sheet, so both
+     * columns carry the same amount.
+     */
+    fun flatStops(config: FareConfig): List<FareStop> = listOf(
+        FareStop(
+            id = FLAT_POBLACION,
+            zone = FLAT_ZONE,
+            name = FareConfig.POBLACION_LABEL,
+            regularFare = config.poblacionFlat,
+            discountedFare = config.poblacionFlat
+        ),
+        FareStop(
+            id = FLAT_TERMINAL,
+            zone = FLAT_ZONE,
+            name = FareConfig.TERMINAL_ROUND_TRIP_LABEL,
+            regularFare = config.terminalRoundTrip,
+            discountedFare = config.terminalRoundTrip
+        )
+    )
+
+    const val FLAT_ZONE = "Flat rate"
+    private const val FLAT_POBLACION = "flat__poblacion"
+    private const val FLAT_TERMINAL = "flat__terminal_ncbi_round_trip"
 }

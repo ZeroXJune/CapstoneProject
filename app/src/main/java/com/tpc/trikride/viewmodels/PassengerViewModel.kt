@@ -3,13 +3,14 @@ package com.tpc.trikride.viewmodels
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.tpc.trikride.models.FareConfig
+import com.tpc.trikride.models.FareStop
+import com.tpc.trikride.models.FareType
 import com.tpc.trikride.models.Location
 import com.tpc.trikride.models.Ride
 import com.tpc.trikride.models.RideRequest
 import com.tpc.trikride.repositories.FareRepository
 import com.tpc.trikride.repositories.RideRepository
 import com.tpc.trikride.utils.FareEngine
-import com.tpc.trikride.utils.LocationUtils
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -39,6 +40,11 @@ class PassengerViewModel(
     val fareConfig: StateFlow<FareConfig> = fareRepository.fareConfig()
         .catch { _errorMessage.value = it.message }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), FareConfig())
+
+    /** Bookable destinations from the posted fare table. */
+    val fareStops: StateFlow<List<FareStop>> = fareRepository.fareStops()
+        .catch { _errorMessage.value = it.message }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
 
     /** Rides that have been accepted and are in progress for this passenger. */
     val activeRides: StateFlow<List<Ride>> = passengerId
@@ -73,20 +79,27 @@ class PassengerViewModel(
 
     fun requestRide(
         pickup: Location,
-        dropoff: Location,
+        destination: FareStop,
+        fareType: FareType,
         passengerCount: Int = 1,
         luggage: String = "None",
         notes: String = ""
     ) {
         val id = passengerId.value ?: return
-        val distanceKm = LocationUtils.distanceKm(pickup, dropoff)
-        val fare = FareEngine.total(
-            fareConfig.value, pickup.address, dropoff.address, distanceKm, passengerCount
-        )
+        val quote = FareEngine.quote(fareConfig.value, destination, fareType, passengerCount)
+        val dropoff = Location(address = destination.label)
         viewModelScope.launch {
             try {
                 _pendingRequest.value = rideRepository.requestRide(
-                    id, pickup, dropoff, passengerCount, luggage, fare, notes
+                    passengerId = id,
+                    pickup = pickup,
+                    dropoff = dropoff,
+                    passengerCount = passengerCount,
+                    luggage = luggage,
+                    estimatedFare = quote.total,
+                    fareStopId = destination.id,
+                    fareType = fareType,
+                    notes = notes
                 )
                 _errorMessage.value = null
             } catch (e: Exception) {

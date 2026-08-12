@@ -2,4 +2,6 @@
 <paths>
     <!-- Where camera captures are written before upload. -->
     <cache-path name="camera_images" path="images/" />
+    <!-- Exported admin reports, handed to whichever app the admin shares to. -->
+    <cache-path name="reports" path="reports/" />
 </paths>

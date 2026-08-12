@@ -457,6 +457,42 @@ class FirebaseService {
         database.getReference("config").child("fare").setValue(config).await()
     }
 
+    // Fare Stops (the posted per-destination rate table)
+    fun getFareStopsFlow(): Flow<List<FareStop>> = callbackFlow {
+        val listener = object : ValueEventListener {
+            override fun onDataChange(snapshot: DataSnapshot) {
+                val stops = snapshot.children.mapNotNull { it.getValue(FareStop::class.java) }
+                trySend(stops)
+            }
+
+            override fun onCancelled(error: DatabaseError) {
+                close(error.toException())
+            }
+        }
+
+        val ref = database.getReference("config").child("fareStops")
+        ref.addValueEventListener(listener)
+
+        awaitClose { ref.removeEventListener(listener) }
+    }
+
+    suspend fun saveFareStop(stop: FareStop) {
+        database.getReference("config").child("fareStops").child(stop.id).setValue(stop).await()
+    }
+
+    suspend fun deleteFareStop(stopId: String) {
+        database.getReference("config").child("fareStops").child(stopId).removeValue().await()
+    }
+
+    /**
+     * Writes the whole rate table in one request. Existing stops with the same
+     * id are overwritten; ones the admin added by hand are left alone.
+     */
+    suspend fun importFareStops(stops: List<FareStop>) {
+        val updates = stops.associate { it.id to it as Any? }
+        database.getReference("config").child("fareStops").updateChildren(updates).await()
+    }
+
     // Document Upload
     suspend fun uploadDocument(driverId: String, document: Document) {
         database.getReference("drivers").child(driverId).child("documents").push()

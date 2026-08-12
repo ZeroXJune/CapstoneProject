@@ -28,6 +28,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.tpc.trikride.models.Driver
+import com.tpc.trikride.models.FareType
 import com.tpc.trikride.models.Ride
 import com.tpc.trikride.models.RideRequest
 import com.tpc.trikride.models.RideStatus
@@ -39,7 +40,6 @@ import com.tpc.trikride.ui.components.SkeletonCard
 import com.tpc.trikride.ui.components.TrikTextField
 import com.tpc.trikride.ui.theme.ErrorColor
 import com.tpc.trikride.ui.theme.RatingColor
-import com.tpc.trikride.utils.LocationUtils
 import kotlinx.coroutines.delay
 import androidx.compose.material.icons.filled.Badge
 import androidx.compose.material.icons.filled.CreditCard
@@ -440,7 +440,6 @@ private fun RequestCard(
     onAccept: () -> Unit,
     onDecline: () -> Unit
 ) {
-    val distanceKm = LocationUtils.distanceKm(request.pickupLocation, request.dropoffLocation)
     val fare = request.estimatedFare
 
     SectionCard {
@@ -475,9 +474,12 @@ private fun RequestCard(
                         fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
                 }
                 Column(horizontalAlignment = Alignment.End) {
-                    Text("Distance", style = MaterialTheme.typography.bodySmall,
+                    Text("Rate", style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    Text("%.1f km".format(distanceKm), style = MaterialTheme.typography.titleMedium)
+                    Text(
+                        if (request.fareType == FareType.REGULAR) "Regular" else "Senior / PWD / Student",
+                        style = MaterialTheme.typography.titleMedium
+                    )
                 }
             }
             Spacer(modifier = Modifier.height(8.dp))
@@ -548,9 +550,15 @@ private fun ActiveRideContent(ride: Ride, onAdvance: () -> Unit) {
                 Column {
                     Text("Passenger", style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold)
-                    Text("Fare ₱%.2f  •  %d min".format(ride.estimatedFare, ride.estimatedDuration),
+                    Text(
+                        "Fare ₱%.2f  •  %s".format(
+                            ride.estimatedFare,
+                            if (ride.fareType == FareType.REGULAR) "regular rate"
+                            else "senior / PWD / student rate"
+                        ),
                         style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
                 }
             }
         }
