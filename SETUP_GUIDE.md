@@ -3,12 +3,14 @@
 ## Prerequisites
 
 Before you begin, ensure you have:
-- Android Studio 2023.1.1 or later
-- Android SDK 24 or higher
-- Kotlin 1.9.0 or later
-- Java Development Kit (JDK) 17
-- Firebase Account
-- Google Cloud Project
+- Android Studio Ladybug (2024.2.1) or later
+- Android SDK platform 35 installed, with a minimum device API of 24
+- JDK 17 — use the JDK bundled with Android Studio rather than a system install
+- A Firebase account
+- A Google Cloud project, only if you are enabling Maps
+
+Kotlin 2.1.0, Android Gradle Plugin 8.7.3, and Gradle 8.11.1 come from the project itself.
+The Gradle wrapper is committed, so do not point Android Studio at its own Gradle.
 
 ## Step 1: Clone the Repository
 
@@ -57,6 +59,9 @@ In Firebase Console, enable:
 
 ## Step 4: Configure Firebase Security Rules
 
+These rules are what actually enforce access. The app talks to Firebase directly with no
+server in between, so anything the rules allow is allowed, whatever the interface shows.
+
 ### Realtime Database Rules
 
 ```json
@@ -64,43 +69,79 @@ In Firebase Console, enable:
   "rules": {
     "users": {
       "$uid": {
-        ".read": "$uid === auth.uid",
-        ".write": "$uid === auth.uid"
+        ".read": "auth != null && ($uid === auth.uid || root.child('users').child(auth.uid).child('userType').val() === 'ADMIN')",
+        ".write": "auth != null && $uid === auth.uid"
       }
     },
     "drivers": {
       "$uid": {
-        ".read": true,
-        ".write": "$uid === auth.uid"
+        ".read": "auth != null",
+        ".write": "auth != null && $uid === auth.uid",
+        "verificationStatus": {
+          ".write": "auth != null && root.child('users').child(auth.uid).child('userType').val() === 'ADMIN'"
+        }
       }
     },
     "rideRequests": {
+      ".read": "auth != null",
       "$requestId": {
-        ".read": true,
-        ".write": "root.child('users').child(auth.uid).exists()"
+        ".write": "auth != null"
       }
     },
     "rides": {
+      ".read": "auth != null",
       "$rideId": {
-        ".read": "root.child('rides').child($rideId).child('passengerId').val() === auth.uid || root.child('rides').child($rideId).child('driverId').val() === auth.uid",
-        ".write": "root.child('users').child(auth.uid).exists()"
+        ".write": "auth != null"
+      }
+    },
+    "config": {
+      ".read": "auth != null",
+      ".write": "auth != null && root.child('users').child(auth.uid).child('userType').val() === 'ADMIN'"
+    },
+    "complaints": {
+      ".read": "auth != null",
+      "$id": {
+        ".write": "auth != null"
+      }
+    },
+    "notifications": {
+      "$uid": {
+        ".read": "auth != null && $uid === auth.uid",
+        ".write": "auth != null"
       }
     }
   }
 }
 ```
 
+Two notes on these. `drivers/$uid/verificationStatus` carries its own write rule so a
+driver can edit their own record without being able to approve themselves. `config`
+covers both `config/fare` and `config/fareStops`, which every signed-in user reads to
+price a ride but only an administrator can change.
+
+While you are still testing, you may want the looser test-mode rules Firebase offers.
+Do not leave them on once real accounts exist.
+
 ## Step 5: Google Maps API Setup
 
 1. Go to [Google Cloud Console](https://console.cloud.google.com/)
 2. Enable Maps SDK for Android
 3. Create API key with Android restrictions
-4. Add the key to `local.properties` in the project root (this file is gitignored,
-   so the key never reaches version control):
+4. Add the key to `.env` in the project root. Copy `.env.example` first:
+   ```bash
+   cp .env.example .env
+   ```
    ```properties
    MAPS_API_KEY=AIza...your_key_here
+   SUPPORT_HOTLINE=+63...
+   SUPPORT_EMAIL=support@example.com
    ```
-   The build injects it into the manifest automatically via a placeholder.
+   Both `.env` and `local.properties` are gitignored, and the build reads `.env` first
+   and falls back to `local.properties`. The key is injected into the manifest through
+   a placeholder, so it never appears in a committed file.
+
+   Maps are not used in the current build — map panels are placeholders — so you can
+   leave `MAPS_API_KEY` blank until you are ready for them.
 
 ## Step 6: Build and Run
 
@@ -112,7 +153,26 @@ In Firebase Console, enable:
 ./gradlew installDebug
 ```
 
-## Step 7: Configure Local Properties (Optional)
+## Step 7: Create the administrator account and load the fares
+
+The app has no bootstrap administrator. Create one by hand the first time.
+
+1. Register an account in the app as normal.
+2. Open the Firebase console, go to Realtime Database, find `users/{uid}` for that
+   account, and change `userType` from `PASSENGER` to `ADMIN`.
+3. Sign out and back in. You will land on the admin dashboard.
+
+Then load the fare table, without which nothing can be booked:
+
+4. Go to the **Fares** tab. It will say no rate table is loaded.
+5. Tap **Load official rates**. This writes all 240 stops from the transcribed FeTODAT
+   schedule into `config/fareStops` in one request.
+6. Tap the **Needs review** chip. Forty-six entries are flagged as uncertain from the
+   transcription and three are switched off because no usable rate could be read. Check
+   them against the physical posted sheet before anyone uses the app for real. Each one
+   opens with the specific problem written at the top of the dialog.
+
+## Step 8: Configure Local Properties (Optional)
 
 Create `local.properties` file in root directory:
 
@@ -121,149 +181,150 @@ sdk.dir=/path/to/android/sdk
 ndk.dir=/path/to/android/ndk
 ```
 
-## Environment Configuration
-
-### Development Environment
-
-Update `build.gradle.kts` for development:
-
-```kotlin
-buildTypes {
-    debug {
-        debuggable = true
-        minifyEnabled = false
-    }
-}
-```
-
-### Production Environment
-
-```kotlin
-buildTypes {
-    release {
-        debuggable = false
-        minifyEnabled = true
-        proguardFiles(
-            getDefaultProguardFile("proguard-android-optimize.txt"),
-            "proguard-rules.pro"
-        )
-    }
-}
-```
-
 ## Troubleshooting
 
-### Gradle Sync Issues
+Problems we actually hit, and what fixed them.
+
+### Gradle sync fails with "Unable to find method DependencyHandler.module"
+
+Android Studio is using its own Gradle instead of the project's. The wrapper is committed
+for exactly this reason. In Settings → Build Tools → Gradle, set **Use Gradle from:
+gradle-wrapper.properties**, and set the Gradle JDK to the embedded JDK 17.
+
+### Build fails at processDebugGoogleServices
+
+The package name registered in the Firebase console does not match the app. It must be
+`com.tpc.trikride` on both sides. Re-download `google-services.json` after fixing it.
+
+### Duplicate resource errors on the launcher icon
+
+Left-over `.webp` files from a manual Image Asset run colliding with the committed PNGs.
+Delete every `.webp` under `app/src/main/res/`.
+
+### "Creating your account" spins forever
+
+The Realtime Database has not been created, or `google-services.json` has no database
+URL in it. Create the database in the Firebase console, re-download the file, and replace
+it. The app now gives up after twelve seconds with a message saying this rather than
+spinning, but the underlying cause is the same.
+
+### No destinations appear when booking
+
+The fare table has not been loaded. Sign in as an administrator and use **Fares → Load
+official rates**. See Step 7.
+
+### Profile photo upload fails
+
+Cloud Storage is not enabled on the Firebase project. New projects require the Blaze plan
+for Storage. The free allowance covers this app comfortably, but a card is needed to
+enable it.
+
+### Gradle sync issues generally
 
 ```bash
 ./gradlew clean
 ./gradlew build --refresh-dependencies
 ```
 
-### Firebase Connection Issues
-
-1. Verify `google-services.json` is in `app/` directory
-2. Check Firebase project ID matches app configuration
-3. Ensure Firebase services are enabled in console
-
-### Location Permission Issues
-
-1. Grant location permissions in device settings
-2. For Android 6.0+, runtime permissions are requested in app
-3. Background location requires additional permissions
-
 ## Database Structure
 
 ```
-users/
-  ├── {userId}
-  │   ├── email
-  │   ├── phoneNumber
-  │   ├── firstName
-  │   ├── lastName
-  │   ├── userType (PASSENGER/DRIVER/ADMIN)
-  │   └── profileImageUrl
+users/{uid}
+  email, phoneNumber, firstName, lastName, birthDate,
+  userType (PASSENGER | DRIVER | ADMIN), profileImageUrl,
+  createdAt, updatedAt
 
-drivers/
-  ├── {driverId}
-  │   ├── licenseNumber
-  │   ├── tricycleNumber
-  │   ├── isAvailable
-  │   ├── currentLocation
-  │   ├── rating
-  │   ├── totalRides
-  │   └── verificationStatus
+drivers/{uid}
+  licenseNumber, licenseExpiry, tricycleNumber,
+  verificationStatus (PENDING | APPROVED | REJECTED | EXPIRED),
+  isAvailable, currentLocation, rating, totalRides, verifiedAt, documents[]
 
-rides/
-  ├── {rideId}
-  │   ├── passengerId
-  │   ├── driverId
-  │   ├── pickupLocation
-  │   ├── dropoffLocation
-  │   ├── status
-  │   ├── estimatedFare
-  │   └── actualFare
+rideRequests/{requestId}          open requests; deleted on accept or expiry
+  passengerId, pickupLocation, dropoffLocation,
+  passengerCount, luggage, estimatedFare,
+  fareStopId, fareType (REGULAR | DISCOUNTED),
+  notes, requestedAt, expiresAt
 
-rideRequests/
-  ├── {requestId}
-  │   ├── passengerId
-  │   ├── pickupLocation
-  │   ├── dropoffLocation
-  │   └── requestedAt
+rides/{rideId}
+  passengerId, driverId, pickupLocation, dropoffLocation,
+  status (REQUESTED … COMPLETED | CANCELLED | NO_SHOW),
+  estimatedFare, actualFare, fareStopId, fareType,
+  passengerCount, luggage, notes,
+  requestedAt, acceptedAt, startedAt, completedAt
+
+config/fare                       one record
+  minimumRegular, minimumDiscounted, poblacionFlat, terminalRoundTrip,
+  chargePerPassenger, source, seededAt
+
+config/fareStops/{stopId}         240 records from the FeTODAT schedule
+  zone, name, regularFare, discountedFare,
+  active, needsReview, confidence, note
+
+complaints/{complaintId}
+  reporterId, reporterName, reporterType, category, description,
+  status (OPEN | IN_REVIEW | RESOLVED), adminNote, createdAt, resolvedAt
+
+notifications/{uid}/{notificationId}
+  title, message, type, read, createdAt
 ```
 
-## API Integration
+Timestamps throughout are epoch milliseconds held as strings.
 
-### Authentication API
+## How the app talks to the backend
 
-- POST `/auth/login` - User login
-- POST `/auth/signup` - User registration
-- POST `/auth/logout` - User logout
-- POST `/auth/refresh` - Refresh token
+There is no REST API and no server of ours. The Android client speaks to Firebase
+directly. One-off reads and writes go over HTTPS; live data arrive over a persistent
+WebSocket that the Firebase client library maintains, which is what makes a driver's
+screen change when a passenger books without anyone refreshing anything.
 
-### Ride API
+Everything the app does to the database goes through one class,
+`services/FirebaseService.kt`. If you are looking for where a piece of data is read or
+written, it is in there.
 
-- POST `/rides/request` - Create ride request
-- GET `/rides/{rideId}` - Get ride details
-- PUT `/rides/{rideId}/status` - Update ride status
-- GET `/rides/history` - Get ride history
+| What you want | Where to look |
+|:---|:---|
+| Sign-up, sign-in, session, profile photo | `repositories/AuthRepository.kt` |
+| Request a ride, accept, advance status, history | `repositories/RideRepository.kt` |
+| Driver record, availability, credentials | `repositories/DriverRepository.kt` |
+| Verification, all users, all rides | `repositories/AdminRepository.kt` |
+| Fare config, fare stops, seed import | `repositories/FareRepository.kt` |
+| Complaints and notifications | `repositories/SupportRepository.kt` |
 
-### Driver API
-
-- POST `/drivers/register` - Register as driver
-- GET `/drivers/{driverId}` - Get driver info
-- PUT `/drivers/{driverId}/availability` - Update availability
-- POST `/drivers/verify` - Submit verification documents
+Because there is no server in the path, the security rules in Step 4 are the only thing
+enforcing access. Checks in the interface are convenience, not security.
 
 ## Testing
 
-Run tests with:
-
 ```bash
-./gradlew test
-./gradlew connectedAndroidTest
+./gradlew test                 # unit tests
+./gradlew connectedAndroidTest # instrumented tests, needs a device or emulator
 ```
+
+There are no automated tests in the repository yet. `FareEngine` and `ReportBuilder` are
+pure functions with no Android dependency and are the obvious place to start.
 
 ## Deployment
 
-### Sign Release APK
+Build a release bundle:
 
 ```bash
 ./gradlew bundleRelease
 ```
 
-### Upload to Play Store
+This needs a release signing config, which the project does not have yet. Generate a
+keystore, back it up somewhere that is not your laptop, and put the passwords in `.env`.
+Losing the keystore means you can never update the app for anyone who installed it.
 
-1. Generate signed APK/AAB
-2. Create Play Store listing
-3. Upload to Google Play Console
-4. Configure rollout percentage
-5. Monitor crash reports
+For a capstone, the two distribution routes that cost nothing are **Firebase App
+Distribution**, which is on the free tier and invites testers by email, and publishing
+the APK as a **GitHub release** with a QR code. The Play Store charges a one-time
+developer fee and, for new individual accounts, requires a closed testing period before
+public release.
 
 ## Support
 
 For issues or questions:
-- Email: support@trikride.com
+- Email: alberjunemumar@gmail.com
 - GitHub Issues: https://github.com/zeroxjune/capstoneproject/issues
 
 ## License

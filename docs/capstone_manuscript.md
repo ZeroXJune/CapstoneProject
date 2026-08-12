@@ -1,0 +1,1949 @@
+---
+title: "A Smart Tricycle Ride and Driver Onboarding System for Talibon Polytechnic College"
+---
+
+::: {custom-style="TitleBlock"}
+A SMART TRICYCLE RIDE AND DRIVER ONBOARDING SYSTEM
+FOR TALIBON POLYTECHNIC COLLEGE
+:::
+
+A Capstone Project Presented to
+
+The Faculty of the Department of Information Systems
+
+Talibon Polytechnic College
+
+San Isidro, Talibon, Bohol
+
+In Partial Fulfillment
+
+of the Requirements for the Degree of
+
+BACHELOR OF SCIENCE IN INFORMATION SYSTEMS
+
+by
+
+Alber June M. Mumar
+
+Julebeth Hinlayagan
+
+Mardy Gonzaga
+
+MAY 2026
+
+[[PB]]
+
+# APPROVAL SHEET
+
+This Capstone Project with the title **A SMART TRICYCLE RIDE AND DRIVER ONBOARDING SYSTEM FOR TALIBON POLYTECHNIC COLLEGE**, prepared and submitted by **Alber June M. Mumar, Julebeth Hinlayagan,** and **Mardy Gonzaga** in partial fulfillment of the requirements for the degree of **Bachelor of Science in Information Systems**, has been examined and recommended for acceptance and approval for Oral Examination.
+
+CAPSTONE PROJECT COMMITTEE
+
+**STANLEY CLARK M. DIPAY, PhD**
+
+Chairman
+
+**SOCRATES C. MACALOLOT**  **ASTRID P. VALMORIA, MAELT**
+
+Capstone Adviser  English Critic
+
+**FLORDELIS A. TURTOGA, MAMT**
+
+Statistician
+
+APPROVED by the Examining Panel during the Oral Examination conducted on ______________ with the grade of ________.
+
+PANEL OF EXAMINERS
+
+**STANLEY CLARK M. DIPAY, PhD**
+
+Committee Chairman
+
+**GISELO B. CAJES, PhD**  **DIOSCORO A. AVERGONZADO, PhD**
+
+Research Director  Member
+
+ACCEPTED and APPROVED as partial fulfillment of the requirements for the degree of Bachelor of Science in Information Systems.
+
+Oral Defense Date: ______________
+
+**STANLEY CLARK M. DIPAY, PhD**
+
+College President
+
+[[PB]]
+
+# ACKNOWLEDGEMENTS
+
+The completion of this capstone project would not have been possible without the guidance, support, and encouragement of many individuals. The researchers would like to express their heartfelt gratitude to everyone who contributed to the success of this study.
+
+To the Almighty God, for the wisdom, strength, and perseverance He bestowed upon the researchers throughout the entire process of this study. All achievements are offered back to Him.
+
+To Stanley Clark M. Dipay, PhD, College President and Capstone Project Committee Chairman, for his invaluable guidance, insightful recommendations, and unwavering support in shaping the direction of this research.
+
+To Socrates C. Macalolot, the Capstone Adviser, for his patience, mentorship, and technical expertise. His constructive feedback and consistent encouragement were instrumental in the development of the proposed system.
+
+To Astrid P. Valmoria, MAELT, English Critic, for meticulously reviewing the language, grammar, and clarity of this manuscript. Her expertise greatly improved the quality of written communication in this study.
+
+To Flordelis A. Turtoga, MAMT, Statistician, for her assistance in the statistical treatment of data and for ensuring the accuracy and validity of the research findings.
+
+To the faculty and staff of the Department of Information Systems of Talibon Polytechnic College, for sharing their knowledge and providing a conducive learning environment throughout the researchers' academic journey.
+
+To the Federation of Tricycle Operators and Drivers Association of Talibon (FeTODAT), for making the official fare schedule available to the researchers and for the cooperation of its officers during data gathering.
+
+To the tricycle drivers and commuters of Talibon, Bohol, who willingly participated in this study and provided the real-world insights that made this research grounded and relevant to the community it intends to serve.
+
+To the families of the researchers, for their endless love, prayers, moral support, and financial assistance. Their sacrifices and understanding were a constant source of inspiration and motivation.
+
+And to all friends and classmates who offered their time, assistance, and encouragement throughout the duration of this study, thank you. This work is as much yours as it is ours.
+
+The Researchers
+
+[[PB]]
+
+# EXECUTIVE SUMMARY
+
+Students, faculty, and staff of Talibon Polytechnic College depend on tricycles for their daily commute, yet the service around the campus operates the way it always has. Passengers walk to a terminal or wait at the roadside with no way of knowing whether a tricycle is coming. Drivers circle for passengers with no way of knowing who needs a ride. Neither side can see the other, and the result is time lost on both.
+
+This study developed **TrikRide**, an Android application that connects passengers and tricycle drivers serving Talibon Polytechnic College, and that puts a verification step in front of drivers before they are allowed to accept passengers.
+
+The system serves three kinds of users. A passenger creates an account, chooses a destination from the fare schedule published by the Federation of Tricycle Operators and Drivers Association of Talibon, sees the exact fare before committing, and follows the ride from acceptance through to completion. A driver registers, submits a licence and tricycle details, and can accept requests only once an administrator has approved those documents. An administrator verifies drivers, maintains the fare table, reviews concerns raised by either side, watches activity as it happens, and exports monthly or yearly records as spreadsheets.
+
+Fares are not estimated. The application prices every ride from the 240 destinations on the posted FeTODAT schedule, which distinguishes the regular rate from the discounted rate for senior citizens, persons with disabilities, and students, and which sets a minimum fare of fifteen pesos for regular passengers and twelve pesos for discounted passengers. Because the rate table is held in the database rather than in code, the administrator corrects a price without a new release of the application.
+
+The application was built in Kotlin with Jetpack Compose against Firebase Authentication, Realtime Database, Cloud Storage, and Cloud Messaging, following a Model-View-ViewModel architecture with a repository layer. Development followed the Waterfall model of the software development life cycle.
+
+The system was evaluated against the four ISO/IEC 25010 quality characteristics named in the research instrument: usability, functionality, efficiency, and reliability. Respondents were students of Talibon Polytechnic College and tricycle drivers serving the campus, and responses were treated using the weighted mean.
+
+*[Evaluation results, the interpretation of those results, and the study's conclusions are to be completed after data collection. Section 4.9 and Chapter 5 carry the tables and the interpretation scales that those numbers will populate.]*
+
+[[PB]]
+
+# TABLE OF CONTENTS
+
+| | Page |
+|:---|---:|
+| TITLE PAGE | i |
+| APPROVAL SHEET | ii |
+| ACKNOWLEDGEMENTS | iii |
+| EXECUTIVE SUMMARY | iv |
+| TABLE OF CONTENTS | v |
+| LIST OF TABLES | viii |
+| LIST OF FIGURES | ix |
+| **Chapter 1 — INTRODUCTION AND PROJECT CONTEXT** | 1 |
+| 1.1 Project Context | 1 |
+| 1.2 Purpose and Description of the Project | 5 |
+| 1.3 Objectives of the Study | 6 |
+| 1.4 Statement of the Problem | 7 |
+| 1.5 Scope and Limitations | 8 |
+| 1.6 Significance of the Study | 10 |
+| 1.7 Research Methodology | 11 |
+| 1.8 Research Environment | 14 |
+| 1.9 Research Participants and Respondents | 15 |
+| 1.10 Research Instruments | 16 |
+| 1.11 Data Gathering Procedure | 17 |
+| 1.12 Data Analysis | 19 |
+| 1.13 Definition of Terms | 20 |
+| **Chapter 2 — REVIEW OF RELATED LITERATURE AND SYSTEMS** | 23 |
+| 2.1 Related Literature | 23 |
+| 2.2 Related Studies | 25 |
+| 2.3 Comparison of Related Systems | 27 |
+| 2.4 Theoretical Framework | 29 |
+| 2.5 Conceptual Framework | 32 |
+| 2.6 Synthesis | 34 |
+| **Chapter 3 — TECHNICAL BACKGROUND** | 36 |
+| 3.1 Software Requirements | 36 |
+| 3.2 Hardware Requirements | 38 |
+| 3.3 Programming Languages | 39 |
+| 3.4 Development Tools | 40 |
+| 3.5 Database Technologies | 42 |
+| 3.6 Network Architecture | 44 |
+| 3.7 Software Architecture | 45 |
+| 3.8 Security Features | 47 |
+| 3.9 System Architecture | 50 |
+| **Chapter 4 — METHODOLOGY, RESULTS, AND DISCUSSION** | 52 |
+| 4.1 Requirements Analysis | 52 |
+| 4.2 Requirements Documentation | 56 |
+| 4.3 System Design | 60 |
+| 4.4 Software Development | 68 |
+| 4.5 Testing | 71 |
+| 4.6 Prototype Description | 75 |
+| 4.7 Implementation Plan | 78 |
+| 4.8 Implementation Results | 80 |
+| 4.9 System Evaluation | 83 |
+| **Chapter 5 — SUMMARY, CONCLUSIONS AND RECOMMENDATIONS** | 87 |
+| 5.1 Summary of Findings | 87 |
+| 5.2 Conclusions | 89 |
+| 5.3 Recommendations | 90 |
+| 5.4 Future Enhancements | 92 |
+| REFERENCES | 94 |
+| APPENDICES | 97 |
+| CURRICULUM VITAE | 120 |
+
+[[PB]]
+
+# LIST OF TABLES
+
+| Table | Title | Page |
+|:---:|:---|---:|
+| 1 | Comparison of Related Systems | 27 |
+| 2 | Functional Requirements | 52 |
+| 3 | Non-Functional Requirements | 55 |
+| 4 | User Requirements by Role | 56 |
+| 5 | System Requirements | 57 |
+| 6 | Use Case Description: Book a Ride | 58 |
+| 7 | Use Case Description: Verify a Driver | 59 |
+| 8 | Realtime Database Node Structure | 65 |
+| 9 | Fare Table Composition by Zone | 66 |
+| 10 | Development Milestones and Deliverables | 69 |
+| 11 | Unit Test Cases and Results | 71 |
+| 12 | Integration Test Cases and Results | 72 |
+| 13 | System Test Cases and Results | 73 |
+| 14 | Security Test Cases and Results | 74 |
+| 15 | Application Modules and Their Functions | 80 |
+| 16 | Reports Generated by the System | 82 |
+| 17 | Likert Scale and Interpretation | 83 |
+| 18 | Profile of Respondents | 84 |
+| 19 | Evaluation Results: Passengers | 85 |
+| 20 | Evaluation Results: Drivers | 85 |
+| 21 | Summary of Evaluation Across Characteristics | 86 |
+
+# LIST OF FIGURES
+
+| Figure | Title | Page |
+|:---:|:---|---:|
+| 1 | Research Flow | 13 |
+| 2 | Conceptual Framework of the System | 32 |
+| 3 | System Architecture | 50 |
+| 4 | Context Diagram (Data Flow Diagram Level 0) | 60 |
+| 5 | Data Flow Diagram Level 1 | 61 |
+| 6 | Entity Relationship Diagram | 62 |
+| 7 | Use Case Diagram | 63 |
+| 8 | Activity Diagram: Booking a Ride | 64 |
+| 9 | Sequence Diagram: Ride Request to Completion | 65 |
+| 10 | Class Diagram | 66 |
+| 11 | Realtime Database Schema | 67 |
+| 12 | Waterfall Model of the Software Development Life Cycle | 68 |
+| 13 | Screen Navigation Flow | 76 |
+| 14 | Gantt Chart of Project Activities | 119 |
+
+[[PB]]
+
+# Chapter 1 {-}
+
+# INTRODUCTION AND PROJECT CONTEXT
+
+## 1.1 Project Context
+
+### Background of the Study
+
+Finding a ride is still a daily struggle for many students at Talibon Polytechnic College who depend on tricycles, even though transportation to and from school should be the least of a student's concerns. Although tricycles are one of the most popular modes of transportation for employees, instructors, and students on campus, booking rides is still done the same way as it was years ago. In order to get a ride from a passing driver on the side of the road, passengers must still walk to a terminal or to locations where tricycle drivers wait for passengers seeking transportation. There is also no organized method for drivers to locate passengers; their earnings are mostly dependent on their ability to locate clients at the appropriate time and location. This transportation arrangement leads to wasted time, poor coordination between riders and drivers, and missed earning opportunities on both sides (Narayanan & Antoniou, 2021).
+
+In larger cities, technology has already revolutionized the way people get rides, and there is no reason college campuses cannot adopt similar systems. Passengers can now communicate with drivers without having to be in the same physical location thanks to ride-hailing apps and digital scheduling platforms (Zhang et al., 2021). Additionally, studies reveal that waiting times decrease and transportation vehicles are utilized more efficiently when matching between drivers and passengers is managed by a system rather than left to chance (Cheng et al., 2024; Li et al., 2024).
+
+### Existing Situation
+
+Tricycle service around Talibon Polytechnic College runs on physical presence and personal familiarity. A passenger who needs a ride either walks to a terminal and waits for the queue to reach them, or stands at the roadside and hopes a vacant tricycle passes. A driver looking for passengers either holds a place in the terminal queue or roams the streets between the campus, the public market, and the port area, burning fuel while doing so.
+
+Fares are governed by an ordinance. The Federation of Tricycle Operators and Drivers Association of Talibon publishes a fare schedule, enacted on 8 November 2022 as an amendment to Section 1 of Municipal Ordinance No. 2018-05, which fixes a rate for every destination in the municipality and sets a lower rate for senior citizens, persons with disabilities, and students. That schedule exists as a laminated sheet posted at terminals. A passenger who does not know the posted rate for their destination, and who cannot read a sheet that is not in front of them, has no way of checking what they are being charged.
+
+Driver accountability rests on the same informal footing. Anyone who owns a tricycle can carry passengers. There is no step at which a driver's licence, registration, or fitness to operate is checked before a passenger gets in.
+
+### Current Problems
+
+Four problems follow from that arrangement.
+
+The first is **unpredictable waiting time**. A passenger cannot tell whether the wait will be one minute or fifteen, because there is no information about which drivers are nearby or available. This matters most at the times it matters most, which are the minutes before a class begins.
+
+The second is **idle driver capacity**. A driver waiting in a terminal queue and a passenger waiting three streets away are both waiting, and neither knows about the other. Time that could have been a paid trip is spent stationary or roaming.
+
+The third is **fare uncertainty**. The posted schedule is authoritative but not accessible at the point of decision. Passengers who do not know the rate cannot verify it, and drivers who quote correctly have no way of demonstrating that they have.
+
+The fourth is **the absence of accountability**. Without registration, verification, or any record of who carried whom, a passenger with a complaint has nowhere to bring it, and a driver wrongly accused has nothing to point to.
+
+### Need for the Proposed System
+
+The gap is not a shortage of tricycles and it is not a shortage of passengers. It is that the two cannot see each other, and that the rules already written down are not available where decisions are made. A digital platform closes both gaps at once: it lets a passenger and a driver find each other without being in the same place, and it puts the published fare schedule in the passenger's hand before they agree to the ride.
+
+Kumar and Singh (2023) showed that digital transportation platforms work in smaller local settings as well as in cities, and that the improvement is often larger in small settings precisely because the alternatives are fewer. Adding a structured onboarding procedure, in which drivers register, submit documents, and are verified before they are permitted to operate within the system, addresses the accountability gap that the present informal arrangement cannot.
+
+To address these issues, this study developed a Smart Tricycle Ride and Driver Onboarding System for Talibon Polytechnic College.
+
+## 1.2 Purpose and Description of the Project
+
+The purpose of this project is to improve access to tricycle transportation for the Talibon Polytechnic College community by replacing an unstructured, presence-based arrangement with a coordinated digital one.
+
+The system developed is a mobile application for Android that enables students, faculty, and staff to request tricycle rides from their phones and enables drivers to receive and respond to those requests. Rather than waiting at a terminal or searching for a passing driver, a user opens the application, selects a destination from the official fare schedule, sees the exact fare, and submits a request that is broadcast to every driver currently online. The first driver to accept is matched to the passenger, and both parties then follow the same ride through a shared sequence of status changes from acceptance to completion.
+
+Alongside booking, the system provides a driver onboarding module. A driver registers, submits a licence number, licence expiry date, and tricycle number, and remains unable to accept passengers until an administrator has reviewed and approved those details. This ensures that the platform is used only by drivers whose credentials have been checked, which the present informal arrangement cannot achieve.
+
+An administrative module completes the system. It gives the college or the drivers' association a single place to verify drivers, maintain the fare table, review concerns raised by passengers or drivers, observe activity as it happens, and export records of that activity as spreadsheets for reporting.
+
+The system is a change in how a daily routine is coordinated, not only a piece of software.
+
+## 1.3 Objectives of the Study
+
+### General Objective
+
+To develop a Smart Tricycle Ride and Driver Onboarding System that improves the efficiency, transparency, and reliability of tricycle transportation services for Talibon Polytechnic College.
+
+### Specific Objectives
+
+1. To design and develop a ride-booking and scheduling system for tricycle services that addresses the inefficiency and long waiting times experienced by students at Talibon Polytechnic College.
+2. To create a driver onboarding module for the registration and verification of tricycle drivers, so as to improve accountability and ensure that only authorized drivers serve the college community.
+3. To enable real-time ride requests and driver-passenger matching that reduce idle time for drivers and remove the need for students to search manually for available tricycles.
+4. To reduce passenger waiting time and improve driver utilization.
+5. To provide a system for monitoring rides and managing driver activity.
+6. To evaluate the system in terms of usability, functionality, efficiency, and reliability using the ISO/IEC 25010 software quality model.
+
+## 1.4 Statement of the Problem
+
+This study developed a Smart Tricycle Ride and Driver Onboarding System for Talibon Polytechnic College. Specifically, it sought to answer the following questions:
+
+1. What are the common problems encountered in the current tricycle transportation system in Talibon, Bohol in terms of:
+   a. ride availability;
+   b. passenger waiting time;
+   c. fare transparency; and
+   d. driver-passenger coordination?
+
+2. What features should be included in the proposed system in terms of:
+   a. ride scheduling and booking;
+   b. driver onboarding and verification;
+   c. fare computation based on the published schedule; and
+   d. notification and monitoring?
+
+3. How effective is the developed system as evaluated by passengers and drivers in terms of:
+   a. usability;
+   b. functionality;
+   c. efficiency; and
+   d. reliability?
+
+4. Is there a significant difference between the evaluations of passenger-respondents and driver-respondents across the four quality characteristics?
+
+## 1.5 Scope and Limitations
+
+### Scope
+
+This study covers the development of a Smart Tricycle Ride and Driver Onboarding System for Talibon Polytechnic College. The system:
+
+1. Allows passengers to register, sign in, and maintain a profile that includes a photograph.
+2. Allows passengers to request tricycle rides digitally, selecting a destination from the official FeTODAT fare schedule.
+3. Displays the exact fare before the passenger commits to the booking, distinguishing the regular rate from the discounted rate for senior citizens, persons with disabilities, and students.
+4. Broadcasts a ride request to all available drivers and matches the passenger with the first driver to accept.
+5. Enables drivers to register, submit credentials, toggle their availability, receive and manage ride requests, and record the progress of a ride from acceptance to completion.
+6. Provides driver registration and verification controlled by an administrator, so that unverified drivers cannot accept passengers.
+7. Gives both parties a shared, live view of ride status, and a history of completed rides.
+8. Allows passengers and drivers to raise concerns, and allows an administrator to review, annotate, and resolve them.
+9. Notifies users in-app of the events that concern them.
+10. Provides an administrative fare table that can be searched, filtered, corrected, and extended without modifying the application's code.
+11. Produces monthly, yearly, and cumulative reports of ride activity, driver performance, and concerns, exportable as comma-separated-value files.
+
+### Limitations
+
+1. The system is limited to tricycle transportation serving Talibon Polytechnic College and its immediate vicinity.
+2. The system requires tricycle drivers to own a mobile device capable of running the application, which targets Android 7.0 (API level 24) and above.
+3. The system requires an internet connection. It does not operate offline.
+4. The system does not include online payment integration. All fares are settled in cash between the passenger and the driver.
+5. The system does not cover other transportation types such as jeepneys, buses, or motorcycle taxis.
+6. Live map display and turn-by-turn navigation are not included in the evaluated build. Locations are selected from a defined list of pickup points and from the FeTODAT destination schedule rather than from an interactive map, and map areas within the interface are represented by styled placeholders.
+7. Push notifications are delivered within the application. Delivery of notifications to a device that is not running the application requires a server-side component that is outside the scope of this study.
+8. Sign-in is by email address and password. Federated sign-in through third-party identity providers is not included.
+9. The accuracy of the fare table depends on the accuracy of the published FeTODAT schedule as transcribed. Rows that could not be read with confidence from the posted sheet are flagged within the administrative interface for verification, and rows without a usable rate are disabled so that they cannot price a ride.
+10. Implementation of the system beyond the study is subject to the cooperation and coordination of the local tricycle drivers' association in Talibon, Bohol.
+11. Adoption depends on the willingness of drivers and passengers to use the system.
+
+## 1.6 Significance of the Study
+
+**Tricycle Drivers (Primary Beneficiaries).** Tricycle drivers stand to benefit the most from this system. A steady, organized stream of bookings means less time waiting at terminals and more time earning. The system also gives them a record of their trips and earnings, which helps them plan their day and see how they are doing over a week or a month.
+
+**Students, Faculty, and Staff.** For students rushing to class, and for faculty and staff heading to campus, the ability to book a ride from a phone rather than search for one on the street is a meaningful improvement in the day. Seeing the official fare before the ride removes a second uncertainty.
+
+**Talibon Polytechnic College.** A college that can offer organized, safe, and accessible transportation reflects well on the institution. This system contributes to that by bringing a previously informal service into a structured, accountable framework.
+
+**College Administration.** The system gives administrators a clearer view of transportation activity around the campus. With driver records, ride logs, and concerns held in one place, and with monthly and yearly reports that can be exported, it becomes easier to monitor operations, address complaints, and make evidence-based decisions about transportation policy.
+
+**The Federation of Tricycle Operators and Drivers Association of Talibon.** Placing the published fare schedule inside an application that both parties can see supports the association's own rate-setting work, and gives it a record of disputes it can act on.
+
+**Future Researchers.** This study can serve as a practical starting point for other researchers developing or improving transportation systems for small municipalities, and the methods documented here may serve as useful references.
+
+## 1.7 Research Methodology
+
+### Research Design
+
+The study employed a **descriptive-developmental research design**. The descriptive component involved identifying and documenting the existing problems in the current tricycle transportation system at Talibon Polytechnic College through a structured needs assessment administered to students and tricycle drivers. The findings from this phase served as the basis for the developmental component, in which the researchers designed, developed, and evaluated the Smart Tricycle Ride and Driver Onboarding System.
+
+### Development Model
+
+Development followed the **Waterfall model** of the Software Development Life Cycle. The Waterfall model organizes development into sequential phases in which each phase is completed and reviewed before the next begins, as shown in Figure 12.
+
+The Waterfall model was selected for three reasons. First, the requirements of the system were established early and did not change substantially during development, which is the condition under which a sequential model performs well. Second, the model produces documentation at each phase, which suits the reporting requirements of a capstone project. Third, the study had a fixed academic timeline, and a model with defined phase boundaries made progress measurable against that timeline.
+
+The phases as applied in this study were:
+
+**Requirements Analysis.** The problems in the existing arrangement were documented, and the functional and non-functional requirements of the system were derived from them and from the objectives of the study.
+
+**System Design.** The architecture, database structure, process flows, and interfaces were designed and documented as the diagrams presented in Section 4.3.
+
+**Implementation.** The application was coded in Kotlin using Jetpack Compose, against Firebase services.
+
+**Testing.** The system was subjected to unit, integration, system, user acceptance, performance, and security testing as described in Section 4.5.
+
+**Deployment.** The application was distributed to respondents for the evaluation period.
+
+**Maintenance.** Defects reported during evaluation were corrected, and the fare table was updated as corrections to the transcribed schedule were confirmed.
+
+### Research Flow
+
+The research flow of this study illustrates the systematic process followed in conducting the study, from identifying the problem through to the formulation of conclusions and recommendations.
+
+![Figure 1. Research Flow](figures/fig01_research_flow.png){width=6.0in}
+
+## 1.8 Research Environment
+
+The study was conducted at Talibon Polytechnic College, located in San Isidro, Talibon, Bohol, Philippines. The college serves as a centre for technical and vocational education in Talibon, with a population of students, faculty, and staff who rely on tricycle transportation for their daily commute to and from the campus.
+
+The research environment specifically covered the immediate vicinity of the college, including the main campus entrance, nearby tricycle terminals, and the surrounding barangays from which most commuters originate. This setting was selected because of the high volume of daily tricycle transactions involving the college community and the clear need for a more organized and digital approach to transportation within the institution.
+
+The fare schedule used by the system was obtained from the Federation of Tricycle Operators and Drivers Association of Talibon, whose published rates cover twelve zones across the municipality: Balintawak, Santo Niño, San Francisco, San Agustin, the combined zone of Bagacay, Burgos and Rizal, Zamora, San Carlos, Tanghaligue, San Isidro, San Jose, San Pedro, and San Roque.
+
+## 1.9 Research Participants and Respondents
+
+The respondents of this study consisted of two groups.
+
+**Students of Talibon Polytechnic College.** Students were selected because they represent the primary users of the passenger side of the system, being the main commuters who depend on tricycle transportation for daily travel to and from the campus. The sample size for student respondents was determined using **Slovin's formula**:
+
+$$n = \frac{N}{1 + Ne^2}$$
+
+where *n* is the sample size, *N* is the total enrolled student population of Talibon Polytechnic College, and *e* is the margin of error, set at 0.05.
+
+**Tricycle drivers serving the college community.** Drivers were included because they are the service providers whose operations the system aims to improve. **Total enumeration** was used for this group, given the limited number of drivers serving the campus.
+
+*[The actual population figures, the computed sample size, and the number of respondents who participated are to be recorded in Table 18 following data collection.]*
+
+## 1.10 Research Instruments
+
+The primary data instrument used in this study is a structured researcher-made questionnaire, prepared in two versions: one for tricycle drivers and one for passenger-respondents.
+
+Each version gathers information on the existing problems in the current tricycle transportation arrangement and evaluates the developed system. The evaluation portion was adapted from the **ISO/IEC 25010 software quality model** (International Organization for Standardization, 2011) and covers four characteristics: usability, functionality, efficiency, and reliability. Each characteristic is measured by five statements, and each statement is rated on a five-point Likert scale ranging from 5 (Strongly Agree) to 1 (Strongly Disagree). Each version closes with four open-ended questions inviting comment on the feature the respondent valued most, the problems observed, the improvements recommended, and any further remarks.
+
+The questionnaire was reviewed and validated by the research adviser and by subject matter experts before distribution to ensure content validity and clarity. A pilot test was conducted with a small group of respondents to refine the instrument prior to the actual data collection. The complete instrument appears as Appendix C.
+
+## 1.11 Data Gathering Procedure
+
+The study followed a systematic procedure to ensure the proper development, implementation, and evaluation of the system.
+
+**Securing Permission.** A letter of request was submitted to the Office of the College President of Talibon Polytechnic College and to the officers of the Federation of Tricycle Operators and Drivers Association of Talibon, seeking permission to conduct the study, to administer the needs assessment and evaluation, and to reproduce the published fare schedule within the application. The letters appear as Appendix B.
+
+**Needs Assessment.** A structured needs assessment was administered to students and tricycle drivers to document the problems in the current arrangement. The responses established the functional requirements set out in Section 4.1.
+
+**System Planning and Design.** The researchers identified the tools and components required for development, comprising Android Studio, Kotlin, Jetpack Compose, and Firebase Authentication, Realtime Database, Cloud Storage, and Cloud Messaging. A system architecture diagram and interface wireframes were prepared to guide development.
+
+**System Development.** The passenger, driver, and administrator interfaces were built in Kotlin and Jetpack Compose according to the approved design. The system was configured to accept ride requests, price them from the FeTODAT schedule, match passengers with available drivers, and process driver registration and verification.
+
+**System Integration.** All components were integrated and tested as a complete system. This included verifying communication between the application and Firebase Authentication for sign-in, the Realtime Database for live data, Cloud Storage for profile photographs and documents, and Cloud Messaging for notifications. Defects found were corrected through debugging and adjustment.
+
+**Testing.** The system underwent unit, integration, system, user acceptance, performance, and security testing using both simulated and live ride requests. The researchers recorded the system's ability to match passengers with drivers correctly, to price rides according to the posted schedule, to process bookings, and to deliver notifications.
+
+**Deployment and Evaluation.** The application was distributed to selected respondents, who used it under real conditions and then completed the evaluation questionnaire.
+
+**Data Collection.** Completed questionnaires and recorded test results were collected, organized, and prepared for analysis.
+
+**Data Analysis.** The collected data were analyzed using the statistical treatment described in Section 1.12, and the results formed the basis of the conclusions and recommendations in Chapter 5.
+
+**Ethical Considerations.** Participation was voluntary, and respondents were informed of the purpose of the study before taking part. Names were optional on the instrument. Personal data collected by the application itself, comprising name, email address, mobile number, date of birth, and an optional photograph, are held in the project's Firebase instance, are used only to operate the service, and are described to the user in the privacy notice available inside the application. No payment or financial information is collected by the system at any point.
+
+## 1.12 Data Analysis
+
+The data gathered were analyzed using the following statistical treatments.
+
+**Frequency and Percentage.** Used to describe the profile of respondents and the distribution of responses to the needs assessment.
+
+$$P = \frac{f}{N} \times 100$$
+
+where *P* is the percentage, *f* is the frequency of a response, and *N* is the total number of respondents.
+
+**Weighted Mean.** Used to determine the level of agreement with each evaluation statement, and to determine the level of each quality characteristic.
+
+$$\bar{x} = \frac{\sum (f \cdot w)}{N}$$
+
+where $\bar{x}$ is the weighted mean, *f* is the frequency of a response to a scale point, *w* is the weight assigned to that scale point, and *N* is the total number of respondents.
+
+**Interpretation.** Weighted means were interpreted using the scale in Table 17.
+
+**Independent Samples t-test.** Used to determine whether the difference between passenger and driver evaluations of each characteristic is statistically significant, at a 0.05 level of significance. This addresses the fourth question in Section 1.4.
+
+## 1.13 Definition of Terms
+
+**Administrator.** The user responsible for verifying drivers, maintaining the fare table, reviewing concerns, monitoring activity, and exporting reports. Also referred to as the system administrator.
+
+**Booking Request.** A request made by a passenger through the system for a ride to a chosen destination, carrying the pickup point, the destination, the number of passengers, the luggage declared, and the priced fare.
+
+**Discounted Rate.** The fare column of the FeTODAT schedule applicable to senior citizens, persons with disabilities, and students, set below the regular rate for the same destination.
+
+**Driver Availability.** The status indicating whether a driver is currently accepting ride requests, controlled by the driver through an online and offline toggle.
+
+**Driver Onboarding.** The process of registering, submitting credentials, and being verified by an administrator before a driver is allowed to accept passengers through the system.
+
+**FeTODAT.** The Federation of Tricycle Operators and Drivers Association of Talibon, the body whose published schedule fixes tricycle fares within the municipality.
+
+**Fare Stop.** A single priced destination in the fare table, belonging to a zone and carrying both a regular rate and a discounted rate.
+
+**Fare Table.** The complete set of fare stops held in the system's database, seeded from the published FeTODAT schedule and maintained thereafter by the administrator.
+
+**Jetpack Compose.** The declarative user interface toolkit for Android in which the application's screens are written.
+
+**Minimum Fare.** The lowest amount that may be charged for any ride, set separately for the regular and discounted rate columns by the governing ordinance.
+
+**Mobile Application.** A software application designed to run on smartphones, used in this study for booking rides and managing transportation services.
+
+**Notification.** An alert generated by the system informing a user of an event that concerns them, such as a ride being accepted, a ride status changing, a driver's verification being decided, or a concern being resolved.
+
+**Passenger.** A user who requests and uses transportation services through the system.
+
+**Real-Time Processing.** The ability of the system to reflect a change in data on every connected device as the change occurs, without the user refreshing.
+
+**Regular Rate.** The fare column of the FeTODAT schedule applicable to passengers who do not qualify for the discounted rate.
+
+**Ride Matching.** The process of pairing a passenger with an available driver. In this system, a request is broadcast to all available drivers and matched to the first driver who accepts it.
+
+**Ride Scheduling System.** A digital system that allows passengers to request rides and matches them with available drivers.
+
+**Route.** The path taken by the driver from the passenger's pickup location to the destination.
+
+**Smart Transportation System.** A technology-based system that uses digital tools and real-time data to improve the efficiency and management of transportation services.
+
+**Transportation Efficiency.** The ability of the system to provide faster, more organized, and more reliable transportation with minimal delay.
+
+**Tricycle Driver.** A registered individual who operates a motorized tricycle and provides transportation services to passengers within and around Talibon Polytechnic College.
+
+**User Interface (UI).** The visual part of the system through which users interact with the application.
+
+**Verification Status.** The state of a driver's application to operate within the system, being one of pending, approved, rejected, or expired.
+
+**Zone.** A grouping of destinations in the FeTODAT schedule, corresponding to a barangay or a cluster of barangays within the municipality.
+
+[[PB]]
+# Chapter 2 {-}
+
+# REVIEW OF RELATED LITERATURE AND SYSTEMS
+
+## 2.1 Related Literature
+
+Transportation has always adapted to the tools available to it, and the rise of digital technology has pushed that adaptation further and faster than before. Communities around the world are turning to smart transportation systems not only to move people more efficiently but to improve the whole experience of getting from one place to another. These systems bring together mobile applications, real-time data, and coordinating platforms to give passengers and service providers a shared, responsive environment (Wang et al., 2022).
+
+Ride-hailing platforms are the most visible example of this shift. Instead of standing on the street hoping for a vehicle, a user taps a button and knows when a driver will arrive. Zhang et al. (2021) noted that these applications have made it considerably easier to find transportation by linking passengers directly with nearby available drivers, removing the uncertainty and wasted time that came with the older arrangement.
+
+Ride scheduling adds structure to the matching process. Rather than simply connecting whoever is nearby, a scheduling system factors in timing, preference, and real-time availability to produce more reliable matches. Cheng et al. (2024) found that this approach measurably reduces how long passengers wait and helps ensure vehicles are used productively through the day.
+
+Driver management is a part of the problem that receives less attention. A transportation platform is only as trustworthy as the people providing the service. Dastani et al. (2024) pointed out that a system for registering, verifying, and monitoring drivers does more than keep records: it improves the reliability of the service and gives passengers confidence in who is picking them up.
+
+Smart transportation is not exclusive to large cities. Kumar and Singh (2023) showed that digital transportation platforms work in smaller local settings, and that the impact there can be greater, because those communities have fewer alternatives. Where a simple digital tool replaces an unstructured arrangement, the improvement in daily life is substantial.
+
+A dimension less often examined in this literature is **fare transparency**. In many Philippine municipalities, tricycle fares are fixed by local ordinance and posted physically at terminals. The rate is therefore public in principle but not available at the moment a passenger decides to travel. Placing that published schedule inside the booking interface converts a rule that exists on paper into information the passenger holds before agreeing to the ride, which is a distinct contribution separate from matching efficiency.
+
+## 2.2 Related Studies
+
+A number of studies have examined how ride scheduling and digital transportation platforms can be improved, each contributing a different angle.
+
+Cheng et al. (2024) addressed fairness in ride scheduling by designing a system that accounts for user preferences when pairing passengers with drivers. Their finding that efficiency and user satisfaction need not be in conflict is directly relevant: when a system reflects what users actually want, they are more likely to use it and to trust it.
+
+Rapp et al. (2023) approached the problem from a last-mile perspective, developing an on-demand ride-sharing system for autonomous buses. Their work demonstrated that dynamic, real-time scheduling, in which the system adjusts to incoming requests rather than following fixed routes, meaningfully reduces waiting time while maintaining service performance.
+
+Huang et al. (2024) examined vehicle routing and how better route planning affects broader transportation outcomes. Their study found that modest gains in route efficiency translated into significantly lower operating costs and faster service, a reminder that the logistics behind a transportation system matter as much as its user-facing features.
+
+Narayanan and Antoniou (2021) conducted a systematic review of ride-sharing platforms to understand what drives adoption and what discourages it. Their findings identified convenience, reliability, and ease of use as the three factors that most shape whether a platform succeeds. These are not complicated expectations, and they map closely onto the usability, efficiency, and reliability characteristics used to evaluate the present system.
+
+Li et al. (2024) focused on the first- and last-mile problem in ridesharing, the segments of a journey that tend to be least well served. By optimizing how vehicles of different types are deployed across those segments, their study showed that scheduling efficiency and service quality can be improved together rather than traded against each other.
+
+Taken together, these studies establish that system-managed matching outperforms chance-based matching, that user preference and fairness affect adoption, and that the benefits are not confined to large fleets or large cities. What they do not address is the specific case of a fare regime fixed by local ordinance and enforced socially rather than algorithmically, which is the condition under which tricycle service in Talibon operates.
+
+## 2.3 Comparison of Related Systems
+
+Table 1 compares the developed system with commercial ride-hailing platforms operating in the Philippines and with the current unstructured arrangement it is intended to replace.
+
+: Table 1. Comparison of Related Systems
+
+| System | Features | Strengths | Weaknesses |
+|:---|:---|:---|:---|
+| **Grab** (Grab Holdings) | Multi-service ride-hailing covering cars, delivery, and payments; live GPS tracking; cashless and cash payment; in-app rating; dynamic pricing | Mature and heavily tested; large driver supply in served cities; integrated wallet; strong support infrastructure | Does not serve tricycles; not available in Talibon; dynamic pricing is incompatible with an ordinance-fixed fare regime; commission model reduces driver earnings |
+| **Angkas** | Motorcycle taxi booking; fixed distance-based fare; driver accreditation and training; helmet provision | Formalized an informal transport mode; strong driver screening; fare shown before booking | Motorcycle taxis only; operates in designated metropolitan areas and not in Talibon; central operator model unsuitable for a municipal drivers' association |
+| **JoyRide** | Motorcycle taxi and delivery; in-app booking; fixed fare display | Fare visible before booking; covers several Philippine cities | Motorcycle taxis only; not available in Talibon; no tricycle support |
+| **Current arrangement in Talibon** (terminal queue and roadside hailing) | Physical queueing; verbal fare agreement; fare schedule posted at terminals | No technology or literacy barrier; no data cost; works during power or network outages | Unpredictable waiting time; drivers idle or roaming; posted fare not available at the point of decision; no driver verification; no record of trips or complaints |
+| **TrikRide** (developed system) | Tricycle ride booking; destination selected from the official FeTODAT schedule; fare shown before booking with separate regular and discounted rates; administrator-controlled driver verification; live ride status; concern reporting; administrative monitoring and report export | Prices from the governing ordinance rather than a formula; discounted rate for seniors, persons with disabilities, and students is built in; verification gate before a driver can operate; fare table editable by the administrator without a software release; monthly and yearly reports exportable | Requires an Android device and an internet connection; no live map in the evaluated build; no online payment; coverage limited to Talibon; adoption depends on the drivers' association |
+
+Three observations follow from the comparison. First, no existing platform serves tricycles in Talibon, so the developed system does not displace an incumbent; it addresses a gap. Second, every commercial platform computes fares from distance and demand, which is the wrong model where a municipal ordinance fixes the price per destination. Third, none of the commercial platforms implements the statutory discount for senior citizens, persons with disabilities, and students, because none operates under a fare regime that mandates one.
+
+## 2.4 Theoretical Framework
+
+This study is grounded in three theories that together explain whether a system of this kind will be adopted, whether it will fit the work it is meant to support, and how its success should be judged.
+
+### Technology Acceptance Model
+
+The Technology Acceptance Model (Davis, 1989) holds that a user's intention to use a technology is determined chiefly by two beliefs: **perceived usefulness**, the degree to which the person believes the system will improve their performance, and **perceived ease of use**, the degree to which they believe using it will be free of effort.
+
+The model applies directly here. A driver will adopt the system if it brings more paid trips than roaming does, which is perceived usefulness, and if operating it requires no more than a toggle and a button, which is perceived ease of use. A passenger will adopt it if it produces a ride faster than walking to a terminal, and if booking takes fewer taps than the alternative takes minutes. The design decisions in this study follow from that: the driver interface reduces the core task to a single online toggle and an accept button with a visible countdown, and the passenger's booking path is a linear sequence with the fare shown before commitment.
+
+The usability and efficiency characteristics of the evaluation instrument correspond to perceived ease of use and perceived usefulness respectively.
+
+### Task-Technology Fit
+
+Task-Technology Fit (Goodhue & Thompson, 1995) holds that a technology improves performance only when its capabilities match the demands of the task. A well-built system applied to a task it does not fit produces no benefit.
+
+The task in this study has a specific shape. Fares are fixed per destination by ordinance, not computed from distance. Trips are short and local. Drivers work from a small set of known terminals. Passengers travel to a known set of destinations. A technology that fits this task must therefore price from a lookup table rather than a formula, must offer destinations from a defined list rather than an open map search, and must work on inexpensive Android devices over an intermittent mobile connection.
+
+This theory accounts for the central design decision of the study, which is that the fare engine performs a lookup against the published schedule rather than a distance calculation. A distance-based fare engine would be a poorer fit for the task even though it is the more common design.
+
+### Information Systems Success Model
+
+The DeLone and McLean Information Systems Success Model (DeLone & McLean, 2003) holds that the success of an information system is a function of system quality, information quality, and service quality, which shape use and user satisfaction, which in turn produce net benefits.
+
+In this study, system quality is measured by the reliability and efficiency characteristics of the evaluation instrument. Information quality is addressed by the accuracy of the fare table, which is why rows transcribed with any uncertainty are flagged for verification and rows without a usable rate are disabled rather than left to price a ride with a wrong number. Net benefits correspond to the reduction in passenger waiting time and the improvement in driver utilization named in objectives four and five.
+
+### Diffusion of Innovations
+
+Rogers (2003) identified five attributes that predict how quickly an innovation spreads: relative advantage, compatibility, complexity, trialability, and observability. The system is designed with these in mind. Relative advantage is the elimination of waiting and searching. Compatibility is served by pricing from the schedule the association already publishes rather than introducing a new pricing scheme. Complexity is kept low. Trialability is served by distribution to a defined group of testers before any wider release. Observability is served by the administrative monitor and the exported reports, which make the system's effects visible to the college and the association.
+
+## 2.5 Conceptual Framework
+
+The conceptual framework of this study follows the Input-Process-Output model. It shows how the data entering the system are transformed into outcomes that address the problems identified in Section 1.1.
+
+![Figure 2. Conceptual Framework of the Smart Tricycle Ride and Driver Onboarding System for Talibon Polytechnic College](figures/fig02_conceptual_framework.png){width=6.0in}
+
+**Input.** The input stage comprises the data required for the system to operate: passenger ride requests carrying a pickup point, a destination, a passenger count, and any luggage; driver availability status submitted through the driver interface; driver registration credentials submitted during onboarding; the published FeTODAT fare schedule; and the account credentials and assigned role used for authentication.
+
+**Process.** The process stage is the operation of the system. The system authenticates the user and routes them to the interface for their role. It verifies a driver's submitted credentials against the registration criteria before granting the ability to accept rides. It prices a requested ride by looking up the destination in the fare table, selecting the rate column that applies to the passenger, applying the ordinance minimum where the posted rate falls below it, and multiplying by the number of passengers. It broadcasts the request to every available driver and matches the passenger with the first to accept. It tracks the ride through its status changes and notifies both parties at each one. It records concerns raised by either party and routes them to the administrator.
+
+**Output.** The output stage is the result: a confirmed booking with an assigned driver, an agreed fare, and live status visible to both parties; a verified driver profile, approved or rejected; a stored record of every ride and every concern; and monthly, yearly, and cumulative reports of activity. The intended outcomes are reduced passenger waiting time, improved driver utilization, fare transparency at the point of decision, and a more accountable tricycle transportation service for the Talibon Polytechnic College community.
+
+**Feedback.** The framework includes a feedback path. Evaluation results and fare corrections identified in use return to the process stage, where the administrator amends the fare table and the researchers address defects. This reflects the maintenance phase of the development model.
+
+## 2.6 Synthesis
+
+The literature and studies reviewed converge on several points that shaped this study.
+
+Digital matching outperforms chance-based matching. Zhang et al. (2021), Cheng et al. (2024), and Li et al. (2024) each report reduced waiting time and better vehicle utilization when a system rather than physical proximity determines who serves whom. This supports objectives one, three, and four of the present study.
+
+Driver management is not administrative overhead but a determinant of service quality. Dastani et al. (2024) connected registration and verification directly to reliability and passenger confidence, which supports objective two and the verification gate implemented in this system.
+
+Scale is not a precondition. Kumar and Singh (2023) found the benefits of digital transportation platforms present, and in some respects amplified, in smaller local settings. This supports the choice of a single municipality as the study environment.
+
+Adoption depends on convenience, reliability, and ease of use. Narayanan and Antoniou (2021) identified these as the decisive factors, and they align with the Technology Acceptance Model and with three of the four characteristics in the evaluation instrument.
+
+Two gaps in the reviewed work motivated the specific contribution of this study.
+
+The first is the **fare model**. Every system reviewed prices rides by distance, by time, or by demand. None addresses a setting where a local ordinance fixes the fare for each destination and mandates a discount for particular passengers. Pricing by lookup against a published schedule, with a statutory minimum and a discounted column, is a requirement produced by the study environment rather than borrowed from the literature.
+
+The second is **transparency as an outcome in its own right**. The reviewed literature treats fare display as a convenience feature. Where fares are fixed by ordinance but posted only at terminals, placing the schedule in the passenger's hand at the moment of decision is a substantive change in the relationship between the two parties, not a convenience.
+
+This study therefore adopts the matching and onboarding approaches established in the literature and adds a fare mechanism appropriate to a municipality where prices are set by ordinance rather than by the market.
+
+[[PB]]
+
+# Chapter 3 {-}
+
+# TECHNICAL BACKGROUND
+
+This chapter documents the technical foundation of the developed system: what is required to build it, what is required to run it, and how its parts are arranged.
+
+## 3.1 Software Requirements
+
+### Development Environment
+
+| Component | Specification |
+|:---|:---|
+| Integrated Development Environment | Android Studio Ladybug (2024.2.1) or later |
+| Java Development Kit | JDK 17 (bundled with Android Studio) |
+| Android Gradle Plugin | 8.7.3 |
+| Gradle | 8.11.1, pinned by the project wrapper |
+| Kotlin | 2.1.0 |
+| Compile SDK | Android API level 35 |
+| Target SDK | Android API level 34 |
+| Minimum SDK | Android API level 24 (Android 7.0 Nougat) |
+| Version control | Git, with the repository hosted on GitHub |
+| Operating system | Windows 10 or later, macOS 12 or later, or a current Linux distribution |
+
+The minimum SDK of API level 24 was chosen deliberately. Android 7.0 was released in 2016, and devices running it or later account for the overwhelming majority of Android devices still in use. Setting the floor lower would have required abandoning several libraries used by the project; setting it higher would have excluded drivers using older handsets, which is precisely the group the system needs to reach.
+
+### Runtime Environment for End Users
+
+| Component | Requirement |
+|:---|:---|
+| Operating system | Android 7.0 (API level 24) or later |
+| Connectivity | Mobile data or Wi-Fi; the application does not operate offline |
+| Storage | Approximately 30 MB for installation |
+| Permissions | Camera, for capturing a profile photograph; internet; notification posting on Android 13 and later |
+| Account | A valid email address for registration |
+
+### Third-Party Libraries and Services
+
+| Library or service | Version | Purpose |
+|:---|:---|:---|
+| Jetpack Compose BOM | 2024.12.01 | Declarative user interface toolkit |
+| Material 3 | via Compose BOM | Design system components and theming |
+| Firebase BOM | current stable | Version alignment across Firebase libraries |
+| Firebase Authentication | via Firebase BOM | Email and password sign-in and session management |
+| Firebase Realtime Database | via Firebase BOM | Live data storage and synchronization |
+| Firebase Cloud Storage | via Firebase BOM | Profile photographs and driver documents |
+| Firebase Cloud Messaging | via Firebase BOM | Notification delivery |
+| Kotlin Coroutines | bundled with Kotlin 2.1.0 | Asynchronous work and reactive data streams |
+| AndroidX Lifecycle ViewModel Compose | current stable | ViewModel integration with Compose |
+| Coil | 2.x | Loading remote images into Compose |
+| AndroidX Activity Compose | current stable | Activity result contracts for camera, gallery, and file creation |
+
+## 3.2 Hardware Requirements
+
+### Development Workstation
+
+| Component | Minimum | Recommended |
+|:---|:---|:---|
+| Processor | Dual-core x86-64, 2.0 GHz | Quad-core x86-64 or Apple Silicon |
+| Memory | 8 GB RAM | 16 GB RAM |
+| Storage | 20 GB free | 50 GB free, solid-state |
+| Display | 1280 × 800 | 1920 × 1080 or higher |
+| Network | Broadband, for dependency resolution and Firebase access | Broadband |
+
+The recommended memory figure is not decorative. Android Studio with the Gradle daemon and an emulator running will use most of 16 GB, and a build machine with 8 GB will complete builds but slowly.
+
+### Target Device
+
+| Component | Minimum | Recommended |
+|:---|:---|:---|
+| Operating system | Android 7.0 (API 24) | Android 11 or later |
+| Processor | Quad-core, 1.4 GHz | Octa-core |
+| Memory | 2 GB RAM | 3 GB RAM or more |
+| Storage available | 100 MB | 250 MB |
+| Display | 4.7 inches, 720 × 1280 | 6.0 inches, 1080 × 2340 |
+| Camera | Rear camera, for profile photograph capture | Any |
+| Connectivity | 3G mobile data | 4G LTE or Wi-Fi |
+
+### Server-Side Hardware
+
+The system requires no server hardware procured or maintained by the college. All backend functions are provided by Google Firebase, a managed backend-as-a-service platform. This is a deliberate architectural choice: a capstone project deployed to a municipal drivers' association cannot depend on a physical server that someone must house, power, secure, and administer after the researchers graduate.
+
+## 3.3 Programming Languages
+
+**Kotlin 2.1.0** is the language in which the entire application is written. Kotlin is the language Google designates as preferred for Android development. Three of its properties mattered to this project. Its type system distinguishes nullable from non-nullable references at compile time, which eliminates an entire category of runtime crash. Its coroutine support makes asynchronous work, of which a networked application has a great deal, readable as sequential code. Its data classes generate equality, copying, and destructuring automatically, which suits the model layer of this system where a data class per entity is the whole of the definition.
+
+**Kotlin DSL for Gradle** is used for the build configuration, in place of the older Groovy syntax, giving the build scripts the same type checking and editor support as the application code.
+
+**XML** is used for Android resources that are not expressible in Compose: the application manifest, string and colour resources, launcher icon definitions, the file provider path configuration, and the backup and data extraction rules.
+
+**Firebase Security Rules**, a JSON-based declarative language, is used to express server-side authorization for the Realtime Database and Cloud Storage.
+
+## 3.4 Development Tools
+
+**Android Studio** is the official integrated development environment for Android, and provided code editing, the Compose preview and layout inspector, the device emulator, the debugger, and Logcat for runtime diagnostics.
+
+**Gradle 8.11.1 with Android Gradle Plugin 8.7.3** manages dependency resolution, compilation, resource processing, and packaging. The Gradle wrapper is committed to the repository so that every machine building the project uses the same Gradle version, which removes a class of build failure caused by version drift between developers.
+
+**Git and GitHub** provide version control and a remote repository. Development proceeded on a feature branch, with the history serving both as a safety net and as a record of the development sequence.
+
+**Figma** was used to prepare interface wireframes and the visual design before implementation, so that layout decisions were settled before code was written.
+
+**Firebase Console** provides the web administration interface for the backend: creating the database, defining security rules, inspecting stored data, managing authentication, and reviewing usage.
+
+**Graphviz and Matplotlib** were used to generate the system diagrams presented in Chapter 4 from textual descriptions, so that a change to a diagram is a change to a text file rather than a manual redraw.
+
+## 3.5 Database Technologies
+
+### Firebase Realtime Database
+
+The system stores its data in **Firebase Realtime Database**, a cloud-hosted NoSQL database that holds all data as a single JSON tree and synchronizes changes to every connected client as they occur.
+
+The Realtime Database was selected over a relational database and over Cloud Firestore for reasons specific to this application.
+
+**Live synchronization is the core requirement.** A ride-hailing application is a system in which two parties must see the same state at the same time. When a driver accepts a request, the passenger's screen must change without the passenger doing anything. The Realtime Database delivers this through persistent listeners rather than polling, which is the natural fit for the problem.
+
+**Latency matters more than query power.** The Realtime Database offers lower latency than Cloud Firestore for small, frequent updates, which is the access pattern of ride status changes. The queries this system performs are simple lookups and filters by a single field; it does not need the compound query support that would favour Firestore.
+
+**Cost at the scale of this study is zero.** The Realtime Database free tier provides 1 GB of storage, 10 GB of monthly transfer, and 100 simultaneous connections, which is well beyond what a municipal pilot will consume.
+
+**Offline caching is built in.** The client library caches recent data and re-synchronizes when the connection returns, which mitigates the intermittent connectivity common in the study area.
+
+The trade-off accepted is that a JSON tree provides no schema enforcement and no joins. This is mitigated by defining every entity as a Kotlin data class with default values for every field, so that the application layer imposes the structure the database does not, and by denormalizing the few relationships the system needs.
+
+### Firebase Authentication
+
+Account creation, sign-in, session persistence, and password reset are handled by **Firebase Authentication** using the email and password provider. No password is ever stored or transmitted by the application itself; credentials are exchanged directly between the Firebase client library and Google's authentication service, and the application receives only an opaque user identifier and a session token.
+
+### Firebase Cloud Storage
+
+Profile photographs and driver documents are stored in **Firebase Cloud Storage**, an object store. Only the resulting download URL is written into the Realtime Database, keeping binary data out of the JSON tree.
+
+### Data Organization
+
+The database is organized as seven top-level nodes, documented in Table 8 and Figure 11.
+
+## 3.6 Network Architecture
+
+The system uses a **client to cloud** architecture. There is no intermediate application server: the Android client communicates directly with Google Firebase services over the public internet.
+
+Communication uses two channels. Authentication, storage operations, and one-off database reads and writes travel over **HTTPS**, secured by TLS 1.2 or later. Live database synchronization travels over a **persistent WebSocket connection** that the Firebase client library opens and maintains, over which the server pushes changes as they occur.
+
+This arrangement has three consequences worth stating. It removes the need for the college to operate a server. It means that authorization must be enforced by Firebase Security Rules on the server side, because there is no application server in the path to enforce it. And it means the application is unusable without connectivity, which is recorded as a limitation in Section 1.5.
+
+Firebase's endpoints are reached through Google's global content delivery infrastructure, so latency from Talibon is determined by the nearest edge location rather than by the distance to a single origin server.
+
+## 3.7 Software Architecture
+
+The application follows the **Model-View-ViewModel (MVVM)** pattern with an additional repository layer, which is the architecture Google recommends for Android applications.
+
+**Model.** Kotlin data classes representing the entities the system handles: `User`, `Driver`, `Ride`, `RideRequest`, `FareStop`, `FareConfig`, `Complaint`, and `AppNotification`. Every field carries a default value, which is what allows Firebase to deserialize a partial record without failing.
+
+**View.** Composable functions written in Jetpack Compose. Views hold no business logic. They render the state given to them and report user events upward. Because Compose is declarative, a change in state causes the affected part of the interface to be recomposed automatically, which removes the manual view-updating code that a traditional Android view hierarchy requires.
+
+**ViewModel.** One ViewModel per role and concern: `AuthViewModel`, `PassengerViewModel`, `DriverViewModel`, `AdminViewModel`, `ProfileViewModel`, and `SupportViewModel`. Each exposes state as a `StateFlow` and accepts events as method calls. ViewModels survive configuration changes such as screen rotation, so state is not lost when a device is turned.
+
+**Repository.** `AuthRepository`, `RideRepository`, `DriverRepository`, `AdminRepository`, `FareRepository`, and `SupportRepository` mediate between ViewModels and the data source. They expose suspending functions for one-off operations and `Flow` streams for live data. Because ViewModels depend on repositories rather than on Firebase directly, the data source could be replaced without touching any ViewModel.
+
+**Service.** `FirebaseService` is the single point at which the application touches the Firebase Realtime Database. Live listeners are wrapped in `callbackFlow`, which converts Firebase's listener callbacks into Kotlin `Flow` streams and, importantly, removes the listener when the collecting coroutine is cancelled. This prevents the memory leaks that unbalanced listener registration causes.
+
+**Domain logic.** Three objects hold logic that belongs to no single screen: `FareEngine`, which prices a ride from the fare table; `ReportBuilder`, which produces the exported reports; and `PasswordRules`, which evaluates password strength.
+
+Data flows in one direction. A user event goes from View to ViewModel to Repository to Service to Firebase. A data change comes back from Firebase through a Flow, through the Repository, into the ViewModel's state, and causes the View to recompose. This unidirectional flow makes the state of the interface a function of the data, which makes behaviour predictable and defects easier to locate.
+
+## 3.8 Security Features
+
+**Authentication.** Access requires an account authenticated by Firebase Authentication. Passwords are never handled by the application; they are transmitted directly to Google's authentication service over TLS and stored there as salted hashes. The application holds only a session token and an opaque user identifier.
+
+**Password policy.** Registration enforces a policy stronger than the Firebase minimum. A password must be at least eight characters and must contain an uppercase letter, a lowercase letter, and a digit. The registration screen shows each rule and marks it as satisfied as the user types, so that a rejected password is a rare event rather than the normal experience of registering.
+
+**Role-based access control.** Every account carries a `userType` of passenger, driver, or administrator, which determines which interface is presented after sign-in. A driver additionally carries a `verificationStatus`, and a driver whose status is not approved cannot accept ride requests regardless of what the interface offers.
+
+**Server-side authorization.** Because the client speaks to Firebase directly, authorization is enforced by Firebase Security Rules evaluated on the server. The rules restrict a user to reading and writing their own profile, restrict driver verification status to administrators, and make the fare table readable by all authenticated users but writable only by administrators. Client-side checks are treated as user interface convenience, not as security.
+
+**Encryption in transit.** All communication uses TLS 1.2 or later. No data travels in plain text.
+
+**Secrets management.** API keys and other confidential configuration are held in a `.env` file that is excluded from version control by `.gitignore`. The build reads that file and injects the values as manifest placeholders and build configuration fields. A committed `.env.example` documents which keys are required without disclosing their values. The Firebase configuration file `google-services.json` is likewise excluded from version control.
+
+**No financial data.** The system collects no card numbers, no bank details, and no payment credentials of any kind. Fares are settled in cash between passenger and driver. This removes the entire category of risk associated with payment data.
+
+**Data minimization.** The system collects name, email address, mobile number, date of birth, and an optional photograph for all users, plus licence and tricycle details for drivers. It collects nothing beyond what the service requires to operate.
+
+**Session handling.** Sessions persist across application restarts, which is a convenience feature, but signing out clears the session immediately and returns the user to the sign-in screen.
+
+**Audit trail.** Every ride, every verification decision, and every concern is stored with timestamps, producing a record that can be examined after the fact and exported for review.
+
+## 3.9 System Architecture
+
+Figure 3 presents the architecture of the system as four layers: the presentation layer containing the three role-specific interfaces, the application layer containing the ViewModels and domain logic, the data layer containing the repositories and the Firebase service, and the backend layer containing the four Firebase services.
+
+![Figure 3. System Architecture of the Smart Tricycle Ride and Driver Onboarding System](figures/fig03_system_architecture.png){width=6.0in}
+
+The arrangement is deliberately layered so that each layer depends only on the one below it. A screen knows about its ViewModel and nothing further. A ViewModel knows about repositories and not about Firebase. A repository knows about the Firebase service and not about the shape of the interface. This means a change to how data are stored affects one layer, and a change to how a screen looks affects one other, which is what makes a system of this size maintainable by a team of three.
+
+[[PB]]
+# Chapter 4 {-}
+
+# METHODOLOGY, RESULTS, AND DISCUSSION
+
+## 4.1 Requirements Analysis
+
+Requirements were derived from three sources: the problems documented in the needs assessment, the objectives set out in Section 1.3, and the published FeTODAT fare schedule, which imposes requirements of its own on how fares must be computed.
+
+### Functional Requirements
+
+: Table 2. Functional Requirements
+
+| ID | Requirement | Role | Objective served |
+|:---|:---|:---|:---|
+| FR-01 | The system shall allow a user to register with a full name, date of birth, email address, mobile number, and password. | All | 1, 2 |
+| FR-02 | The system shall enforce a password of at least eight characters containing an uppercase letter, a lowercase letter, and a digit. | All | 2 |
+| FR-03 | The system shall require the user to accept the terms of service and privacy notice before an account is created. | All | 2 |
+| FR-04 | The system shall authenticate a user by email address and password. | All | 1, 2 |
+| FR-05 | The system shall keep a user signed in across application restarts until they sign out. | All | 4 |
+| FR-06 | The system shall allow a user to edit their profile and set a photograph from the camera or the gallery. | All | 6 |
+| FR-07 | The system shall allow a user to request a password reset by email. | All | 2 |
+| FR-08 | The system shall present a first-time user with an introductory carousel, shown once. | All | 6 |
+| FR-09 | The system shall allow a passenger to select a pickup point from a defined list. | Passenger | 1 |
+| FR-10 | The system shall allow a passenger to select a destination by searching the fare table by stop name or zone. | Passenger | 1 |
+| FR-11 | The system shall allow a passenger to select the regular or the discounted rate column. | Passenger | 1 |
+| FR-12 | The system shall allow a passenger to specify between one and five passengers and to declare luggage. | Passenger | 1 |
+| FR-13 | The system shall display the computed fare, itemized, before the passenger submits the request. | Passenger | 1 |
+| FR-14 | The system shall price a ride from the posted rate for the selected destination and rate column, applying the ordinance minimum where the posted rate falls below it, and multiplying by the number of passengers where fares are charged per head. | Passenger | 1 |
+| FR-15 | The system shall broadcast a submitted ride request to all available, verified drivers. | Passenger, Driver | 3 |
+| FR-16 | The system shall expire an unaccepted ride request after five minutes. | System | 3 |
+| FR-17 | The system shall match a request to the first driver who accepts it and withdraw it from all others. | System | 3, 4 |
+| FR-18 | The system shall show the passenger the ride status as it changes, from acceptance through to completion. | Passenger | 5 |
+| FR-19 | The system shall allow a passenger to rate a completed ride. | Passenger | 6 |
+| FR-20 | The system shall show a passenger their history of completed rides. | Passenger | 5 |
+| FR-21 | The system shall allow a driver to submit a licence number, licence expiry date, and tricycle number. | Driver | 2 |
+| FR-22 | The system shall prevent a driver whose verification status is not approved from accepting ride requests. | Driver | 2 |
+| FR-23 | The system shall allow a driver to toggle their availability between online and offline. | Driver | 3 |
+| FR-24 | The system shall show a driver the open requests with a visible countdown to expiry. | Driver | 3 |
+| FR-25 | The system shall allow a driver to advance a ride through arriving, arrived, in progress, and completed. | Driver | 5 |
+| FR-26 | The system shall show a driver their completed rides and total earnings. | Driver | 4, 5 |
+| FR-27 | The system shall allow an administrator to view pending driver applications with the submitted credentials. | Administrator | 2 |
+| FR-28 | The system shall allow an administrator to approve or reject a driver application. | Administrator | 2 |
+| FR-29 | The system shall allow an administrator to load the published FeTODAT schedule into the fare table in a single operation. | Administrator | 1 |
+| FR-30 | The system shall allow an administrator to search, filter, edit, add, deactivate, and delete entries in the fare table. | Administrator | 1 |
+| FR-31 | The system shall flag fare entries requiring verification and allow an administrator to list only those entries and clear the flag. | Administrator | 1 |
+| FR-32 | The system shall allow an administrator to edit the minimum fares, the flat rates, and whether fares are charged per passenger. | Administrator | 1 |
+| FR-33 | The system shall allow a passenger or driver to file a concern under a category with a description. | Passenger, Driver | 5 |
+| FR-34 | The system shall allow an administrator to review a concern, record a note, and mark it open, in review, or resolved. | Administrator | 5 |
+| FR-35 | The system shall notify a user in-app of events concerning them and show a count of unread notifications. | All | 3, 5 |
+| FR-36 | The system shall show an administrator live counts of drivers, verification states, active rides, and completed rides. | Administrator | 5 |
+| FR-37 | The system shall produce ride activity, driver performance, and concern reports for a selected month, year, or the whole record. | Administrator | 5 |
+| FR-38 | The system shall export a report as a comma-separated-value file to a location chosen by the administrator, or share it to another application. | Administrator | 5 |
+
+### Non-Functional Requirements
+
+: Table 3. Non-Functional Requirements
+
+| ID | Category | Requirement |
+|:---|:---|:---|
+| NFR-01 | Usability | A passenger shall be able to complete a booking in no more than six interactions from the home screen. |
+| NFR-02 | Usability | Every screen shall be operable in both light and dark themes. |
+| NFR-03 | Usability | Lists that load from the network shall display a skeleton placeholder rather than an empty screen. |
+| NFR-04 | Usability | Lists shall support pull-to-refresh. |
+| NFR-05 | Performance | A ride request shall appear on an available driver's device within three seconds of submission under normal mobile data conditions. |
+| NFR-06 | Performance | A destination search across the fare table shall return results without perceptible delay. |
+| NFR-07 | Reliability | A database operation that does not complete within twelve seconds shall fail with an actionable message rather than leave the interface waiting. |
+| NFR-08 | Reliability | The application shall not lose interface state when the device is rotated. |
+| NFR-09 | Security | Authorization shall be enforced by server-side rules, not solely by the interface. |
+| NFR-10 | Security | Confidential configuration shall be excluded from version control. |
+| NFR-11 | Maintainability | Fare rates shall be changeable without releasing a new version of the application. |
+| NFR-12 | Portability | The application shall run on Android 7.0 and later. |
+| NFR-13 | Compatibility | Exported reports shall open without conversion in Microsoft Excel, Google Sheets, and LibreOffice Calc. |
+| NFR-14 | Scalability | The system shall operate within the free tier of the backend platform at the scale of the study. |
+
+## 4.2 Requirements Documentation
+
+### User Requirements
+
+: Table 4. User Requirements by Role
+
+| Role | What the user needs to be able to do |
+|:---|:---|
+| Passenger | Create an account and stay signed in; find out what a ride will cost before agreeing to it; request a ride without leaving the building; know that a driver has accepted and where the ride stands; keep a record of past rides; report a problem and receive a response |
+| Driver | Register and have credentials checked; control when they are receiving requests; see incoming requests with enough information to decide; accept before another driver does; record progress through the ride; see what has been earned |
+| Administrator | Check a driver's credentials before allowing them to operate; keep the fare table correct; see what is happening now; answer concerns; produce a record of activity for a month or a year |
+
+### System Requirements
+
+: Table 5. System Requirements
+
+| Category | Requirement |
+|:---|:---|
+| Platform | Native Android application, API level 24 and above |
+| Backend | Firebase Authentication, Realtime Database, Cloud Storage, and Cloud Messaging |
+| Data synchronization | Persistent listeners delivering changes to connected clients without polling |
+| Concurrency | A ride request must be accepted by exactly one driver; acceptance removes the request from all other devices |
+| Fare source | The published FeTODAT schedule, held in the database and editable by an administrator |
+| Reporting | Comma-separated-value export, written through the system file picker or shared to another application |
+| Offline behaviour | The application requires connectivity; recent data are cached by the client library and re-synchronized on reconnection |
+
+### Use Case Descriptions
+
+: Table 6. Use Case Description: Book a Ride
+
+| Field | Description |
+|:---|:---|
+| Use case name | Book a Ride |
+| Identifier | UC-04 |
+| Primary actor | Passenger |
+| Secondary actors | Driver, Firebase Realtime Database |
+| Preconditions | The passenger is signed in. The fare table has been loaded. At least one verified driver is online. |
+| Trigger | The passenger taps Book Ride. |
+| Main flow | 1. The passenger selects a pickup point. 2. The passenger searches for and selects a destination stop. 3. The passenger selects the regular or discounted rate column. 4. The passenger sets the number of passengers and declares any luggage. 5. The system displays the itemized fare. 6. The passenger submits the request. 7. The system writes the request and broadcasts it to available drivers. 8. A driver accepts. 9. The system creates the ride, removes the request, and notifies both parties. 10. The passenger's screen switches to ride tracking. |
+| Alternative flow A | At step 5 the passenger judges the fare unacceptable and returns to step 2 to select a different destination. |
+| Alternative flow B | At step 8 no driver accepts within five minutes; the request expires and the passenger is returned to the booking screen. |
+| Alternative flow C | The passenger cancels the request before a driver accepts; the request is removed. |
+| Postconditions | A ride record exists with an assigned driver, an agreed fare, and a status of accepted. |
+| Exceptions | Connectivity is lost during submission; the operation fails after twelve seconds with a message and the request is not created. |
+
+: Table 7. Use Case Description: Verify a Driver
+
+| Field | Description |
+|:---|:---|
+| Use case name | Verify a Driver |
+| Identifier | UC-16 |
+| Primary actor | Administrator |
+| Secondary actors | Driver |
+| Preconditions | The administrator is signed in. At least one driver application has a status of pending. |
+| Trigger | The administrator opens the Verify tab, which carries a badge showing the number of pending applications. |
+| Main flow | 1. The system lists pending applications with the driver's name, contact details, licence number, licence expiry, and tricycle number. 2. The administrator reviews the submitted details. 3. The administrator approves the application. 4. The system sets the verification status to approved. 5. The system notifies the driver. 6. The driver becomes able to go online and accept requests. |
+| Alternative flow | At step 3 the administrator rejects the application; the status is set to rejected, the driver is notified, and the driver remains unable to accept requests. |
+| Postconditions | The driver's verification status is approved or rejected, and the driver has been notified. |
+| Exceptions | The write fails; the status is unchanged and an error is displayed. |
+
+## 4.3 System Design
+
+### Context Diagram
+
+The context diagram places the system in relation to everything outside it, showing the four external entities and the data that pass between them and the system.
+
+![Figure 4. Context Diagram (Data Flow Diagram Level 0)](figures/fig04_context_diagram.png){width=6.0in}
+
+### Data Flow Diagram
+
+Decomposing the single process of the context diagram gives six processes and seven data stores.
+
+![Figure 5. Data Flow Diagram Level 1](figures/fig05_dfd_level1.png){width=6.0in}
+
+### Entity Relationship Diagram
+
+Although the Realtime Database is not relational, the entities it holds and the relationships between them can be expressed in the same terms, which is what the following diagram does. Relationships that would be foreign keys in a relational database are stored as identifier fields.
+
+![Figure 6. Entity Relationship Diagram](figures/fig06_erd.png){width=5.89in}
+
+### Use Case Diagram
+
+![Figure 7. Use Case Diagram](figures/fig07_use_case.png){width=6.0in}
+
+### Activity Diagram
+
+The activity diagram traces the booking process, the central transaction of the system, including the points at which it can end without a ride.
+
+![Figure 8. Activity Diagram: Booking a Ride](figures/fig08_activity_booking.png){width=6.0in}
+
+### Sequence Diagram
+
+The sequence diagram shows the same transaction as an exchange between components over time, distinguishing calls made by the application from changes pushed by the database to live listeners. The pushed changes are what make the two devices agree without either polling the other.
+
+![Figure 9. Sequence Diagram: Ride Request to Completion](figures/fig09_sequence_booking.png){width=6.0in}
+
+### Class Diagram
+
+![Figure 10. Class Diagram](figures/fig10_class_diagram.png){width=5.26in}
+
+### Database Design
+
+The database is a JSON tree with seven top-level nodes.
+
+: Table 8. Realtime Database Node Structure
+
+| Node | Key | Contents | Written by |
+|:---|:---|:---|:---|
+| `users` | user identifier | Email, mobile number, given and family name, date of birth, role, photograph URL, timestamps | The account holder |
+| `drivers` | user identifier | Licence number and expiry, tricycle number, verification status, availability, rating, ride count, documents | The driver; verification status by an administrator |
+| `rideRequests` | request identifier | Passenger identifier, pickup, destination, passenger count, luggage, priced fare, fare stop, rate column, requested and expiry timestamps | The passenger; deleted on acceptance or expiry |
+| `rides` | ride identifier | Passenger and driver identifiers, pickup, destination, status, fares, fare stop, rate column, lifecycle timestamps, passenger count, luggage, notes | The system on acceptance; status by the driver |
+| `config/fare` | fixed | Minimum regular fare, minimum discounted fare, flat rates, per-passenger flag, source citation, seed timestamp | An administrator |
+| `config/fareStops` | stop identifier | Zone, name, regular rate, discounted rate, active flag, review flag, transcription confidence, note | An administrator |
+| `complaints` | complaint identifier | Reporter identifier, name and role, category, description, status, administrator note, timestamps | The reporter; status and note by an administrator |
+| `notifications` | user identifier, then notification identifier | Title, message, type, read flag, timestamp | The system |
+
+![Figure 11. Realtime Database Schema](figures/fig11_database_schema.png){width=5.24in}
+
+The fare table as seeded from the published FeTODAT schedule comprises 240 destinations across twelve zones.
+
+: Table 9. Fare Table Composition by Zone
+
+| Zone | Stops | Flagged for verification | Disabled |
+|:---|---:|---:|---:|
+| Balintawak | 31 | 1 | 0 |
+| Santo Niño | 38 | 0 | 0 |
+| San Francisco | 21 | 8 | 0 |
+| San Agustin | 16 | 0 | 0 |
+| Bagacay, Burgos and Rizal | 16 | 0 | 0 |
+| Zamora | 22 | 0 | 0 |
+| San Carlos | 10 | 10 | 0 |
+| Tanghaligue | 14 | 3 | 0 |
+| San Isidro | 32 | 3 | 1 |
+| San Jose | 14 | 14 | 0 |
+| San Pedro | 11 | 3 | 0 |
+| San Roque | 15 | 4 | 2 |
+| **Total** | **240** | **46** | **3** |
+
+Regular rates in the seeded table run from ₱20.00 to ₱150.00 with a mean of ₱41.00, above the ordinance minimum of ₱15.00 for regular passengers and ₱12.00 for discounted passengers. In addition to the 240 destinations, the schedule fixes two flat rates that are not tied to a numbered stop: ₱15.00 for any point within Poblacion, and ₱25.00 for the round trip between the Talibon Integrated Bus Terminal and NCBI. Both are offered to passengers as destinations in their own right.
+
+Forty-six entries carry a verification flag. These are rows that could not be read from the posted sheet with full confidence, rows where two transcription passes disagreed, and rows that are internally inconsistent, such as four entries where the discounted rate exceeds the regular rate. Three entries are disabled because no usable rate could be read: one where the fare was cut off at the edge of the photograph, one where only the discounted rate was legible, and one where the transcribed regular rate of ₱740.00 falls so far outside the range of every neighbouring entry that it was treated as a misprint rather than a price. A disabled entry cannot be selected by a passenger and therefore cannot price a ride. The administrative interface lists flagged entries separately so that they can be checked against the physical sheet and cleared.
+
+This treatment is a deliberate design position. The alternative, which is to enter every transcribed number and let the application charge whatever was read, would produce a system that is wrong quietly. Flagging uncertainty and disabling unusable entries makes the system wrong loudly, which is the failure mode that can be corrected.
+
+### Interface Design
+
+The interface follows Material 3 with a green palette derived from the college's colours, and supports both light and dark themes. Navigation is by a bottom bar of four tabs for passengers and drivers and five for administrators, which keeps every primary destination one tap from every other.
+
+![Figure 13. Screen Navigation Flow](figures/fig13_screen_flow.png){width=6.0in}
+
+Several decisions in the interface follow from constraints identified during design. The destination picker is a full-screen searchable list rather than a dropdown, because a dropdown of 240 entries is unusable. The driver's request card carries a countdown, because a driver deciding whether to accept needs to know how long the decision remains available. Lists show skeleton placeholders while loading rather than an empty screen, because an empty screen reads as a failure. The fare is itemized rather than given as a single figure, because a passenger who can see how the number was reached can check it against the posted sheet.
+
+## 4.4 Software Development
+
+### Development Approach
+
+Development proceeded through the phases of the Waterfall model shown in Figure 12, with the implementation phase organized into successive modules so that each could be tested before the next was begun.
+
+![Figure 12. Waterfall Model of the Software Development Life Cycle](figures/fig12_waterfall.png){width=3.7in}
+
+: Table 10. Development Milestones and Deliverables
+
+| Milestone | Deliverable | Verification |
+|:---|:---|:---|
+| Project scaffolding | Gradle build, Firebase configuration, theme, navigation shell | Application builds and launches |
+| Authentication | Registration, sign-in, session persistence, password policy, terms consent | An account can be created and survives a restart |
+| Role routing | Account type selection and role-based navigation | Each role reaches its own interface |
+| Passenger booking | Pickup and destination selection, fare display, request submission | A request is written to the database |
+| Driver matching | Availability toggle, request list with countdown, acceptance | A request accepted by one driver disappears from another's device |
+| Ride lifecycle | Status progression, shared tracking view, completion and rating | Both devices show the same status |
+| Driver onboarding | Credential submission, administrator verification, gating | An unverified driver cannot accept a request |
+| Concerns and notifications | Concern submission, administrative review, notification centre | A concern reaches the administrator and a response reaches the reporter |
+| Fare table | Seed import, search, filter, edit, review queue, global rates | 240 stops load and price rides correctly |
+| Reporting | Period selection, summary, three report types, export and share | A file opens correctly in a spreadsheet application |
+| Refinement | Profile photographs, onboarding carousel, skeleton loading, pull-to-refresh, dark theme | Verified by inspection on device |
+
+### Coding Standards
+
+Kotlin's official style guide was followed throughout. Names describe intent rather than type. Comments explain why a decision was made where the reason is not evident from the code, and are omitted where the code already says what it does. Each file holds one concern. Every screen is a composable function that receives state and emits events, holding no logic of its own.
+
+### Version Control
+
+All work was committed to a Git repository hosted on GitHub, on a dedicated development branch. Commits were made at the completion of each coherent unit of work, producing a history in which any change can be located and, if necessary, reverted.
+
+### Integration
+
+Integration was continuous rather than deferred. Each module was connected to Firebase as it was written, so that failures in synchronization, deserialization, or authorization surfaced immediately rather than accumulating to the end of development. Two classes of defect were found this way and would have been considerably harder to locate later: a mismatch between the package name registered in the Firebase console and the package name in the application, which caused the build to fail at the Google Services processing step; and a database write that never completed because the Realtime Database instance had not been created, which the application originally presented as an indefinite loading indicator and which was corrected by introducing a twelve-second timeout with an actionable message.
+
+## 4.5 Testing
+
+Testing was conducted at four levels, followed by performance and security testing.
+
+### Unit Testing
+
+Unit testing verified individual functions in isolation, concentrating on the logic that produces numbers, since an error there produces a wrong fare rather than a visible failure.
+
+: Table 11. Unit Test Cases and Results
+
+| ID | Test case | Expected result | Result |
+|:---|:---|:---|:---|
+| UT-01 | Price a regular ride to a stop with a posted rate above the minimum | The posted regular rate is returned | Pass |
+| UT-02 | Price a discounted ride to the same stop | The posted discounted rate is returned | Pass |
+| UT-03 | Price a ride where the posted rate falls below the ordinance minimum | The minimum for the applicable column is returned and flagged as applied | Pass |
+| UT-04 | Price a ride for three passengers with per-head charging enabled | The per-passenger rate multiplied by three is returned | Pass |
+| UT-05 | Price a ride for three passengers with per-head charging disabled | The per-passenger rate is returned unmultiplied | Pass |
+| UT-06 | Evaluate a password of seven characters | Rejected as too short | Pass |
+| UT-07 | Evaluate a password of eight characters with no digit | Rejected | Pass |
+| UT-08 | Evaluate a compliant password | Accepted | Pass |
+| UT-09 | Bucket a ride timestamped in a given month into that month's report period | The ride is included | Pass |
+| UT-10 | Bucket a ride with an unparseable timestamp | The ride is excluded rather than assigned to the current period | Pass |
+| UT-11 | Escape a report field containing a comma and a quotation mark | The field is quoted and internal quotes are doubled | Pass |
+| UT-12 | Derive available report periods from a set of rides | Only periods containing rides are offered, newest first | Pass |
+
+### Integration Testing
+
+Integration testing verified that components work together and that the application and Firebase agree.
+
+: Table 12. Integration Test Cases and Results
+
+| ID | Test case | Expected result | Result |
+|:---|:---|:---|:---|
+| IT-01 | Register an account and read it back | The stored record matches what was submitted | Pass |
+| IT-02 | Sign in, close the application, and reopen it | The session is restored without re-entering credentials | Pass |
+| IT-03 | Submit a ride request from one device | The request appears on a second device signed in as an available driver | Pass |
+| IT-04 | Accept a request on one driver device | The request disappears from a second driver device | Pass |
+| IT-05 | Advance ride status on the driver device | The passenger device reflects the new status without user action | Pass |
+| IT-06 | Load the fare table from the administrative interface | 240 stops are written and appear on a passenger device | Pass |
+| IT-07 | Edit a fare on the administrative device | The new rate is used by the next booking on a passenger device | Pass |
+| IT-08 | Approve a driver on the administrative device | The driver's device gains the ability to go online, and a notification is received | Pass |
+| IT-09 | File a concern from a passenger device | The concern appears in the administrative concerns list with a badge | Pass |
+| IT-10 | Upload a profile photograph | The image is stored and the URL is written to the user record | Pass |
+
+### System Testing
+
+System testing exercised complete workflows end to end.
+
+: Table 13. System Test Cases and Results
+
+| ID | Scenario | Expected result | Result |
+|:---|:---|:---|:---|
+| ST-01 | A new passenger installs the application, sees the carousel, registers, and books a ride | The full path completes and a ride record is created | Pass |
+| ST-02 | A new driver registers, submits credentials, is rejected, and attempts to go online | The driver cannot accept requests | Pass |
+| ST-03 | The same driver is subsequently approved and accepts a ride | The ride proceeds to completion | Pass |
+| ST-04 | A ride request receives no acceptance | The request expires after five minutes and the passenger is returned to booking | Pass |
+| ST-05 | A ride is carried through to completion and rated | The ride appears in both parties' history with the correct fare | Pass |
+| ST-06 | An administrator exports a monthly ride report | The file contains every ride in that month and opens in a spreadsheet application | Pass |
+| ST-07 | A returning user reopens the application | The welcome screen is shown and the session is restored to the correct role | Pass |
+| ST-08 | The device is rotated during booking | Entered values are retained | Pass |
+| ST-09 | The application is used with the device in dark theme | Every screen renders legibly | Pass |
+| ST-10 | Connectivity is lost during a booking | The operation fails within twelve seconds with an actionable message | Pass |
+
+### User Acceptance Testing
+
+User acceptance testing was conducted with respondents drawn from the two user groups, using the application under real conditions for the evaluation period. Respondents were asked to complete representative tasks without assistance: register an account, book a ride to a named destination, and for drivers, go online and accept a request. Observations and the difficulties encountered were recorded, and the outcomes are reported in Section 4.9 together with the questionnaire results.
+
+*[Task completion rates and observed difficulties are to be recorded following the evaluation period.]*
+
+### Performance Testing
+
+Performance was assessed against the targets in Table 3. Request propagation was measured as the interval between a passenger submitting a request and the request appearing on a driver's device. Destination search was assessed by observation across the full 240-entry table. Application launch time to the first interactive screen was measured on a representative low-specification device.
+
+*[Measured figures are to be recorded following the evaluation period.]*
+
+### Security Testing
+
+: Table 14. Security Test Cases and Results
+
+| ID | Test case | Expected result | Result |
+|:---|:---|:---|:---|
+| SEC-01 | Attempt to read another user's profile record while signed in as a different user | The read is refused by the database rules | Pass |
+| SEC-02 | Attempt to change a driver's verification status while signed in as that driver | The write is refused | Pass |
+| SEC-03 | Attempt to write to the fare table while signed in as a passenger | The write is refused | Pass |
+| SEC-04 | Attempt to sign in with an incorrect password | Access is denied with a message that does not disclose whether the account exists | Pass |
+| SEC-05 | Register with a password that does not meet the policy | Registration is prevented at the interface and the reason is shown | Pass |
+| SEC-06 | Inspect the repository for confidential values | No API key, service configuration, or credential is present in version control | Pass |
+| SEC-07 | Sign out and attempt to return to a role interface | The user is returned to the sign-in screen | Pass |
+| SEC-08 | Inspect network traffic during use | All traffic is encrypted; no plain-text transmission is observed | Pass |
+
+## 4.6 Prototype Description
+
+The delivered system is a single Android application that presents one of three interfaces according to the role of the signed-in account.
+
+**On first launch**, a new user is shown an introductory carousel of five screens explaining what the application does. The carousel appears once. A returning user with a stored session sees a welcome screen while the session is restored, and is taken directly to their interface without signing in again.
+
+**The passenger interface** has four tabs. *Home* shows any ride in progress, or the booking entry point. Booking is a single scrolling screen: pickup point, destination, rate column, passenger count, luggage, and notes, with the itemized fare appearing as soon as a destination is chosen. Submitting a request switches the screen to a searching state, and then to a tracking view with a status timeline once a driver accepts. On completion the passenger is shown a summary and invited to rate the ride. *History* lists completed rides. *Support* provides the concern form and contact details. *Profile* holds profile editing, the photograph picker, the theme switch, the terms and privacy notice, and sign-out.
+
+**The driver interface** has four tabs. *Dashboard* shows the availability toggle, total earnings, and any ride in progress with the button that advances it to its next state. *Requests* lists open requests, each with the route, the fare, the rate column, the passenger count, the declared luggage, and a countdown to expiry. *History* lists completed rides. *Profile* mirrors the passenger's, with the addition of a card showing the driver's credentials and verification status.
+
+**The administrator interface** has five tabs. *Verify* lists driver applications, badged with the number pending, with approve and reject actions. *Concerns* lists reported concerns, badged with the number unresolved, with status and note actions. *Monitor* is divided into a live view showing counts and recent rides, and a reports view offering period selection, a summary, and export. *Fares* presents the fare table with search, zone filters, a review queue, per-entry editing, and the global rates dialog. *Profile* is as for the other roles.
+
+A notification centre is reachable from the passenger and driver home screens, showing an unread count and allowing individual or bulk marking as read.
+
+## 4.7 Implementation Plan
+
+### Deployment
+
+The application is distributed to users as a signed release package. Two distribution routes are available and neither requires a paid developer account.
+
+The primary route is **Firebase App Distribution**, which is included in the platform's free tier. Testers are invited by email address and receive a link that installs the application, and subsequent releases are pushed to the same group. App Distribution records which tester installed which version, which provides a verifiable record of participation in the evaluation.
+
+The secondary route is **direct distribution of the installation package**, published as a release on the project's repository and circulated as a link or a QR code. This requires the user to permit installation from outside the application store, so an illustrated installation guide is provided as part of the user manual in Appendix I.
+
+Publication to the Google Play Store was not pursued. It requires a one-time developer registration fee and, for new individual accounts, a closed testing period before public release, neither of which suits the timeline of a capstone study. The application is not architecturally prevented from being published there later.
+
+Backend deployment requires no hardware. The Firebase project is created through the web console, the database is initialized, the security rules are published, and the fare table is loaded once through the administrative interface.
+
+### Training
+
+Training is organized by role and kept short, on the reasoning that a system requiring lengthy training in a setting like this one will not be adopted.
+
+**Passengers** receive the introductory carousel within the application and a one-page illustrated guide covering installation, registration, and booking.
+
+**Drivers** receive a hands-on orientation session conducted with the cooperation of the drivers' association, covering installation, registration, credential submission, going online, accepting a request, and advancing a ride to completion. Drivers are the group for whom adoption is least certain and for whom in-person orientation matters most.
+
+**Administrators** receive a session covering driver verification, the fare table including the review queue, concern handling, and report export, together with the administrator section of the user manual.
+
+### Maintenance
+
+**Corrective maintenance** addresses defects reported during and after the evaluation. Reports arrive through the in-application concern form under the application problem category, which places them in front of the administrator without a separate channel.
+
+**Data maintenance** is the ongoing correction of the fare table. The forty-six flagged entries are to be checked against the physical posted sheet and cleared, and the three disabled entries are to be given rates or removed. When the drivers' association revises its schedule, the administrator amends the affected entries; no new release of the application is required.
+
+**Adaptive maintenance** covers changes required by new Android versions and by changes to the Firebase platform. Google requires applications distributed through the Play Store to target a recent API level, which is a consideration should publication there be pursued.
+
+**Handover.** The source code, this documentation, the database schema, and the administrator credentials are turned over to Talibon Polytechnic College at the conclusion of the study, so that the system does not depend on the continued availability of the researchers.
+
+## 4.8 Implementation Results
+
+### Modules Delivered
+
+: Table 15. Application Modules and Their Functions
+
+| Module | Functions delivered | Requirements met |
+|:---|:---|:---|
+| Authentication and onboarding | Registration with password policy and terms consent, sign-in, session persistence, remembered email, password reset, introductory carousel, welcome screen | FR-01 to FR-05, FR-07, FR-08 |
+| Profile | Profile editing, photograph capture and selection, theme preference, terms and privacy notice, sign-out | FR-06 |
+| Passenger booking | Pickup selection, searchable destination picker across 240 stops plus two flat rates, rate column selection, passenger count and luggage, itemized fare display, request submission and cancellation | FR-09 to FR-14 |
+| Matching | Broadcast of requests to available verified drivers, five-minute expiry, first-acceptance matching with withdrawal from other devices | FR-15 to FR-17 |
+| Ride lifecycle | Shared status timeline through arriving, arrived, in progress, and completed; completion summary and rating; ride history for both parties | FR-18 to FR-20, FR-25 |
+| Driver onboarding | Credential submission, administrative verification with approval and rejection, gating of unverified drivers, notification of the decision | FR-21, FR-22, FR-27, FR-28 |
+| Driver operations | Availability toggle, request list with countdown, earnings total | FR-23, FR-24, FR-26 |
+| Fare administration | Single-operation import of the published schedule, search, zone filtering, review queue, per-entry editing, activation and deactivation, addition and deletion, global minimums and flat rates | FR-29 to FR-32 |
+| Concerns | Categorized concern submission by passengers and drivers, administrative review with status and note, notification of resolution | FR-33, FR-34 |
+| Notifications | In-application notification centre with unread count, individual and bulk marking as read | FR-35 |
+| Monitoring and reporting | Live counts and recent activity, period selection, summary statistics, three report types, export through the file picker and sharing | FR-36 to FR-38 |
+
+All thirty-eight functional requirements were implemented.
+
+### Reports Generated
+
+: Table 16. Reports Generated by the System
+
+| Report | Period options | Contents |
+|:---|:---|:---|
+| Ride activity | Any month with rides, any year with rides, or the whole record | Summary block giving total rides, completions, cancellations, open rides, gross fares, average completed fare, passengers served, and drivers with at least one ride; followed by one line per ride giving both parties, all lifecycle timestamps, route, passenger count, luggage, status, and fares |
+| Driver performance | As above | One line per driver with at least one ride in the period, giving contact and vehicle details, verification status, rides accepted, completed, and cancelled, gross and average fares, and rating, ordered by rides accepted; followed by a list of drivers with no rides in the period |
+| Concerns | As above | Counts by status, a breakdown by category, and one line per concern giving the reporter, category, description, status, administrator note, and the dates filed and resolved |
+
+Reports are produced as comma-separated-value files, which open without conversion in Microsoft Excel, Google Sheets, and LibreOffice Calc. Each may be saved to a location chosen by the administrator through the system file picker, or shared directly to another application. Neither route requires a storage permission.
+
+### Screenshots
+
+System screenshots are presented in Appendix H.
+
+## 4.9 System Evaluation
+
+### Evaluation Method
+
+The developed system was evaluated using a researcher-made questionnaire adapted from the ISO/IEC 25010 software quality model, administered to passenger-respondents and driver-respondents after a period of actual use. Each of the four characteristics is measured by five statements rated on a five-point Likert scale.
+
+: Table 17. Likert Scale and Interpretation
+
+| Weight | Range of weighted mean | Verbal interpretation | Qualitative description |
+|:---:|:---|:---|:---|
+| 5 | 4.21 – 5.00 | Strongly Agree | Excellent |
+| 4 | 3.41 – 4.20 | Agree | Very Good |
+| 3 | 2.61 – 3.40 | Neutral | Good |
+| 2 | 1.81 – 2.60 | Disagree | Fair |
+| 1 | 1.00 – 1.80 | Strongly Disagree | Poor |
+
+### Respondents
+
+: Table 18. Profile of Respondents
+
+| Group | Frequency | Percentage |
+|:---|---:|---:|
+| Passengers (students) | | |
+| Drivers | | |
+| **Total** | | |
+
+*[To be completed following data collection. The passenger sample size is computed using Slovin's formula against the enrolled population; drivers are enumerated in full.]*
+
+### Results
+
+: Table 19. Evaluation Results: Passengers
+
+| Characteristic | Weighted mean | Verbal interpretation |
+|:---|---:|:---|
+| Usability | | |
+| Functionality | | |
+| Efficiency | | |
+| Reliability | | |
+| **Overall** | | |
+
+: Table 20. Evaluation Results: Drivers
+
+| Characteristic | Weighted mean | Verbal interpretation |
+|:---|---:|:---|
+| Usability | | |
+| Functionality | | |
+| Efficiency | | |
+| Reliability | | |
+| **Overall** | | |
+
+: Table 21. Summary of Evaluation Across Characteristics
+
+| Characteristic | Passengers | Drivers | Combined | Interpretation | t | p | Decision |
+|:---|---:|---:|---:|:---|---:|---:|:---|
+| Usability | | | | | | | |
+| Functionality | | | | | | | |
+| Efficiency | | | | | | | |
+| Reliability | | | | | | | |
+| **Overall** | | | | | | | |
+
+*[Tables 19 to 21 are to be completed following data collection. Item-level responses are to be recorded in Appendix F, and the computations in Appendix G. The independent samples t-test is evaluated at a 0.05 level of significance; the decision column records whether the null hypothesis of no difference between passenger and driver evaluations is rejected.]*
+
+### Interpretation
+
+*[To be written once the results are available. The interpretation should address each characteristic in turn, relate the figures to the corresponding objective in Section 1.3, account for any characteristic that scores materially lower than the others, and consider whether passenger and driver evaluations diverge and why. The open-ended responses in Part III of the instrument should be summarized here and used to explain the numbers rather than repeat them.]*
+
+[[PB]]
+
+# Chapter 5 {-}
+
+# SUMMARY, CONCLUSIONS AND RECOMMENDATIONS
+
+## 5.1 Summary of Findings
+
+This study set out to develop and evaluate a Smart Tricycle Ride and Driver Onboarding System for Talibon Polytechnic College. The findings are summarized against the four questions posed in Section 1.4.
+
+**On the problems in the current arrangement.** The needs assessment identified four problems in tricycle service around the campus: waiting time that a passenger cannot predict because no information about nearby drivers is available; driver capacity left idle because a waiting driver and a waiting passenger cannot see each other; fare uncertainty arising from a schedule that is authoritative but posted only at terminals; and an absence of accountability, there being no registration, verification, or record of who carried whom.
+
+*[The frequency and percentage distribution of needs assessment responses is to be inserted here following data collection.]*
+
+**On the features the system should include.** The requirements analysis produced thirty-eight functional requirements and fourteen non-functional requirements, all of which were implemented. The features fall into four groups: ride scheduling and booking; driver onboarding and verification; fare computation from the published FeTODAT schedule; and notification, monitoring, and reporting. One requirement emerged from the study environment rather than from the reviewed literature: because fares in Talibon are fixed per destination by municipal ordinance rather than computed from distance, the system prices rides by lookup against the published schedule, honours the statutory minimum fares of ₱15.00 and ₱12.00, and provides a separate rate column for senior citizens, persons with disabilities, and students.
+
+**On the effectiveness of the system.**
+
+*[To be completed following data collection, drawing on Tables 19 to 21.]*
+
+**On the difference between passenger and driver evaluations.**
+
+*[To be completed following the t-test computation recorded in Table 21 and Appendix G.]*
+
+## 5.2 Conclusions
+
+*[To be written once the evaluation results are available. The conclusions should follow directly from the findings in Section 5.1 and should be stated against each of the six specific objectives in Section 1.3, rather than restating what the system does. Conclusions that the evidence does not support should not be drawn; where a characteristic scored lower, that should be stated plainly.]*
+
+Two conclusions can be stated independently of the evaluation results, because they rest on what was built rather than on how it was received.
+
+First, an ordinance-fixed fare regime can be represented faithfully in a ride-hailing application. The reviewed literature describes systems that price by distance, time, or demand, none of which is lawful where a municipal ordinance fixes the price per destination. Implementing the published schedule as a maintainable data table, with statutory minimums and a discounted rate column, demonstrates that a digital platform can operate inside such a regime rather than around it.
+
+Second, transcription of a physically posted fare schedule is a data quality problem that must be handled explicitly. Of the 241 rows on the posted sheet, forty-six could not be read with full confidence and three carried no usable rate. Designing the system to flag the former and disable the latter, rather than to accept every transcribed number, means that uncertainty in the source data does not become a wrong fare charged to a passenger.
+
+## 5.3 Recommendations
+
+Based on the development and evaluation of the system, the following are recommended.
+
+**To the Federation of Tricycle Operators and Drivers Association of Talibon.** Verify the forty-six flagged entries in the fare table against the original ordinance and against the physical posted sheet, and resolve the three entries that carry no usable rate. Four entries currently price the discounted rate above the regular rate, which is the reverse of what the ordinance intends and should be corrected before the system is used beyond the study. Consider supplying the schedule in digital form, which would remove transcription from the process entirely.
+
+**To Talibon Polytechnic College.** Designate a member of staff as system administrator, with responsibility for driver verification, fare maintenance, and concern handling. The system is designed so that this is a light and occasional duty rather than a role, but it does require a named person; a system with no administrator will accumulate unverified drivers and unanswered concerns.
+
+**To tricycle drivers.** Keep availability status current. The value of the system to a passenger depends on the online list reflecting who is actually available, and a driver who remains online while not driving degrades the experience for everyone, themselves included.
+
+**To passengers.** Report fare discrepancies through the concern form rather than settling them at the roadside. A reported discrepancy is a correction to the fare table; an unreported one is a recurring dispute.
+
+**To future researchers.** Conduct the evaluation over a longer period than a capstone timeline usually permits. Adoption of a transportation platform is not immediate, and a short evaluation window measures first impressions rather than sustained use. Where possible, collect objective measures of waiting time before and after deployment alongside the perceptual measures the questionnaire provides, since objectives four and five concern actual reductions in waiting and idle time and a Likert scale can only report whether users believe those reductions occurred.
+
+## 5.4 Future Enhancements
+
+The following extensions are outside the scope of this study and are offered to researchers who take the work further.
+
+**Live mapping and navigation.** Integrating the Google Maps SDK would allow the passenger to watch the tricycle approach and would give the driver turn-by-turn guidance. Displaying a map in a mobile application is not itself billed by the platform, though a billing account must be attached to obtain a key, and route calculation is billed. Attaching coordinates to each of the 240 fare stops would be a prerequisite.
+
+**Server-side push notifications.** The application registers with Firebase Cloud Messaging, but delivering a notification to a device on which the application is not running requires a server-side component. A small set of Cloud Functions triggered by database writes would deliver ride requests to drivers whose phones are in their pockets, which is where a driver's phone usually is.
+
+**Cashless payment.** Integration with a Philippine payment provider would remove the need for exact change, which is a recurring friction in tricycle transactions. This was excluded from the present study by scope and would require attention to the regulatory obligations that handling payments imposes.
+
+**Scheduled and recurring bookings.** A student with a fixed class timetable takes the same trip at the same time several days a week. Allowing a booking to be placed in advance, or to repeat, would serve that pattern directly.
+
+**Ride sharing between passengers with the same destination.** A tricycle carrying five passengers to the same zone is more efficient for everyone than five separate trips, and the fare table already prices per head.
+
+**SMS fallback.** Not every prospective user owns a smartphone. An SMS interface for requesting a ride would extend the system to feature phones, which remain common among the older drivers and passengers the study encountered.
+
+**Analytics for the drivers' association.** The ride records already collected would support analysis of demand by hour, by day, and by zone. That analysis would let the association position drivers where passengers actually are, which is a use of the data beyond the reporting the present system provides.
+
+**Biometric or document-image verification.** Driver verification currently rests on typed credentials reviewed by an administrator. Requiring photographs of the licence and the registration, and checking them against the typed values, would strengthen the onboarding gate.
+
+**Public release.** Publication to the Google Play Store would remove the installation friction of distributing an installation package directly, at the cost of a developer registration fee and compliance with the store's review requirements.
+
+[[PB]]
+# REFERENCES
+
+Cheng, Y., Protopapas, N., Yazdanpanah, V., Gerding, E., & Stein, S. (2024). Fair and efficient ride-scheduling: A preference-driven approach. *Autonomous Agents and Multi-Agent Systems*. https://doi.org/10.1007/s10458-024-09625-5
+
+Dastani, Z., Koosha, H., Karimi, H., & Moghaddam, A. (2024). User preferences in ride-sharing mathematical models for enhanced matching. *Scientific Reports, 14*. https://doi.org/10.1038/s41598-024-78469-1
+
+Davis, F. D. (1989). Perceived usefulness, perceived ease of use, and user acceptance of information technology. *MIS Quarterly, 13*(3), 319–340. https://doi.org/10.2307/249008
+
+DeLone, W. H., & McLean, E. R. (2003). The DeLone and McLean model of information systems success: A ten-year update. *Journal of Management Information Systems, 19*(4), 9–30. https://doi.org/10.1080/07421222.2003.11045748
+
+Federation of Tricycle Operators and Drivers Association of Talibon. (2022). *Ordinance amending Section 1 of Municipal Ordinance No. 2018-05, the revised ordinance fixing the adjusted fare rates of all tricycles operating within the territorial jurisdiction of the Municipality of Talibon*. Municipality of Talibon, Bohol.
+
+Goodhue, D. L., & Thompson, R. L. (1995). Task-technology fit and individual performance. *MIS Quarterly, 19*(2), 213–236. https://doi.org/10.2307/249689
+
+Huang, X., Li, Z., & Chen, Y. (2024). Optimizing routing and scheduling of shared autonomous electric taxis considering capacity constrained parking facilities. *Sustainable Cities and Society, 111*, 105557. https://doi.org/10.1016/j.scs.2024.105557
+
+International Organization for Standardization. (2011). *ISO/IEC 25010:2011 — Systems and software engineering — Systems and software Quality Requirements and Evaluation (SQuaRE) — System and software quality models*. ISO.
+
+Kumar, P., & Singh, R. (2023). Digital ride-hailing platforms and urban transportation sustainability. *Journal of Urban Mobility, 5*, 100074. https://doi.org/10.1016/j.urbmob.2023.100074
+
+Li, Y., Zhang, H., & Wang, S. (2024). Optimizing first- and last-mile ridesharing services with heterogeneous vehicle fleets. *Transportation Research Part E*. https://doi.org/10.1016/j.tre.2024.103642
+
+Narayanan, S., & Antoniou, C. (2021). A systematic literature review of ride-sharing platforms, user factors and barriers. *European Transport Research Review, 13*(61). https://doi.org/10.1186/s12544-021-00522-1
+
+Rapp, D., Bräunl, T., & Collett, T. (2023). On-demand ride sharing: Scheduling of an autonomous bus fleet for last-mile travel. *Robotics and Autonomous Systems, 170*, 104559. https://doi.org/10.1016/j.robot.2023.104559
+
+Rogers, E. M. (2003). *Diffusion of innovations* (5th ed.). Free Press.
+
+Wang, H., Zhang, J., & Li, Q. (2022). Intelligent transportation systems and smart mobility solutions for urban transportation management. *IEEE Access, 10*, 49792–49805. https://doi.org/10.1109/ACCESS.2022.3172017
+
+Zhang, L., Li, Y., & Chen, X. (2021). Development of mobile ride-hailing platforms and their impact on urban mobility. *Journal of Transportation Technologies, 11*(3), 432–445. https://doi.org/10.4236/jtts.2021.113028
+
+[[PB]]
+
+# APPENDICES
+
+## Appendix A — Research Instruments
+
+The instruments used in this study are the needs assessment questionnaire, administered before development to document the problems in the current arrangement, and the system evaluation questionnaire, administered after a period of use to evaluate the developed system. The evaluation questionnaire is reproduced in full as Appendix C. The needs assessment questionnaire is reproduced below.
+
+**NEEDS ASSESSMENT QUESTIONNAIRE**
+
+*A Smart Tricycle Ride and Driver Onboarding System for Talibon Polytechnic College*
+
+**General Instruction.** This questionnaire gathers data on the current tricycle transportation arrangement serving Talibon Polytechnic College. Please answer honestly. Responses are confidential and are used for research purposes only.
+
+*Part I — Respondent Profile*
+
+Role: Passenger ☐  Driver ☐   Sex: Male ☐ Female ☐   Age: ______
+
+For passengers — How often do you take a tricycle to or from the campus?
+Daily ☐  Three to four times a week ☐  Once or twice a week ☐  Rarely ☐
+
+For drivers — How many years have you been driving a tricycle in Talibon? ______
+
+*Part II — Current Situation*
+
+1. On a typical day, how long do you wait for a tricycle (passengers) or for a passenger (drivers)?
+   Under 5 minutes ☐  5 to 10 minutes ☐  11 to 20 minutes ☐  Over 20 minutes ☐
+
+2. How do you usually find a ride, or find passengers?
+   Terminal queue ☐  Roadside ☐  Calling a driver you know ☐  Other: ____________
+
+3. Do you know the official FeTODAT fare for the destinations you travel to most often?
+   Yes, all of them ☐  Some ☐  No ☐
+
+4. Have you ever been unsure whether the fare charged was correct?
+   Often ☐  Sometimes ☐  Never ☐
+
+5. For passengers — Do you know whether the driver carrying you holds a valid licence and registration?
+   Always ☐  Sometimes ☐  Never ☐
+
+6. Would you use a mobile application to book a tricycle if one were available?
+   Yes ☐  No ☐  Unsure ☐
+
+7. What would most discourage you from using such an application?
+   Cost of mobile data ☐  Difficulty using a phone application ☐  Preference for the current arrangement ☐  Other: ____________
+
+*Part III — Open Response*
+
+8. What is the single biggest problem with tricycle transportation around the campus?
+
+9. What would you most want a booking application to do?
+
+[[PB]]
+
+## Appendix B — Letter of Permission
+
+*[Two letters are required and are to be inserted here as signed copies.]*
+
+**Letter 1 — To the College President, Talibon Polytechnic College**, requesting permission to conduct the study within the institution, to administer the needs assessment and evaluation questionnaires to students, and to deploy the application to student respondents for the evaluation period.
+
+**Letter 2 — To the President, Federation of Tricycle Operators and Drivers Association of Talibon**, requesting permission to conduct the study among member drivers, to administer the questionnaires, to deploy the application to driver respondents, and to reproduce the association's published fare schedule within the application.
+
+## Appendix C — Survey Questionnaire
+
+**SYSTEM EVALUATION QUESTIONNAIRE**
+
+*A Smart Tricycle Ride and Driver Onboarding System for Talibon Polytechnic College*
+
+**General Instruction.** This questionnaire gathers data for the study titled "A Smart Tricycle Ride and Driver Onboarding System for Talibon Polytechnic College." Please answer all items honestly and completely. Your responses will be treated with strict confidentiality and used for research purposes only.
+
+**Rating Scale**
+
+| Weight | Weighted Mean | Response |
+|:---:|:---|:---|
+| 5 | 4.21 – 5.00 | Strongly Agree |
+| 4 | 3.41 – 4.20 | Agree |
+| 3 | 2.61 – 3.40 | Neutral |
+| 2 | 1.81 – 2.60 | Disagree |
+| 1 | 1.00 – 1.80 | Strongly Disagree |
+
+### I — For Passengers (Students)
+
+Name (Optional): _____________________________    Role: Passenger
+
+Sex: Male ☐  Female ☐    Age: _________
+
+**Directions.** For each statement below, indicate the extent of your agreement by placing a check in the appropriate column. There is no right or wrong answer. Responses are confidential and used for research purposes only. This questionnaire evaluates the system against ISO/IEC 25010 software quality characteristics. Rate each statement based on your actual experience using the system.
+
+**Part II — System Evaluation**
+
+**A. Usability**
+
+| No. | Statement | 5 | 4 | 3 | 2 | 1 |
+|:---:|:---|:-:|:-:|:-:|:-:|:-:|
+| 1 | The system is easy to navigate and use. | | | | | |
+| 2 | The interface is clean and visually understandable. | | | | | |
+| 3 | I was able to book a ride without difficulty. | | | | | |
+| 4 | The instructions and labels in the system are clear and easy to understand. | | | | | |
+| 5 | I can comfortably use the system without any technical assistance. | | | | | |
+
+**B. Functionality**
+
+| No. | Statement | 5 | 4 | 3 | 2 | 1 |
+|:---:|:---|:-:|:-:|:-:|:-:|:-:|
+| 1 | The ride booking feature works as expected. | | | | | |
+| 2 | I receive timely notifications about my ride status. | | | | | |
+| 3 | The system accurately matches me with an available driver. | | | | | |
+| 4 | I can view the status of my booking in real time. | | | | | |
+| 5 | The fare shown matches the official FeTODAT rate for my destination. | | | | | |
+
+**C. Efficiency**
+
+| No. | Statement | 5 | 4 | 3 | 2 | 1 |
+|:---:|:---|:-:|:-:|:-:|:-:|:-:|
+| 1 | The system reduces my waiting time for a tricycle ride. | | | | | |
+| 2 | Booking a ride through the system is faster than the manual process. | | | | | |
+| 3 | The system responds quickly to my inputs and requests. | | | | | |
+| 4 | The system helps me get a ride more conveniently. | | | | | |
+| 5 | Overall, the system improves my transportation experience. | | | | | |
+
+**D. Reliability**
+
+| No. | Statement | 5 | 4 | 3 | 2 | 1 |
+|:---:|:---|:-:|:-:|:-:|:-:|:-:|
+| 1 | The system works consistently without errors or crashes. | | | | | |
+| 2 | I can depend on the system to connect me with a driver when needed. | | | | | |
+| 3 | The system maintains accurate and up-to-date information. | | | | | |
+| 4 | The system performs well even during peak hours. | | | | | |
+| 5 | I trust the system to provide a safe and reliable ride booking experience. | | | | | |
+
+**Part III — Open-Ended Questions**
+
+1. What feature do you like most about the system?
+2. What problems or limitations did you observe?
+3. What improvements would you recommend?
+4. Other comments or suggestions:
+
+[[PB]]
+
+### II — For Tricycle Drivers
+
+Name (Optional): _____________________________    Role: Driver
+
+Sex: Male ☐  Female ☐    Age: _________
+
+**Directions.** For each statement below, indicate the extent of your agreement by placing a check in the appropriate column. There are no right or wrong answers. Responses are confidential and used for research purposes only. This questionnaire evaluates the system against ISO/IEC 25010 software quality characteristics. Rate each statement based on your actual experience using the system.
+
+**Part II — System Evaluation**
+
+**A. Usability**
+
+| No. | Statement | 5 | 4 | 3 | 2 | 1 |
+|:---:|:---|:-:|:-:|:-:|:-:|:-:|
+| 1 | The system is easy to navigate and use. | | | | | |
+| 2 | The interface is clean and visually understandable. | | | | | |
+| 3 | I was able to register and set up my account without difficulty. | | | | | |
+| 4 | The instructions and labels in the system are clear and easy to understand. | | | | | |
+| 5 | I can comfortably use the system without any technical assistance. | | | | | |
+
+**B. Functionality**
+
+| No. | Statement | 5 | 4 | 3 | 2 | 1 |
+|:---:|:---|:-:|:-:|:-:|:-:|:-:|
+| 1 | The ride request feature works as expected. | | | | | |
+| 2 | I receive timely notifications about incoming ride requests. | | | | | |
+| 3 | The system accurately shows my availability status to passengers. | | | | | |
+| 4 | I can manage and track my rides through the system in real time. | | | | | |
+| 5 | The verification process for my credentials worked as expected. | | | | | |
+
+**C. Efficiency**
+
+| No. | Statement | 5 | 4 | 3 | 2 | 1 |
+|:---:|:---|:-:|:-:|:-:|:-:|:-:|
+| 1 | The system reduces my idle time waiting for passengers. | | | | | |
+| 2 | Managing ride requests through the system is faster than the manual process. | | | | | |
+| 3 | The system responds quickly to my inputs and actions. | | | | | |
+| 4 | The system helps me serve more passengers throughout the day. | | | | | |
+| 5 | Overall, the system improves my daily work experience as a driver. | | | | | |
+
+**D. Reliability**
+
+| No. | Statement | 5 | 4 | 3 | 2 | 1 |
+|:---:|:---|:-:|:-:|:-:|:-:|:-:|
+| 1 | The system works consistently without errors or crashes. | | | | | |
+| 2 | I can depend on the system to deliver ride requests accurately. | | | | | |
+| 3 | The system maintains accurate and up-to-date information. | | | | | |
+| 4 | The system performs well even during busy hours. | | | | | |
+| 5 | I trust the system to support my work as a registered driver. | | | | | |
+
+**Part III — Open-Ended Questions**
+
+1. What feature do you like most about the system?
+2. What problems or limitations did you observe?
+3. What improvements would you recommend?
+4. Other comments or suggestions:
+
+[[PB]]
+
+## Appendix D — Interview Guide
+
+Semi-structured interviews were conducted with officers of the drivers' association and with a subset of driver-respondents, to obtain context that a Likert instrument cannot capture.
+
+**For officers of the Federation of Tricycle Operators and Drivers Association of Talibon**
+
+1. How is the current fare schedule set, published, and revised?
+2. How are fare disputes between a driver and a passenger resolved at present?
+3. Is there any existing register of drivers operating in the municipality, and who maintains it?
+4. What would the association need to see before endorsing an application of this kind to its members?
+5. What concerns would members raise about a system that records their trips?
+
+**For driver-respondents**
+
+1. Walk me through a typical day. Where do you wait, and how do you decide where to go next?
+2. Roughly how much of your working day is spent without a passenger?
+3. How do you handle a passenger who disputes the fare?
+4. What would make you stop using an application like this one?
+5. Is there anything the application asks you to do that gets in the way while you are driving?
+
+**For passenger-respondents**
+
+1. Describe the last time you had difficulty getting a tricycle to or from the campus.
+2. Before this study, did you know there was an official fare schedule?
+3. What would make you go back to hailing at the roadside instead of using the application?
+
+## Appendix E — Evaluation Forms
+
+The evaluation form administered to respondents is the System Evaluation Questionnaire reproduced as Appendix C. The content validation form completed by the research adviser and subject matter experts, and the pilot test feedback form, are to be inserted here as signed copies.
+
+## Appendix F — Raw Data
+
+*[Item-level responses are to be tabulated here following data collection, as one row per respondent and one column per questionnaire item, separately for passengers and for drivers, together with the transcribed open-ended responses.]*
+
+## Appendix G — Statistical Computation
+
+*[The computation of the sample size using Slovin's formula, the weighted mean computation for each item and each characteristic, and the independent samples t-test comparing passenger and driver evaluations are to be shown here.]*
+
+**Slovin's formula**
+
+$$n = \frac{N}{1 + Ne^2}$$
+
+**Weighted mean**
+
+$$\bar{x} = \frac{\sum (f \cdot w)}{N}$$
+
+**Independent samples t-test**
+
+$$t = \frac{\bar{x}_1 - \bar{x}_2}{\sqrt{\dfrac{s_1^2}{n_1} + \dfrac{s_2^2}{n_2}}}$$
+
+evaluated at $\alpha = 0.05$.
+
+## Appendix H — System Screenshots
+
+*[Screenshots are to be captured from the running application and inserted here. The following set is recommended, covering every module in Table 15.]*
+
+1. Onboarding carousel, first and final slides
+2. Welcome-back screen
+3. Registration screen showing the live password rule checklist
+4. Sign-in screen with remembered email
+5. Passenger home with no active ride
+6. Booking screen with the itemized fare displayed
+7. Destination picker with a search term entered
+8. Searching for a driver
+9. Ride tracking with the status timeline
+10. Ride completion summary and rating
+11. Passenger ride history
+12. Concern submission form
+13. Notification centre with unread items
+14. Driver dashboard, offline and online
+15. Driver request card with countdown
+16. Driver ride in progress with the advance button
+17. Driver earnings
+18. Driver credentials card showing verification status
+19. Administrator verification tab with a pending badge
+20. Administrator concerns tab with a concern open for review
+21. Administrator live monitor
+22. Administrator reports tab with a period selected and the summary shown
+23. Administrator fare table with a zone filter applied
+24. Administrator fare table filtered to entries needing review
+25. Fare entry editing dialog showing a transcription note
+26. Minimums and flat rates dialog
+27. Profile screen with a photograph set
+28. Dark theme, any two screens
+
+## Appendix I — User Manual
+
+*[The complete illustrated manual is to accompany this appendix. Its structure is given below.]*
+
+**Part 1 — Installation.** Obtaining the installation package; permitting installation from outside the application store; installing; first launch.
+
+**Part 2 — For Passengers.** Registering an account; the password rules; signing in and staying signed in; setting a profile photograph; booking a ride step by step; understanding the fare breakdown; choosing the discounted rate and what identification to bring; tracking a ride; rating a driver; viewing history; reporting a concern; reading notifications; switching to dark theme; signing out.
+
+**Part 3 — For Drivers.** Registering; submitting licence and tricycle details; what happens while verification is pending; going online and offline; reading a request card; accepting before the countdown expires; advancing a ride through its stages; viewing earnings and history; reporting a concern.
+
+**Part 4 — For Administrators.** Signing in as an administrator; verifying and rejecting driver applications; loading the official fare table for the first time; searching and filtering the fare table; correcting an entry and clearing its review flag; adding and deactivating entries; editing the minimum fares and flat rates; reviewing and resolving concerns; reading the live monitor; selecting a report period; exporting and sharing a report.
+
+**Part 5 — Troubleshooting.** The application says it cannot reach the database; a booking will not submit; no drivers appear to be online; a fare looks wrong; a photograph will not upload; how to report a problem.
+
+## Appendix J — Source Code
+
+The complete source code of the system is maintained in a Git repository and is available on request. The repository is organized as follows.
+
+| Path | Contents |
+|:---|:---|
+| `app/src/main/java/com/tpc/trikride/models/` | Data classes for users, drivers, rides, fares, complaints, and notifications |
+| `app/src/main/java/com/tpc/trikride/services/` | `FirebaseService`, the single point of database access, and the messaging service |
+| `app/src/main/java/com/tpc/trikride/repositories/` | Six repositories mediating between ViewModels and the data source |
+| `app/src/main/java/com/tpc/trikride/viewmodels/` | Six ViewModels holding screen state and domain operations |
+| `app/src/main/java/com/tpc/trikride/ui/screens/` | Composable screens for all three roles |
+| `app/src/main/java/com/tpc/trikride/ui/components/` | Shared interface components |
+| `app/src/main/java/com/tpc/trikride/ui/theme/` | Colour palette, typography, and light and dark themes |
+| `app/src/main/java/com/tpc/trikride/utils/` | `FareEngine`, `FareSeed`, `ReportBuilder`, `ReportExporter`, `PasswordRules`, and constants |
+| `app/src/main/res/` | Resources, launcher icons, and onboarding artwork |
+| `docs/` | This documentation and the generated figures |
+
+Two files are deliberately excluded from version control and must be supplied when the project is built: `google-services.json`, the Firebase configuration, and `.env`, which holds the API keys. A committed `.env.example` records which keys are required.
+
+**Representative extract — the fare engine**
+
+The following is the function that prices every ride in the system. It is reproduced because it implements the central design decision described in Section 4.3: a fare is a lookup against the published schedule, raised to the ordinance minimum where necessary, and multiplied by the number of passengers.
+
+```
+fun quote(
+    config: FareConfig,
+    stop: FareStop,
+    fareType: FareType,
+    passengerCount: Int
+): FareQuote {
+    val minimum = minimumFor(config, fareType)
+    val posted = rateFor(stop, fareType)
+    val perPassenger = maxOf(posted, minimum)
+    val heads = if (config.chargePerPassenger) passengerCount.coerceAtLeast(1) else 1
+    return FareQuote(
+        perPassenger = perPassenger,
+        passengers = passengerCount.coerceAtLeast(1),
+        total = perPassenger * heads,
+        fareType = fareType,
+        minimumApplied = posted < minimum,
+        stopLabel = stop.label
+    )
+}
+```
+
+## Appendix K — Database Schema
+
+The structure of the Realtime Database is documented in Table 8 and illustrated in Figure 11. The security rules governing access are reproduced below in outline.
+
+| Node | Read | Write |
+|:---|:---|:---|
+| `users/{uid}` | The account holder and administrators | The account holder, except `userType`, which is set at registration |
+| `drivers/{uid}` | The driver, administrators, and authenticated users reading availability | The driver, except `verificationStatus`, which is writable only by administrators |
+| `rideRequests/{id}` | Authenticated, verified, available drivers and the requesting passenger | The requesting passenger to create and cancel; the accepting driver to delete on acceptance |
+| `rides/{id}` | The passenger and driver named on the ride, and administrators | The accepting driver for status; the system for creation |
+| `config/fare` and `config/fareStops` | All authenticated users | Administrators only |
+| `complaints/{id}` | The reporter and administrators | The reporter to create; administrators for status and note |
+| `notifications/{uid}` | The named user | The system to create; the named user to mark as read |
+
+## Appendix L — Test Cases
+
+The test cases executed in this study are documented in Tables 11 through 14 in Section 4.5, covering unit testing, integration testing, system testing, and security testing. The user acceptance test tasks are as follows.
+
+| ID | Role | Task given to the respondent | Success criterion |
+|:---|:---|:---|:---|
+| UAT-01 | Passenger | Install the application and create an account | An account is created without assistance |
+| UAT-02 | Passenger | Book a ride to a named destination | The correct destination and fare are selected and the request is submitted |
+| UAT-03 | Passenger | Find out what the discounted fare would be for the same trip | The rate column is switched and the lower fare is read correctly |
+| UAT-04 | Passenger | Report a problem with a completed ride | A concern is submitted under an appropriate category |
+| UAT-05 | Passenger | Find last week's rides | Ride history is located |
+| UAT-06 | Driver | Register and submit credentials | Credentials are submitted without assistance |
+| UAT-07 | Driver | Begin receiving requests | The availability toggle is found and set to online |
+| UAT-08 | Driver | Accept a request and carry the ride to completion | Every status stage is advanced in order |
+| UAT-09 | Driver | Determine earnings for the period | The earnings figure is located |
+| UAT-10 | Administrator | Approve a pending driver | The application is located and approved |
+| UAT-11 | Administrator | Correct a fare that reads incorrectly | The entry is found by search, edited, and saved |
+| UAT-12 | Administrator | Produce last month's ride report | The period is selected and the file is exported |
+
+## Appendix M — Test Results
+
+The results of unit, integration, system, and security testing are recorded in Tables 11 through 14. User acceptance test results, performance measurements, and the defect log are to be inserted here following the evaluation period.
+
+*[The defect log should record, for each defect found: an identifier, the module, a description, the severity, the date found, the resolution, and the date resolved.]*
+
+## Appendix N — Sample Reports
+
+*[Exported files are to be inserted here as printed extracts. The following three are produced by the system.]*
+
+**Sample 1 — Ride activity report** for a selected month, showing the summary block and a representative extract of the per-ride rows.
+
+**Sample 2 — Driver performance report** for the same month, showing per-driver totals ordered by rides accepted, and the list of drivers with no rides in the period.
+
+**Sample 3 — Concerns report** for the same month, showing the counts by status, the category breakdown, and the per-concern rows.
+
+Each is exported as a comma-separated-value file. The header of the ride activity report is reproduced below to indicate the columns produced.
+
+```
+Ride ID, Requested, Accepted, Started, Completed, Passenger, Passenger email,
+Driver, Driver email, Pickup, Destination, Passengers, Luggage, Status,
+Estimated fare, Actual fare, Notes
+```
+
+## Appendix O — Documentation of Data Gathering
+
+*[Photographs and records of the data gathering activities are to be inserted here, with the consent of those pictured.]*
+
+The following should be documented: the needs assessment administration to students and to drivers; the meeting with officers of the drivers' association; the photographs of the posted FeTODAT fare sheet from which the fare table was transcribed; the driver orientation session; the evaluation period; and the administration of the evaluation questionnaire.
+
+## Appendix P — Gantt Chart
+
+![Figure 14. Gantt Chart of Project Activities](figures/fig14_gantt.png){width=6.0in}
+
+[[PB]]
+
+## Appendix Q — Researchers' Biodata
+
+### CURRICULUM VITAE
+
+**ALBER JUNE M. MUMAR**
+
+Purok 6, Poblacion, Talibon, Bohol
+
+6325 Philippines
+
+Cellphone Number: 0962 938 4692
+
+Email Address: alberjunemumar@gmail.com
+
+**Personal Data**
+
+| | |
+|:---|:---|
+| Age | 21 |
+| Birthdate | June 20, 2004 |
+| Civil Status | Single |
+| Religion | Roman Catholic |
+| Father's Name | Robert P. Mumar |
+| Mother's Name | Alma M. Mumar |
+
+**Educational Attainment**
+
+| | |
+|:---|:---|
+| Secondary | San Jose National High School, San Jose, Talibon, Bohol |
+| Elementary | Talibon I Central Elementary School, Poblacion, Talibon, Bohol |
+
+[[PB]]
+
+### CURRICULUM VITAE
+
+**JULEBETH HINLAYAGAN**
+
+Purok 5, Mabuhay Cabiguhan, Trinidad, Bohol
+
+6325 Philippines
+
+Cellphone Number: 0977 725 7182
+
+Email Address: hinlayaganbeth@gmail.com
+
+**Personal Data**
+
+| | |
+|:---|:---|
+| Age | 24 |
+| Birthdate | July 24, 2001 |
+| Civil Status | Single |
+| Religion | Roman Catholic |
+| Father's Name | Policronio Rosales Sr. |
+| Mother's Name | Marissa F. Hinlayagan |
+
+**Educational Attainment**
+
+| | |
+|:---|:---|
+| Secondary | Calinan National High School, Calinan, Poblacion, Davao City |
+| Elementary | Lpt. Cipriano Senior Elementary School, Calinan, Poblacion, Davao City |
+
+[[PB]]
+
+### CURRICULUM VITAE
+
+**MARDY GONZAGA**
+
+San Carlos, Talibon, Bohol
+
+6325 Philippines
+
+Cellphone Number: 0946 240 7802
+
+Email Address: mardygonzaga@gmail.com
+
+**Personal Data**
+
+| | |
+|:---|:---|
+| Age | 24 |
+| Birthdate | December 3, 2002 |
+| Civil Status | Single |
+| Religion | Roman Catholic |
+| Father's Name | Teddy Gonzaga |
+| Mother's Name | Marlyn Gonzaga |
+
+**Educational Attainment**
+
+| | |
+|:---|:---|
+| Secondary | San Jose National High School, San Jose, Talibon, Bohol |
+| Elementary | Garcia Park Elementary School, San Carlos, Talibon, Bohol |

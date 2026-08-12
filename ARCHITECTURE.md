@@ -1,388 +1,171 @@
-# TrikRide Application Architecture
+# Architecture
 
-## Overview
+Package: `com.tpc.trikride`. Kotlin 2.1, Jetpack Compose, Firebase. MVVM with a
+repository layer, which is what Google recommends and, more to the point, what keeps a
+three-person team from stepping on each other.
 
-TrikRide follows a modern Android architecture with clear separation of concerns:
-
-```
-┌─────────────────────────────────────────────────┐
-│           Presentation Layer (UI)               │
-│  ┌──────────────────────────────────────────┐   │
-│  │  Screens, Composables, ViewModels        │   │
-│  └──────────────────────────────────────────┘   │
-└──────────────────────┬──────────────────────────┘
-                       │
-┌──────────────────────▼──────────────────────────┐
-│        Business Logic Layer (Services)          │
-│  ┌──────────────────────────────────────────┐   │
-│  │  FirebaseService, LocationService, etc   │   │
-│  └──────────────────────────────────────────┘   │
-└──────────────────────┬──────────────────────────┘
-                       │
-┌──────────────────────▼──────────────────────────┐
-│         Data Layer (Repositories & Database)    │
-│  ┌──────────────────────────────────────────┐   │
-│  │  Firebase Realtime DB, Cloud Storage     │   │
-│  └──────────────────────────────────────────┘   │
-└──────────────────────┬──────────────────────────┘
-                       │
-┌──────────────────────▼──────────────────────────┐
-│      External Services & APIs                   │
-│  ┌──────────────────────────────────────────┐   │
-│  │  Google Maps, Firebase Auth, Messaging   │   │
-│  └──────────────────────────────────────────┘   │
-└─────────────────────────────────────────────────┘
-```
-
-## Project Structure
+## Layers
 
 ```
-app/
-├── src/
-│   ├── main/
-│   │   ├── AndroidManifest.xml
-│   │   ├── java/com/talibon/trikride/
-│   │   │   ├── MainActivity.kt
-│   │   │   ├── models/
-│   │   │   │   ├── User.kt
-│   │   │   │   ├── Ride.kt
-│   │   │   │   └── ...
-│   │   │   ├── services/
-│   │   │   │   ├── FirebaseService.kt
-│   │   │   │   ├── LocationService.kt
-│   │   │   │   ├── AuthenticationService.kt
-│   │   │   │   └── TrikRideMessagingService.kt
-│   │   │   ├── repositories/
-│   │   │   │   ├── UserRepository.kt
-│   │   │   │   ├── RideRepository.kt
-│   │   │   │   ├── DriverRepository.kt
-│   │   │   │   └── ...
-│   │   │   ├── viewmodels/
-│   │   │   │   ├── AuthViewModel.kt
-│   │   │   │   ├── RideViewModel.kt
-│   │   │   │   ├── DriverViewModel.kt
-│   │   │   │   └── ...
-│   │   │   ├── ui/
-│   │   │   │   ├── screens/
-│   │   │   │   │   ├── MainAppScreen.kt
-│   │   │   │   │   ├── PassengerHomeScreen.kt
-│   │   │   │   │   ├── DriverHomeScreen.kt
-│   │   │   │   │   ├── BookRideScreen.kt
-│   │   │   │   │   ├── RideTrackingScreen.kt
-│   │   │   │   │   └── ...
-│   │   │   │   ├── components/
-│   │   │   │   │   ├── RideCard.kt
-│   │   │   │   │   ├── DriverCard.kt
-│   │   │   │   │   ├── LocationPicker.kt
-│   │   │   │   │   └── ...
-│   │   │   │   └── theme/
-│   │   │   │       ├── Theme.kt
-│   │   │   │       ├── Color.kt
-│   │   │   │       └── Type.kt
-│   │   │   └── utils/
-│   │   │       ├── Constants.kt
-│   │   │       ├── LocationUtils.kt
-│   │   │       ├── DateTimeUtils.kt
-│   │   │       └── ...
-│   │   └── res/
-│   │       ├── drawable/
-│   │       ├── layout/
-│   │       ├── values/
-│   │       │   ├── strings.xml
-│   │       │   ├── colors.xml
-│   │       │   ├── styles.xml
-│   │       │   └── dimens.xml
-│   │       └── xml/
-│   │           ├── backup_rules.xml
-│   │           └── data_extraction_rules.xml
-│   └── test/
-│       └── java/com/talibon/trikride/
-│           ├── services/
-│           ├── repositories/
-│           └── viewmodels/
-├── build.gradle.kts
-└── proguard-rules.pro
+Compose screens          render state, emit events, hold no logic
+      ↓ events                    ↑ StateFlow
+ViewModels               one per role; own the screen state
+      ↓ suspend calls             ↑ Flow
+Repositories             six of them; the ViewModels' only data source
+      ↓
+FirebaseService          the single place that touches the database
+      ↓ HTTPS / WebSocket
+Firebase                 Auth, Realtime Database, Storage, Cloud Messaging
 ```
 
-## Data Flow Architecture
+Each layer knows only about the one below it. A screen knows its ViewModel. A ViewModel
+knows repositories, never Firebase. A repository knows `FirebaseService`, never the UI.
+Changing where data live touches one layer; changing how a screen looks touches another.
 
-### Passenger Booking Flow
+Data flows one way. An event goes down, a change comes back up as a `Flow`, the state
+updates, Compose recomposes whatever depended on it. Nothing pushes into a view
+directly.
 
-```
-PassengerHomeScreen
-    │
-    ├─→ RideBookingScreen (Compose UI)
-    │       │
-    │       ├─→ RideViewModel (State Management)
-    │       │       │
-    │       │       ├─→ RideRepository (Data Logic)
-    │       │       │       │
-    │       │       │       └─→ FirebaseService (Database)
-    │       │       │
-    │       │       └─→ LocationService (GPS)
-    │       │
-    │       └─→ GoogleMapsCompose (Map Display)
-    │
-    └─→ RideTrackingScreen
-            │
-            └─→ Real-time updates via Flow<Ride>
-```
-
-### Driver Acceptance Flow
+## Where things are
 
 ```
-DriverHomeScreen
-    │
-    ├─→ DriverViewModel (State)
-    │       │
-    │       └─→ RideRepository
-    │           │
-    │           ├─→ FirebaseService (Listen for requests)
-    │           │
-    │           └─→ TrikRideMessagingService (Notifications)
-    │
-    └─→ RideRequestCard
-        │
-        └─→ Accept/Reject Actions
+models/
+  User.kt              User, UserType, Driver, Passenger, VerificationStatus,
+                       Document, DocumentType, SavedLocation, Location
+  Ride.kt              Ride, RideStatus, RideRequest, RideOffer, RideReview,
+                       PaymentMethod, PaymentStatus
+  FareConfig.kt        FareStop, FareType, FareConfig, FareQuote
+  Complaint.kt         Complaint, ComplaintStatus, COMPLAINT_CATEGORIES
+  AppNotification.kt   AppNotification, NotificationType
+
+services/
+  FirebaseService.kt           every database read and write
+  TrikRideMessagingService.kt  FCM receiver
+
+repositories/
+  AuthRepository.kt     sign-up, sign-in, session, profile photo upload
+  RideRepository.kt     request, accept, status progression, history
+  DriverRepository.kt   driver record, availability, credentials
+  AdminRepository.kt    all drivers, all users, all rides, verification
+  FareRepository.kt     fare config, fare stops, one-shot seed import
+  SupportRepository.kt  complaints and notifications
+
+viewmodels/
+  AuthViewModel        bootstrap, login, register, account type, sign out
+  PassengerViewModel   active rides, history, fare stops, booking
+  DriverViewModel      open requests, active rides, earnings, status advance
+  AdminViewModel       drivers, users, rides, complaints, fare table, import
+  ProfileViewModel     profile edit, photo upload, password reset
+  SupportViewModel     complaint submission, notification centre
+
+ui/screens/
+  MainAppScreen        routing: bootstrap → onboarding → auth → role dashboard
+  OnboardingScreen     first-launch carousel and the welcome-back screen
+  PassengerHomeScreen  home, history, support, profile
+  DriverHomeScreen     dashboard, requests, history, profile
+  AdminDashboardScreen verify, concerns, monitor, fares, profile
+  AdminReportsScreen   period selection, summary, CSV export
+  NotificationsScreen  notification centre
+  SettingsScreen       shared profile screen for all three roles
+  LegalScreen          terms of service and privacy notice
+
+ui/components/
+  CommonComponents.kt  PrimaryButton, SecondaryButton, SectionCard, SkeletonBox,
+                       SkeletonCard, RefreshableBox, SimplePlaceholder, TrikTextField
+  AvatarPicker.kt      circular avatar with a camera/gallery chooser
+
+utils/
+  FareEngine.kt     prices a ride from the table
+  FareSeed.kt       the 240 transcribed FeTODAT stops
+  ReportBuilder.kt  CSV generation and period bucketing
+  ReportExporter.kt writes through the file picker, or shares
+  PasswordRules.kt  password policy, evaluated live as the user types
+  AuthPrefs.kt      remembered email, onboarding-seen flag
+  LocationUtils.kt  haversine distance
+  Constants.kt      pickup points, request TTL, max passengers
 ```
 
-## Core Components
+## Database
 
-### 1. Models (Data Structures)
-
-- `User`: Base user information
-- `Driver`: Driver-specific data and verification
-- `Passenger`: Passenger preferences
-- `Ride`: Active ride information
-- `RideRequest`: Incoming ride request
-- `Location`: GPS coordinates and address
-- `Document`: Driver verification documents
-- `RideReview`: Rating and feedback
-
-### 2. Services
-
-#### FirebaseService
-- Handles all Firebase Realtime Database operations
-- Provides Flow-based reactive data streams
-- Manages user, driver, and ride data persistence
-
-#### TrikRideMessagingService
-- Receives Firebase Cloud Messages
-- Creates and displays notifications
-- Handles message data routing
-
-#### AuthenticationService (To Be Implemented)
-- Manages user authentication
-- Handles token refresh
-- Manages session state
-
-#### LocationService (To Be Implemented)
-- Provides real-time GPS tracking
-- Calculates distances and ETAs
-- Integrates with Google Maps
-
-### 3. Repositories (To Be Implemented)
-
-Repository pattern for:
-- UserRepository
-- DriverRepository
-- RideRepository
-- ReviewRepository
-
-Acts as data access abstraction layer.
-
-### 4. ViewModels (To Be Implemented)
-
-ViewModel classes for:
-- AuthViewModel
-- RideViewModel
-- DriverViewModel
-- HomeViewModel
-- ReviewViewModel
-
-Manages UI state and business logic.
-
-### 5. UI Components
-
-Jetpack Compose components organized by:
-- **Screens**: Full-page composables
-- **Components**: Reusable UI elements
-- **Theme**: Design system (colors, typography)
-
-## State Management
-
-TrikRide uses Jetpack Compose for declarative UI with:
-- `remember` for local state
-- `mutableStateOf` for reactive state
-- ViewModels for screen-level state
-- Flow<T> for reactive data streams from Firebase
-
-## Database Schema
-
-### Users Collection
+Realtime Database, seven top-level nodes.
 
 ```
-users/
-└── {userId}
-    ├── id: String
-    ├── email: String
-    ├── phoneNumber: String
-    ├── firstName: String
-    ├── lastName: String
-    ├── userType: UserType
-    ├── profileImageUrl: String
-    ├── createdAt: String
-    └── updatedAt: String
+users/{uid}                    profile
+drivers/{uid}                  credentials, verification, availability, rating
+rideRequests/{id}              open requests; deleted on accept or expiry
+rides/{id}                     accepted rides through to completion
+config/fare                    minimums, flat rates, per-head flag, source
+config/fareStops/{stopId}      the 240-entry rate table
+complaints/{id}                concerns raised by passengers and drivers
+notifications/{uid}/{id}       per-user notification feed
 ```
 
-### Drivers Collection
+Fare stops sit in their own node rather than inside `config/fare` so that correcting one
+price is a small write instead of a rewrite of all 240.
+
+Every model is a data class with a default for every field. Firebase's deserializer
+needs a no-arg constructor, and defaults give it one while also making a partial record
+survive a read. `FareStop.label` is computed and carries `@get:Exclude`, because
+otherwise Firebase would serialize the getter as a field and then fail to find anywhere
+to put it coming back.
+
+## How the pieces work
+
+**Live data.** `FirebaseService` wraps Firebase listeners in `callbackFlow`. That turns
+a callback into a `Flow` and, more usefully, removes the listener when the collecting
+coroutine is cancelled. Unbalanced listener registration is the standard way to leak
+memory in a Firebase app; this makes it structural rather than something to remember.
+
+**Matching.** A request is written to `rideRequests` and every online driver is
+listening on that node, so it appears on their devices without polling. The first driver
+to accept writes a `rides` entry and deletes the request, which removes it from every
+other device. There is no lock; the delete is the resolution.
+
+**Pricing.** `FareEngine.quote()` takes the config, the stop, the rate column, and the
+head count. It reads the posted rate, raises it to the ordinance minimum if lower, and
+multiplies. The priced fare travels on the `RideRequest`, so the driver sees the same
+number the passenger agreed to rather than recomputing it.
+
+**Session.** Firebase keeps the user signed in across restarts. `AuthViewModel`
+constructs with `hasExistingSession` set synchronously from `repo.currentUserId`, so the
+first frame can already choose between the welcome-back screen and the splash instead of
+flashing the wrong one. `bootstrap()` then loads the role, guarded by a twelve-second
+timeout: an unreachable database used to leave the app on a spinner forever.
+
+**Reports.** `ReportBuilder` buckets rides by month or year from epoch-millisecond
+strings. A timestamp that will not parse is excluded from every period rather than
+silently landing in the current one. `ReportExporter` writes through
+`ActivityResultContracts.CreateDocument`, so no storage permission is needed, or shares
+through a `FileProvider` URI.
+
+## Security
+
+Authorization is enforced by Firebase Security Rules on the server, because there is no
+application server in the path to enforce it. Client-side checks are UI convenience and
+nothing more.
+
+The rules restrict a user to their own profile, make `verificationStatus` writable only
+by administrators, make the fare table readable by all authenticated users and writable
+only by administrators, and scope notifications to their owner.
+
+Secrets live in `.env`, which is gitignored; `.env.example` records which keys exist
+without their values. `google-services.json` is gitignored too. The build reads `.env`
+and injects values as manifest placeholders and `buildConfigField` entries.
+
+No payment data is collected anywhere, which removes that category of risk entirely.
+
+## Build
 
 ```
-drivers/
-└── {driverId}
-    ├── userId: String
-    ├── licenseNumber: String
-    ├── licenseExpiry: String
-    ├── tricycleNumber: String
-    ├── verificationStatus: VerificationStatus
-    ├── isAvailable: Boolean
-    ├── currentLocation: {latitude, longitude, address}
-    ├── rating: Double
-    ├── totalRides: Int
-    ├── documents: Document[]
-    └── verifiedAt: String
+Gradle 8.11.1 (wrapper committed)   AGP 8.7.3   Kotlin 2.1.0   JDK 17
+compileSdk 35   targetSdk 34   minSdk 24
+compose-bom 2024.12.01
 ```
 
-### Rides Collection
+The wrapper is committed on purpose. Without it Android Studio supplies its own Gradle
+version, and a newer Gradle against this AGP fails with an error that points nowhere
+near the cause.
 
-```
-rides/
-└── {rideId}
-    ├── id: String
-    ├── passengerId: String
-    ├── driverId: String
-    ├── pickupLocation: Location
-    ├── dropoffLocation: Location
-    ├── status: RideStatus
-    ├── requestedAt: String
-    ├── acceptedAt: String
-    ├── startedAt: String
-    ├── completedAt: String
-    ├── estimatedDuration: Int
-    ├── actualDuration: Int
-    ├── estimatedFare: Double
-    ├── actualFare: Double
-    ├── paymentMethod: PaymentMethod
-    ├── paymentStatus: PaymentStatus
-    ├── route: Location[]
-    └── notes: String
-```
-
-## Authentication Flow
-
-```
-User Input (Email/Password)
-    │
-    ├─→ AuthViewModel
-    │       │
-    │       └─→ FirebaseAuth.signInWithEmailAndPassword()
-    │           │
-    │           ├─→ Success: Save user data, navigate to home
-    │           │
-    │           └─→ Error: Display error message
-    │
-    └─→ Update AppState (isLoggedIn, userType)
-```
-
-## Real-time Location Tracking
-
-```
-Driver Location Updates
-    │
-    ├─→ LocationService.requestLocationUpdates()
-    │       │
-    │       └─→ FusedLocationProviderClient
-    │
-    └─→ FirebaseService.updateDriverLocation(driverId, location)
-        │
-        └─→ Ride subscribers notified via Flow
-            │
-            └─→ PassengerTrackingScreen updates map
-```
-
-## Error Handling
-
-Centralized error handling with:
-- Try-catch blocks in services
-- Error states in ViewModels
-- User-friendly error messages
-- Retry mechanisms for network failures
-
-## Performance Optimizations
-
-1. **Database Indexing**: Optimize Firebase queries
-2. **Image Caching**: Coil for efficient image loading
-3. **ProGuard**: Code obfuscation for release builds
-4. **Lazy Loading**: Load data on demand
-5. **Flow Cancellation**: Proper cleanup in UI lifecycle
-
-## Security Measures
-
-1. **Firebase Security Rules**: Restrict database access
-2. **Permissions**: Runtime permissions for location/camera
-3. **Data Encryption**: Firebase handles SSL/TLS
-4. **Token Management**: Secure token storage
-5. **Input Validation**: Client-side validation
-
-## Testing Strategy
-
-### Unit Tests
-- Service logic
-- Repository operations
-- ViewModel state management
-
-### Integration Tests
-- Firebase operations
-- Database transactions
-- API responses
-
-### UI Tests
-- Screen navigation
-- User interactions
-- State updates
-
-## Build Configuration
-
-- **minSdk**: 24 (Android 7.0)
-- **targetSdk**: 34 (Latest)
-- **Language**: Kotlin
-- **UI Framework**: Jetpack Compose
-- **Build System**: Gradle Kotlin DSL
-
-## Dependencies Management
-
-Core dependencies:
-- Jetpack: Core, Compose, Lifecycle, Navigation
-- Firebase: Database, Auth, Storage, Messaging
-- Google Play Services: Maps, Location
-- Networking: Retrofit, OkHttp, Gson
-- Image Loading: Coil
-
-See `app/build.gradle.kts` for complete dependency list.
-
-## Continuous Integration
-
-Build checks:
-- Gradle build
-- Unit tests
-- ProGuard rules validation
-- Lint analysis
-
-## Future Enhancements
-
-- Push notification enhancements
-- In-app messaging
-- Payment gateway integration
-- Advanced analytics
-- Machine learning for ride matching
-- Offline support with local caching
+The Google Services plugin is applied conditionally on `google-services.json` existing,
+so the project still configures on a machine that has not been given the Firebase file
+yet.
