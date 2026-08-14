@@ -190,3 +190,17 @@ near the cause.
 The Google Services plugin is applied conditionally on `google-services.json` existing,
 so the project still configures on a machine that has not been given the Firebase file
 yet.
+
+Release signing follows the same shape. `build.gradle.kts` reads `RELEASE_STORE_FILE`,
+`RELEASE_STORE_PASSWORD`, `RELEASE_KEY_ALIAS` and `RELEASE_KEY_PASSWORD` from `.env`, and
+only registers a `release` signing config when all four are present and the keystore file
+actually exists. When they are not, the release build type falls back to the debug config
+and a `whenReady` hook logs a warning naming the missing variables. The alternative —
+failing the build outright — would stop a fresh clone from compiling at all, and the
+alternative to that, signing silently with the debug key, is how an undistributable APK
+gets handed to testers.
+
+Shrinking is off. R8 removes the constructors and fields Firebase needs to map a snapshot
+onto a data class, and the failure is quiet: reads return empty records rather than
+crashing. `proguard-rules.pro` carries the keep rules that make it safe, so enabling it is
+one line plus a test against a real database.

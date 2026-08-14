@@ -1,3 +1,4 @@
+import java.io.File
 import java.util.Properties
 
 plugins {
@@ -37,6 +38,20 @@ val mapsApiKey: String = secret("MAPS_API_KEY", "MISSING_MAPS_API_KEY")
 val supportHotline: String = secret("SUPPORT_HOTLINE", "0966-749-7561")
 val supportEmail: String = secret("SUPPORT_EMAIL", "trikride@tpc.edu.ph")
 
+// Release signing. The keystore itself is never committed; its path and
+// passwords come from .env. When they are absent — a fresh clone, or anyone
+// building only the debug variant — the release build falls back to the debug
+// key so the project still configures and assembles.
+val keystorePath: String = secret("RELEASE_STORE_FILE")
+val keystoreFile: File? = keystorePath
+    .takeIf { it.isNotBlank() }
+    ?.let { path -> File(path).let { if (it.isAbsolute) it else rootProject.file(path) } }
+    ?.takeIf { it.exists() }
+val hasReleaseKeystore = keystoreFile != null &&
+    secret("RELEASE_STORE_PASSWORD").isNotBlank() &&
+    secret("RELEASE_KEY_ALIAS").isNotBlank() &&
+    secret("RELEASE_KEY_PASSWORD").isNotBlank()
+
 android {
     namespace = "com.tpc.trikride"
     compileSdk = 35
@@ -58,8 +73,37 @@ android {
         buildConfigField("String", "SUPPORT_EMAIL", "\"$supportEmail\"")
     }
 
+    signingConfigs {
+        if (hasReleaseKeystore) {
+            create("release") {
+                storeFile = keystoreFile
+                storePassword = secret("RELEASE_STORE_PASSWORD")
+                keyAlias = secret("RELEASE_KEY_ALIAS")
+                keyPassword = secret("RELEASE_KEY_PASSWORD")
+                // v2 covers everything from Android 7.0, which is our minimum.
+                // v1 stays on because some sideloading paths and file managers
+                // still look for it, and this app is distributed by sideload.
+                enableV1Signing = true
+                enableV2Signing = true
+            }
+        }
+    }
+
     buildTypes {
         release {
+            signingConfig = if (hasReleaseKeystore) {
+                signingConfigs.getByName("release")
+            } else {
+                // Assembles, but produces a package that cannot be distributed.
+                // The warning below says so at configuration time.
+                signingConfigs.getByName("debug")
+            }
+            // Left off on purpose. R8 strips the members Firebase reads by
+            // reflection when it deserializes a snapshot into a data class, and
+            // a release build that silently returns empty records is far worse
+            // than a slightly larger download. proguard-rules.pro already holds
+            // the keep rules needed to turn this on; do it only with time to
+            // test a real release build against a real database.
             isMinifyEnabled = false
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
@@ -130,4 +174,20 @@ dependencies {
     testImplementation("junit:junit:4.13.2")
     androidTestImplementation("androidx.test.ext:junit:1.2.1")
     androidTestImplementation("androidx.test.espresso:espresso-core:3.6.1")
+}
+
+// Warn once, at configuration time, rather than let someone discover at install
+// time that they have handed out a debug-signed build.
+gradle.taskGraph.whenReady { graph ->
+    val buildingRelease = graph.allTasks.any { it.name.contains("Release", ignoreCase = true) }
+    if (buildingRelease && !hasReleaseKeystore) {
+        logger.warn(
+            "\n=====================================================================\n" +
+                "  No release keystore configured. This release build is signed with\n" +
+                "  the debug key and MUST NOT be distributed.\n" +
+                "  Set RELEASE_STORE_FILE, RELEASE_STORE_PASSWORD, RELEASE_KEY_ALIAS\n" +
+                "  and RELEASE_KEY_PASSWORD in .env — see .env.example.\n" +
+                "====================================================================="
+        )
+    }
 }

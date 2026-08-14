@@ -317,21 +317,64 @@ pure functions with no Android dependency and are the obvious place to start.
 
 ## Deployment
 
-Build a release bundle:
+### Generate the signing key, once
 
 ```bash
-./gradlew bundleRelease
+keytool -genkeypair -v \
+  -keystore trikride-release.jks \
+  -alias trikride \
+  -keyalg RSA -keysize 2048 -validity 10000
 ```
 
-This needs a release signing config, which the project does not have yet. Generate a
-keystore, back it up somewhere that is not your laptop, and put the passwords in `.env`.
-Losing the keystore means you can never update the app for anyone who installed it.
+`keytool` ships with the JDK. If it is not on your PATH, it is under the `bin` folder of
+the JDK bundled with Android Studio.
 
-For a capstone, the two distribution routes that cost nothing are **Firebase App
-Distribution**, which is on the free tier and invites testers by email, and publishing
-the APK as a **GitHub release** with a QR code. The Play Store charges a one-time
-developer fee and, for new individual accounts, requires a closed testing period before
-public release.
+Answer the prompts, then **back the `.jks` file up somewhere that is not this laptop**.
+Losing it means nobody who installed the app can ever be sent an update: Android will
+refuse a package signed by a different key, and the only way out is a new package name
+and a fresh install for every user. `*.jks` and `*.keystore` are gitignored, so the file
+will not be committed by accident, which also means it will not be backed up by accident.
+
+### Point the build at it
+
+Add these to `.env`:
+
+```properties
+RELEASE_STORE_FILE=trikride-release.jks
+RELEASE_STORE_PASSWORD=the-store-password
+RELEASE_KEY_ALIAS=trikride
+RELEASE_KEY_PASSWORD=the-key-password
+```
+
+The path is relative to the project root, or absolute if you keep the keystore elsewhere.
+
+### Build
+
+```bash
+./gradlew assembleRelease   # APK, for sideloading and App Distribution
+./gradlew bundleRelease     # AAB, only needed for the Play Store
+```
+
+The APK lands in `app/build/outputs/apk/release/`.
+
+If any of the four values is missing, the build still succeeds but signs with the debug
+key and prints a warning saying so. That output installs and runs, and must not be handed
+to anyone: a debug-signed build cannot be updated by a properly signed one later.
+
+### Getting it to users
+
+**Firebase App Distribution** is on the free tier. Upload the APK, add tester email
+addresses, and they receive an install link. Later builds go to the same group. It also
+records who installed which version, which is usable evidence of participation for the
+evaluation chapter.
+
+**A GitHub release** with the APK attached works for anyone, no invitation needed. Print
+the link as a QR code. Users have to allow installation from outside the app store, so
+include the illustrated install guide from the user manual.
+
+The Play Store is neither free nor quick: a one-time developer fee, and for new
+individual accounts a closed testing period before public release. Nothing in the project
+prevents publishing there later.
 
 ## Support
 

@@ -25,5 +25,11 @@ secrets.properties
 .env.local
 !.env.example
 
+# Signing keys. Committing one hands anybody the ability to publish an update
+# that Android will accept as genuinely ours.
+*.jks
+*.keystore
+keystore.properties
+
 # Logs
 *.log

@@ -6,8 +6,8 @@ picks this up next, including us in a month.
 ## Finished and on the branch
 
 **Accounts.** Registration with full name, birthdate through a date picker, email, mobile
-number, and a password checked against a live rule list as it is typed. Terms and privacy
-consent is required before the account is created. Sign-in remembers the email if asked.
+number, and a password checked against a live rule list as it is typed. The Terms,
+Privacy Policy and Community Guidelines must be ticked before the account is created. Sign-in remembers the email if asked.
 Firebase keeps the session, so the app opens straight to the dashboard on the next
 launch. Password reset by email.
 
@@ -50,6 +50,12 @@ ticked separately, or sign out. Acceptance is recorded against
 `Constants.LEGAL_VERSION`, so revising the documents means changing that string and
 everyone is asked again on their next launch.
 
+**Release signing.** `assembleRelease` produces a properly signed APK once four values
+are set in `.env`. Without them it falls back to the debug key and Gradle prints a warning
+that the output must not be distributed, so a debug-signed build cannot be handed out by
+accident. The keystore itself is gitignored and has to be generated once and backed up —
+see the Deployment section of SETUP_GUIDE.md.
+
 **Runs on the free tier.** Auth, Realtime Database, Cloud Messaging, and App Distribution
 are all free and none of them asks for a card. Cloud Storage is the one Firebase service
 that needs the paid Blaze plan, so it is not used: profile photos are squared off at 256
@@ -71,10 +77,6 @@ Functions, deferred.
 
 **Online payment.** Out of scope by the study's own limitations. Cash only.
 
-**Release signing.** The project builds debug APKs. A release keystore and a signing
-config reading from `.env` are needed before anything is distributed, and the keystore
-must be backed up somewhere that is not one laptop.
-
 ## What still needs a person, not a commit
 
 **The fare data.** Forty-six of the 240 entries are flagged. Open Fares, tap the "Needs
@@ -85,6 +87,10 @@ need a number or removal. One of those, San Roque "Dina/Gabril", looks like a du
 "Gabriel & Dina", which is already in the table at ₱36/₱40.
 
 **`.env`.** Copy `.env.example` and fill it in. The build reads it.
+
+**The keystore.** Generate it, back it up in two places, and put the four
+`RELEASE_*` values in `.env`. Nothing can be distributed until this exists, and nothing
+can be updated if it is lost.
 
 **Evaluation.** No survey data has been collected. The manuscript's section 4.9 and
 Chapter 5 carry the tables and the interpretation scale, with the numbers left blank and
@@ -110,10 +116,12 @@ one means editing a script, not redrawing a picture.
 
 ## Rebuilding the .docx
 
-Edit `docs/capstone_manuscript.md`, then run pandoc against a reference document with the
-capstone's page setup. The `[[PB]]` markers in the Markdown expand to Word page breaks,
-and pandoc's `[Content_Types].xml` needs a PNG default added afterwards or the file will
-not open. The build steps are recorded in the commit that introduced the manuscript.
+Edit `docs/capstone_manuscript.md`, then run `bash docs/build_docx.sh`. It needs pandoc.
+
+The script expands the `[[PB]]` markers into Word page breaks, renders against
+`docs/reference.docx` (which carries the page setup: Letter, Times New Roman 12, double
+spaced, 1.5-inch left margin), and patches the image content types back into the result —
+pandoc omits them, and without them neither Word nor LibreOffice will open the file.
 
 ## Known rough edges
 

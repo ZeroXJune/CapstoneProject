@@ -75,6 +75,16 @@ There is no server to run. Firebase provides the backend, which is deliberate: a
 handed to a municipal drivers' association cannot depend on a machine somebody has to
 keep alive.
 
+## Releasing
+
+`./gradlew assembleRelease` produces a signed APK once four `RELEASE_*` values are set in
+`.env`. Without them it signs with the debug key and Gradle warns that the output must not
+be handed out, so nobody ships a build by accident that can never be updated.
+
+Generate the keystore once, back it up somewhere that is not your laptop, and never
+commit it — `*.jks` and `*.keystore` are gitignored. Full steps are in
+[SETUP_GUIDE.md](SETUP_GUIDE.md#deployment).
+
 ## Getting it running
 
 See [SETUP_GUIDE.md](SETUP_GUIDE.md). Two files are not in this repository and you will

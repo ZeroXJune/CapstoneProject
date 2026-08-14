@@ -1216,7 +1216,11 @@ A notification centre is reachable from the passenger and driver home screens, s
 
 ### Deployment
 
-The application is distributed to users as a signed release package. Two distribution routes are available and neither requires a paid developer account.
+The application is distributed to users as a signed release package. The signing key is generated once and held outside version control; the build reads its location and passwords from the project's environment file and, when they are absent, falls back to the debug key while printing a warning that the resulting package must not be distributed. This arrangement makes it difficult to hand out a build that cannot later be updated, which is the practical consequence of signing with the wrong key.
+
+The keystore is the single artefact of this project that cannot be regenerated. Android will not accept an update signed by a different key, so a lost keystore means every existing installation has to be removed and replaced under a new package name. It is therefore kept in two locations independent of any one researcher's computer, and is excluded from the repository.
+
+Two distribution routes are available and neither requires a paid developer account.
 
 The primary route is **Firebase App Distribution**, which is included in the platform's free tier. Testers are invited by email address and receive a link that installs the application, and subsequent releases are pushed to the same group. App Distribution records which tester installed which version, which provides a verifiable record of participation in the evaluation.
 
