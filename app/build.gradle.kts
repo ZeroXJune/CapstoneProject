@@ -176,18 +176,20 @@ dependencies {
     androidTestImplementation("androidx.test.espresso:espresso-core:3.6.1")
 }
 
-// Warn once, at configuration time, rather than let someone discover at install
-// time that they have handed out a debug-signed build.
-gradle.taskGraph.whenReady { graph ->
-    val buildingRelease = graph.allTasks.any { it.name.contains("Release", ignoreCase = true) }
-    if (buildingRelease && !hasReleaseKeystore) {
-        logger.warn(
-            "\n=====================================================================\n" +
-                "  No release keystore configured. This release build is signed with\n" +
-                "  the debug key and MUST NOT be distributed.\n" +
-                "  Set RELEASE_STORE_FILE, RELEASE_STORE_PASSWORD, RELEASE_KEY_ALIAS\n" +
-                "  and RELEASE_KEY_PASSWORD in .env — see .env.example.\n" +
-                "====================================================================="
-        )
-    }
+// Warn at configuration time rather than let someone discover at install time
+// that they have handed out a debug-signed build. Reading the requested task
+// names keeps this to plain Kotlin; the task-graph callback has a Groovy
+// Closure overload that Kotlin picks in preference to the Action one.
+val buildingRelease = gradle.startParameter.taskNames.any {
+    it.contains("release", ignoreCase = true)
+}
+if (buildingRelease && !hasReleaseKeystore) {
+    logger.warn(
+        "\n=====================================================================\n" +
+            "  No release keystore configured. This release build is signed with\n" +
+            "  the debug key and MUST NOT be distributed.\n" +
+            "  Set RELEASE_STORE_FILE, RELEASE_STORE_PASSWORD, RELEASE_KEY_ALIAS\n" +
+            "  and RELEASE_KEY_PASSWORD in .env — see .env.example.\n" +
+            "====================================================================="
+    )
 }
