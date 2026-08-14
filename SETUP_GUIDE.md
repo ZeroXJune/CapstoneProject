@@ -54,8 +54,12 @@ cd capstoneproject
 In Firebase Console, enable:
 - **Authentication**: Email/Password
 - **Realtime Database**: Create database in production mode
-- **Cloud Storage**: Create bucket for documents
 - **Cloud Messaging**: For push notifications
+
+Cloud Storage is deliberately not used. New Firebase projects need the paid Blaze plan
+before a Storage bucket can be provisioned, and Blaze requires a card on file. Profile
+photos are shrunk to 256 pixels square, compressed, and written into the Realtime
+Database instead, which keeps the whole project on the free Spark plan.
 
 ## Step 4: Configure Firebase Security Rules
 
@@ -108,6 +112,12 @@ server in between, so anything the rules allow is allowed, whatever the interfac
       "$uid": {
         ".read": "auth != null && $uid === auth.uid",
         ".write": "auth != null"
+      }
+    },
+    "profilePhotos": {
+      "$uid": {
+        ".read": "auth != null",
+        ".write": "auth != null && $uid === auth.uid"
       }
     }
   }
@@ -213,11 +223,13 @@ spinning, but the underlying cause is the same.
 The fare table has not been loaded. Sign in as an administrator and use **Fares → Load
 official rates**. See Step 7.
 
-### Profile photo upload fails
+### Profile photo will not save
 
-Cloud Storage is not enabled on the Firebase project. New projects require the Blaze plan
-for Storage. The free allowance covers this app comfortably, but a card is needed to
-enable it.
+The app shrinks the image to 256 pixels square and writes it into
+`profilePhotos/{uid}` in the database, so this is a database permission problem rather
+than a Storage one. Check that the `profilePhotos` rule from Step 4 is published. If the
+message says the image could not be processed, the file was not a readable image or it
+would not compress below 24 KB even at the lowest quality.
 
 ### Gradle sync issues generally
 

@@ -42,6 +42,13 @@ rides, drivers, and concerns.
 privacy text, an in-app notification centre with unread counts, skeleton loading,
 pull-to-refresh, and a concern form for passengers and drivers.
 
+**Runs on the free tier.** Auth, Realtime Database, Cloud Messaging, and App Distribution
+are all free and none of them asks for a card. Cloud Storage is the one Firebase service
+that needs the paid Blaze plan, so it is not used: profile photos are squared off at 256
+pixels, compressed to a few kilobytes, and written to `profilePhotos/{uid}` in the
+database. They are kept out of the user record on purpose, so the admin screens can list
+every user without dragging every avatar across the network.
+
 ## What is not built, and why
 
 **Live maps.** Map panels are styled placeholders. Displaying a Google map on Android
@@ -68,11 +75,6 @@ the discount above the regular rate, which is backwards and should be fixed befo
 real uses the app. Three entries are switched off because no rate could be read; they
 need a number or removal. One of those, San Roque "Dina/Gabril", looks like a duplicate of
 "Gabriel & Dina", which is already in the table at ₱36/₱40.
-
-**Cloud Storage.** Profile photo uploads need it enabled in the Firebase console. New
-Firebase projects require the Blaze plan for Storage, which wants a card even though the
-free allowance covers this app several times over. If that is not wanted, drop remote
-photos and keep the picked image on the device.
 
 **`.env`.** Copy `.env.example` and fill it in. The build reads it.
 

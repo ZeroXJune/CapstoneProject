@@ -96,10 +96,9 @@ digraph G {{
   }}
 
   subgraph cluster_cloud {{
-    label="Backend as a service — Google Firebase"; style="rounded"; color="{DEEP}"; fontcolor="{DEEP}"; bgcolor="{BLUE}";
+    label="Backend as a service — Google Firebase (free tier)"; style="rounded"; color="{DEEP}"; fontcolor="{DEEP}"; bgcolor="{BLUE}";
     auth [label="Authentication\\nemail and password", fillcolor="white"];
-    rtdb [label="Realtime Database\\nusers · drivers · rides\\nrequests · config · complaints", fillcolor="white"];
-    stor [label="Cloud Storage\\nprofile photos\\ndriver documents", fillcolor="white"];
+    rtdb [label="Realtime Database\\nusers · drivers · rides · requests\\nconfig · complaints · profilePhotos", fillcolor="white"];
     fcm  [label="Cloud Messaging\\npush notifications", fillcolor="white"];
   }}
 

@@ -15,7 +15,7 @@ Repositories             six of them; the ViewModels' only data source
       ↓
 FirebaseService          the single place that touches the database
       ↓ HTTPS / WebSocket
-Firebase                 Auth, Realtime Database, Storage, Cloud Messaging
+Firebase                 Auth, Realtime Database, Cloud Messaging
 ```
 
 Each layer knows only about the one below it. A screen knows its ViewModel. A ViewModel
@@ -43,7 +43,7 @@ services/
   TrikRideMessagingService.kt  FCM receiver
 
 repositories/
-  AuthRepository.kt     sign-up, sign-in, session, profile photo upload
+  AuthRepository.kt     sign-up, sign-in, session, profile photo
   RideRepository.kt     request, accept, status progression, history
   DriverRepository.kt   driver record, availability, credentials
   AdminRepository.kt    all drivers, all users, all rides, verification
@@ -80,6 +80,7 @@ utils/
   ReportBuilder.kt  CSV generation and period bucketing
   ReportExporter.kt writes through the file picker, or shares
   PasswordRules.kt  password policy, evaluated live as the user types
+  ProfilePhoto.kt   shrinks and base64-encodes an avatar for the database
   AuthPrefs.kt      remembered email, onboarding-seen flag
   LocationUtils.kt  haversine distance
   Constants.kt      pickup points, request TTL, max passengers
@@ -98,10 +99,20 @@ config/fare                    minimums, flat rates, per-head flag, source
 config/fareStops/{stopId}      the 240-entry rate table
 complaints/{id}                concerns raised by passengers and drivers
 notifications/{uid}/{id}       per-user notification feed
+profilePhotos/{uid}            base64 avatar, a few kilobytes
 ```
 
 Fare stops sit in their own node rather than inside `config/fare` so that correcting one
-price is a small write instead of a rewrite of all 240.
+price is a small write instead of a rewrite of all 240. Profile photos are separated from
+`users` for the same kind of reason: the admin screens read every user record constantly,
+and an avatar embedded in each one would be pulled down every time.
+
+**No Cloud Storage.** Firebase now requires the paid Blaze plan before a Storage bucket
+can be provisioned, and this project runs on Spark with no card. `ProfilePhoto` squares
+the chosen image, scales it to 256 pixels, and compresses it down a quality ladder until
+the base64 fits in 24 KB. Decoding the source is done with `inSampleSize` first, because
+decoding a 4000-pixel camera photo at full size to produce a thumbnail is how an app runs
+out of memory.
 
 Every model is a data class with a default for every field. Firebase's deserializer
 needs a no-arg constructor, and defaults give it one while also making a partial record

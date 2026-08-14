@@ -111,7 +111,7 @@ The system serves three kinds of users. A passenger creates an account, chooses 
 
 Fares are not estimated. The application prices every ride from the 240 destinations on the posted FeTODAT schedule, which distinguishes the regular rate from the discounted rate for senior citizens, persons with disabilities, and students, and which sets a minimum fare of fifteen pesos for regular passengers and twelve pesos for discounted passengers. Because the rate table is held in the database rather than in code, the administrator corrects a price without a new release of the application.
 
-The application was built in Kotlin with Jetpack Compose against Firebase Authentication, Realtime Database, Cloud Storage, and Cloud Messaging, following a Model-View-ViewModel architecture with a repository layer. Development followed the Waterfall model of the software development life cycle.
+The application was built in Kotlin with Jetpack Compose against Firebase Authentication, Realtime Database, and Cloud Messaging, following a Model-View-ViewModel architecture with a repository layer. The system operates entirely within the free tier of the backend platform, and no component of it requires a paid subscription. Development followed the Waterfall model of the software development life cycle.
 
 The system was evaluated against the four ISO/IEC 25010 quality characteristics named in the research instrument: usability, functionality, efficiency, and reliability. Respondents were students of Talibon Polytechnic College and tricycle drivers serving the campus, and responses were treated using the weighted mean.
 
@@ -436,11 +436,11 @@ The study followed a systematic procedure to ensure the proper development, impl
 
 **Needs Assessment.** A structured needs assessment was administered to students and tricycle drivers to document the problems in the current arrangement. The responses established the functional requirements set out in Section 4.1.
 
-**System Planning and Design.** The researchers identified the tools and components required for development, comprising Android Studio, Kotlin, Jetpack Compose, and Firebase Authentication, Realtime Database, Cloud Storage, and Cloud Messaging. A system architecture diagram and interface wireframes were prepared to guide development.
+**System Planning and Design.** The researchers identified the tools and components required for development, comprising Android Studio, Kotlin, Jetpack Compose, and Firebase Authentication, Realtime Database, and Cloud Messaging. A system architecture diagram and interface wireframes were prepared to guide development.
 
 **System Development.** The passenger, driver, and administrator interfaces were built in Kotlin and Jetpack Compose according to the approved design. The system was configured to accept ride requests, price them from the FeTODAT schedule, match passengers with available drivers, and process driver registration and verification.
 
-**System Integration.** All components were integrated and tested as a complete system. This included verifying communication between the application and Firebase Authentication for sign-in, the Realtime Database for live data, Cloud Storage for profile photographs and documents, and Cloud Messaging for notifications. Defects found were corrected through debugging and adjustment.
+**System Integration.** All components were integrated and tested as a complete system. This included verifying communication between the application and Firebase Authentication for sign-in, the Realtime Database for live data and profile photographs, and Cloud Messaging for notifications. Defects found were corrected through debugging and adjustment.
 
 **Testing.** The system underwent unit, integration, system, user acceptance, performance, and security testing using both simulated and live ride requests. The researchers recorded the system's ability to match passengers with drivers correctly, to price rides according to the posted schedule, to process bookings, and to deliver notifications.
 
@@ -671,7 +671,7 @@ The minimum SDK of API level 24 was chosen deliberately. Android 7.0 was release
 | Operating system | Android 7.0 (API level 24) or later |
 | Connectivity | Mobile data or Wi-Fi; the application does not operate offline |
 | Storage | Approximately 30 MB for installation |
-| Permissions | Camera, for capturing a profile photograph; internet; notification posting on Android 13 and later |
+| Permissions | Internet; camera, for capturing a profile photograph; notification posting on Android 13 and later. Choosing an existing photograph requires no permission, and neither does saving an exported report. |
 | Account | A valid email address for registration |
 
 ### Third-Party Libraries and Services
@@ -683,11 +683,9 @@ The minimum SDK of API level 24 was chosen deliberately. Android 7.0 was release
 | Firebase BOM | current stable | Version alignment across Firebase libraries |
 | Firebase Authentication | via Firebase BOM | Email and password sign-in and session management |
 | Firebase Realtime Database | via Firebase BOM | Live data storage and synchronization |
-| Firebase Cloud Storage | via Firebase BOM | Profile photographs and driver documents |
 | Firebase Cloud Messaging | via Firebase BOM | Notification delivery |
 | Kotlin Coroutines | bundled with Kotlin 2.1.0 | Asynchronous work and reactive data streams |
 | AndroidX Lifecycle ViewModel Compose | current stable | ViewModel integration with Compose |
-| Coil | 2.x | Loading remote images into Compose |
 | AndroidX Activity Compose | current stable | Activity result contracts for camera, gallery, and file creation |
 
 ## 3.2 Hardware Requirements
@@ -728,7 +726,7 @@ The system requires no server hardware procured or maintained by the college. Al
 
 **XML** is used for Android resources that are not expressible in Compose: the application manifest, string and colour resources, launcher icon definitions, the file provider path configuration, and the backup and data extraction rules.
 
-**Firebase Security Rules**, a JSON-based declarative language, is used to express server-side authorization for the Realtime Database and Cloud Storage.
+**Firebase Security Rules**, a JSON-based declarative language, is used to express server-side authorization for the Realtime Database.
 
 ## 3.4 Development Tools
 
@@ -756,7 +754,7 @@ The Realtime Database was selected over a relational database and over Cloud Fir
 
 **Latency matters more than query power.** The Realtime Database offers lower latency than Cloud Firestore for small, frequent updates, which is the access pattern of ride status changes. The queries this system performs are simple lookups and filters by a single field; it does not need the compound query support that would favour Firestore.
 
-**Cost at the scale of this study is zero.** The Realtime Database free tier provides 1 GB of storage, 10 GB of monthly transfer, and 100 simultaneous connections, which is well beyond what a municipal pilot will consume.
+**Cost at the scale of this study is zero, and no payment method is required.** The Realtime Database free tier provides 1 GB of storage, 10 GB of monthly transfer, and 100 simultaneous connections, which is well beyond what a municipal pilot will consume. This is not merely an economy: a capstone project handed over to a college department and a drivers' association cannot depend on a recurring bill that somebody must agree to pay.
 
 **Offline caching is built in.** The client library caches recent data and re-synchronizes when the connection returns, which mitigates the intermittent connectivity common in the study area.
 
@@ -766,9 +764,15 @@ The trade-off accepted is that a JSON tree provides no schema enforcement and no
 
 Account creation, sign-in, session persistence, and password reset are handled by **Firebase Authentication** using the email and password provider. No password is ever stored or transmitted by the application itself; credentials are exchanged directly between the Firebase client library and Google's authentication service, and the application receives only an opaque user identifier and a session token.
 
-### Firebase Cloud Storage
+### Profile Photographs Without Object Storage
 
-Profile photographs and driver documents are stored in **Firebase Cloud Storage**, an object store. Only the resulting download URL is written into the Realtime Database, keeping binary data out of the JSON tree.
+Firebase Cloud Storage would ordinarily hold an uploaded image, but Firebase requires the paid Blaze plan before a Storage bucket can be provisioned on a new project, and Blaze requires a payment method on file. Because a condition of this study is that the deployed system incur no cost and require no such commitment from the college, Cloud Storage is not used.
+
+Profile photographs are instead reduced and stored in the Realtime Database. When a user selects an image, the application decodes it at a reduced sample size, crops it to a square, scales it to 256 pixels, and compresses it as a JPEG, stepping down through decreasing quality levels until the base64-encoded result fits within 24 kilobytes. An avatar displayed at 96 density-independent pixels needs no more resolution than this.
+
+The encoded photograph is written to a `profilePhotos` node keyed by user identifier, rather than into the user record itself. This separation matters in practice: the administrative screens read every user record continuously to populate their lists, and an image embedded in each record would be transferred on every one of those reads. Held separately, a photograph is transferred only when it is actually displayed.
+
+At 24 kilobytes per photograph, one thousand users would consume roughly 24 megabytes of the 1 gigabyte free allowance. Driver credentials are recorded as typed values reviewed by an administrator rather than as uploaded document images, for the same reason.
 
 ### Data Organization
 
@@ -778,7 +782,7 @@ The database is organized as seven top-level nodes, documented in Table 8 and Fi
 
 The system uses a **client to cloud** architecture. There is no intermediate application server: the Android client communicates directly with Google Firebase services over the public internet.
 
-Communication uses two channels. Authentication, storage operations, and one-off database reads and writes travel over **HTTPS**, secured by TLS 1.2 or later. Live database synchronization travels over a **persistent WebSocket connection** that the Firebase client library opens and maintains, over which the server pushes changes as they occur.
+Communication uses two channels. Authentication and one-off database reads and writes travel over **HTTPS**, secured by TLS 1.2 or later. Live database synchronization travels over a **persistent WebSocket connection** that the Firebase client library opens and maintains, over which the server pushes changes as they occur.
 
 This arrangement has three consequences worth stating. It removes the need for the college to operate a server. It means that authorization must be enforced by Firebase Security Rules on the server side, because there is no application server in the path to enforce it. And it means the application is unusable without connectivity, which is recorded as a limitation in Section 1.5.
 
@@ -906,6 +910,7 @@ Requirements were derived from three sources: the problems documented in the nee
 | NFR-12 | Portability | The application shall run on Android 7.0 and later. |
 | NFR-13 | Compatibility | Exported reports shall open without conversion in Microsoft Excel, Google Sheets, and LibreOffice Calc. |
 | NFR-14 | Scalability | The system shall operate within the free tier of the backend platform at the scale of the study. |
+| NFR-15 | Cost | The system shall require no paid subscription and no payment method on file, so that neither the college nor the drivers' association incurs a recurring commitment. |
 
 ## 4.2 Requirements Documentation
 
@@ -926,7 +931,7 @@ Requirements were derived from three sources: the problems documented in the nee
 | Category | Requirement |
 |:---|:---|
 | Platform | Native Android application, API level 24 and above |
-| Backend | Firebase Authentication, Realtime Database, Cloud Storage, and Cloud Messaging |
+| Backend | Firebase Authentication, Realtime Database, and Cloud Messaging, all within the free tier |
 | Data synchronization | Persistent listeners delivering changes to connected clients without polling |
 | Concurrency | A ride request must be accepted by exactly one driver; acceptance removes the request from all other devices |
 | Fare source | The published FeTODAT schedule, held in the database and editable by an administrator |
@@ -983,7 +988,7 @@ Decomposing the single process of the context diagram gives six processes and se
 
 ### Entity Relationship Diagram
 
-Although the Realtime Database is not relational, the entities it holds and the relationships between them can be expressed in the same terms, which is what the following diagram does. Relationships that would be foreign keys in a relational database are stored as identifier fields.
+Although the Realtime Database is not relational, the entities it holds and the relationships between them can be expressed in the same terms, which is what the following diagram does. Relationships that would be foreign keys in a relational database are stored as identifier fields. A user's profile photograph is held in a separate `profilePhotos` node keyed by the same identifier, for the reason given in Section 3.5.
 
 ![Figure 6. Entity Relationship Diagram](figures/fig06_erd.png){width=5.89in}
 
@@ -1023,8 +1028,9 @@ The database is a JSON tree with seven top-level nodes.
 | `config/fareStops` | stop identifier | Zone, name, regular rate, discounted rate, active flag, review flag, transcription confidence, note | An administrator |
 | `complaints` | complaint identifier | Reporter identifier, name and role, category, description, status, administrator note, timestamps | The reporter; status and note by an administrator |
 | `notifications` | user identifier, then notification identifier | Title, message, type, read flag, timestamp | The system |
+| `profilePhotos` | user identifier | Base64 JPEG thumbnail and the time it was set | The account holder |
 
-![Figure 11. Realtime Database Schema](figures/fig11_database_schema.png){width=5.24in}
+![Figure 11. Realtime Database Schema](figures/fig11_database_schema.png){width=4.83in}
 
 The fare table as seeded from the published FeTODAT schedule comprises 240 destinations across twelve zones.
 
@@ -1212,7 +1218,7 @@ The secondary route is **direct distribution of the installation package**, publ
 
 Publication to the Google Play Store was not pursued. It requires a one-time developer registration fee and, for new individual accounts, a closed testing period before public release, neither of which suits the timeline of a capstone study. The application is not architecturally prevented from being published there later.
 
-Backend deployment requires no hardware. The Firebase project is created through the web console, the database is initialized, the security rules are published, and the fare table is loaded once through the administrative interface.
+Backend deployment requires no hardware and no payment method. The Firebase project is created through the web console, the database is initialized, the security rules are published, and the fare table is loaded once through the administrative interface. Authentication, the Realtime Database, Cloud Messaging, and App Distribution are all provided within the platform's free tier; the one service that would require a paid plan, object storage, is not used, for the reason set out in Section 3.5.
 
 ### Training
 
@@ -1254,7 +1260,7 @@ Training is organized by role and kept short, on the reasoning that a system req
 | Notifications | In-application notification centre with unread count, individual and bulk marking as read | FR-35 |
 | Monitoring and reporting | Live counts and recent activity, period selection, summary statistics, three report types, export through the file picker and sharing | FR-36 to FR-38 |
 
-All thirty-eight functional requirements were implemented.
+All thirty-eight functional requirements were implemented, as were the fifteen non-functional requirements.
 
 ### Reports Generated
 
@@ -1352,7 +1358,7 @@ This study set out to develop and evaluate a Smart Tricycle Ride and Driver Onbo
 
 *[The frequency and percentage distribution of needs assessment responses is to be inserted here following data collection.]*
 
-**On the features the system should include.** The requirements analysis produced thirty-eight functional requirements and fourteen non-functional requirements, all of which were implemented. The features fall into four groups: ride scheduling and booking; driver onboarding and verification; fare computation from the published FeTODAT schedule; and notification, monitoring, and reporting. One requirement emerged from the study environment rather than from the reviewed literature: because fares in Talibon are fixed per destination by municipal ordinance rather than computed from distance, the system prices rides by lookup against the published schedule, honours the statutory minimum fares of ₱15.00 and ₱12.00, and provides a separate rate column for senior citizens, persons with disabilities, and students.
+**On the features the system should include.** The requirements analysis produced thirty-eight functional requirements and fifteen non-functional requirements, all of which were implemented. The features fall into four groups: ride scheduling and booking; driver onboarding and verification; fare computation from the published FeTODAT schedule; and notification, monitoring, and reporting. One requirement emerged from the study environment rather than from the reviewed literature: because fares in Talibon are fixed per destination by municipal ordinance rather than computed from distance, the system prices rides by lookup against the published schedule, honours the statutory minimum fares of ₱15.00 and ₱12.00, and provides a separate rate column for senior citizens, persons with disabilities, and students.
 
 **On the effectiveness of the system.**
 
@@ -1393,6 +1399,8 @@ The following extensions are outside the scope of this study and are offered to 
 **Live mapping and navigation.** Integrating the Google Maps SDK would allow the passenger to watch the tricycle approach and would give the driver turn-by-turn guidance. Displaying a map in a mobile application is not itself billed by the platform, though a billing account must be attached to obtain a key, and route calculation is billed. Attaching coordinates to each of the 240 fare stops would be a prerequisite.
 
 **Server-side push notifications.** The application registers with Firebase Cloud Messaging, but delivering a notification to a device on which the application is not running requires a server-side component. A small set of Cloud Functions triggered by database writes would deliver ride requests to drivers whose phones are in their pockets, which is where a driver's phone usually is.
+
+**Object storage for images.** Should a paid plan become available, moving profile photographs to Cloud Storage would allow full-resolution images and would make it practical to require photographs of a driver's licence and registration during onboarding. The present design deliberately avoids this dependency.
 
 **Cashless payment.** Integration with a Philippine payment provider would remove the need for exact change, which is a recurring friction in tricycle transactions. This was excluded from the present study by scope and would require attention to the regulatory obligations that handling payments imposes.
 
@@ -1751,7 +1759,7 @@ The complete source code of the system is maintained in a Git repository and is 
 | `app/src/main/java/com/tpc/trikride/ui/screens/` | Composable screens for all three roles |
 | `app/src/main/java/com/tpc/trikride/ui/components/` | Shared interface components |
 | `app/src/main/java/com/tpc/trikride/ui/theme/` | Colour palette, typography, and light and dark themes |
-| `app/src/main/java/com/tpc/trikride/utils/` | `FareEngine`, `FareSeed`, `ReportBuilder`, `ReportExporter`, `PasswordRules`, and constants |
+| `app/src/main/java/com/tpc/trikride/utils/` | `FareEngine`, `FareSeed`, `ReportBuilder`, `ReportExporter`, `PasswordRules`, `ProfilePhoto`, and constants |
 | `app/src/main/res/` | Resources, launcher icons, and onboarding artwork |
 | `docs/` | This documentation and the generated figures |
 
@@ -1796,6 +1804,7 @@ The structure of the Realtime Database is documented in Table 8 and illustrated 
 | `config/fare` and `config/fareStops` | All authenticated users | Administrators only |
 | `complaints/{id}` | The reporter and administrators | The reporter to create; administrators for status and note |
 | `notifications/{uid}` | The named user | The system to create; the named user to mark as read |
+| `profilePhotos/{uid}` | All authenticated users | The account holder only |
 
 ## Appendix L — Test Cases
 

@@ -101,6 +101,7 @@ digraph G {{
   config [label="config", fillcolor="{LIGHT}"];
   compl [label="complaints", fillcolor="{LIGHT}"];
   notif [label="notifications", fillcolor="{LIGHT}"];
+  photo [label="profilePhotos", fillcolor="{LIGHT}"];
 
   uk [label="{{uid}}\\l  email, phoneNumber\\l  firstName, lastName\\l  birthDate, userType\\l  profileImageUrl\\l  createdAt, updatedAt\\l", shape=box];
   dk [label="{{uid}}\\l  licenseNumber, licenseExpiry\\l  tricycleNumber\\l  verificationStatus\\l  isAvailable, rating\\l  totalRides, documents[]\\l"];
@@ -118,6 +119,7 @@ digraph G {{
   root -> config; config -> cf; config -> cs;
   root -> compl -> ck;
   root -> notif -> nk;
+  root -> photo -> pk;
 }}
 ''')
 

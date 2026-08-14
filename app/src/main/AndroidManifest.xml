@@ -1,25 +1,19 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
-    <!-- Location Permissions -->
-    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
-    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
-
-    <!-- Internet Permission -->
     <uses-permission android:name="android.permission.INTERNET" />
 
-    <!-- Camera Permission for Driver Verification -->
+    <!-- Taking a profile photo. Choosing one from the gallery needs no permission:
+         the photo picker returns a single image the user selected themselves. -->
     <uses-permission android:name="android.permission.CAMERA" />
 
-    <!-- Storage Permissions -->
-    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
-    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
-
-    <!-- Background Location for Drivers -->
-    <uses-permission android:name="android.permission.ACCESS_BACKGROUND_LOCATION" />
-
-    <!-- Notification Permission -->
+    <!-- Ride notifications on Android 13 and later. -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+
+    <!-- Held for the map work deferred to deployment. Nothing requests them yet,
+         so the runtime prompt never appears in the current build. -->
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
 
     <application
         android:allowBackup="true"

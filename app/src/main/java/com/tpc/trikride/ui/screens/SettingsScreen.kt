@@ -24,6 +24,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
@@ -55,6 +56,8 @@ fun SettingsScreen(
 ) {
     LaunchedEffect(userId) { viewModel.bind(userId) }
     val state by viewModel.state.collectAsState()
+    val context = LocalContext.current
+    val pickPhoto: (android.net.Uri) -> Unit = { uri -> viewModel.uploadPhoto(context, uri) }
 
     var editing by remember { mutableStateOf(false) }
     var showDoc by remember { mutableStateOf<LegalDoc?>(null) }
@@ -69,7 +72,8 @@ fun SettingsScreen(
             user = state.user,
             isSaving = state.isSaving,
             isUploadingPhoto = state.isUploadingPhoto,
-            onPickPhoto = viewModel::uploadPhoto,
+            photoData = state.photo,
+            onPickPhoto = pickPhoto,
             onSave = { name, phone ->
                 viewModel.saveProfile(name, phone)
                 editing = false
@@ -96,10 +100,10 @@ fun SettingsScreen(
             SectionCard {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     AvatarPicker(
-                        imageUrl = state.user?.profileImageUrl,
+                        photoData = state.photo,
                         initials = initials(state.user?.firstName),
                         isUploading = state.isUploadingPhoto,
-                        onImagePicked = viewModel::uploadPhoto,
+                        onImagePicked = pickPhoto,
                         size = 56.dp
                     )
                     Spacer(modifier = Modifier.width(14.dp))
@@ -206,6 +210,7 @@ private fun EditProfileContent(
     user: User?,
     isSaving: Boolean,
     isUploadingPhoto: Boolean,
+    photoData: String,
     onPickPhoto: (android.net.Uri) -> Unit,
     onSave: (String, String) -> Unit,
     onBack: () -> Unit
@@ -230,7 +235,7 @@ private fun EditProfileContent(
         Spacer(modifier = Modifier.height(20.dp))
 
         AvatarPicker(
-            imageUrl = user?.profileImageUrl,
+            photoData = photoData,
             initials = initials(name),
             isUploading = isUploadingPhoto,
             onImagePicked = onPickPhoto,

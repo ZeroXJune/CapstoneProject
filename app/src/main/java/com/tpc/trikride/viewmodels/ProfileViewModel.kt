@@ -1,5 +1,6 @@
 package com.tpc.trikride.viewmodels
 
+import android.content.Context
 import android.net.Uri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -20,6 +21,8 @@ class ProfileViewModel(
         val isSaving: Boolean = false,
         val isUploadingPhoto: Boolean = false,
         val user: User? = null,
+        /** The profile photo as base64, empty when the user has not set one. */
+        val photo: String = "",
         val message: String? = null,
         val error: String? = null
     )
@@ -41,7 +44,8 @@ class ProfileViewModel(
             _state.update { it.copy(isLoading = true, error = null) }
             try {
                 val user = repo.loadUser(uid)
-                _state.update { it.copy(isLoading = false, user = user) }
+                val photo = runCatching { repo.loadProfilePhoto(uid) }.getOrDefault("")
+                _state.update { it.copy(isLoading = false, user = user, photo = photo) }
             } catch (e: Exception) {
                 _state.update { it.copy(isLoading = false, error = e.message ?: "Failed to load profile") }
             }
@@ -67,24 +71,20 @@ class ProfileViewModel(
         }
     }
 
-    fun uploadPhoto(uri: Uri) {
+    fun uploadPhoto(context: Context, uri: Uri) {
         val uid = boundId ?: return
         viewModelScope.launch {
             _state.update { it.copy(isUploadingPhoto = true, error = null, message = null) }
             try {
-                val url = repo.uploadProfilePhoto(uid, uri)
+                val encoded = repo.saveProfilePhoto(context, uid, uri)
                 _state.update {
-                    it.copy(
-                        isUploadingPhoto = false,
-                        user = it.user?.copy(profileImageUrl = url),
-                        message = "Photo updated"
-                    )
+                    it.copy(isUploadingPhoto = false, photo = encoded, message = "Photo updated")
                 }
             } catch (e: Exception) {
                 _state.update {
                     it.copy(
                         isUploadingPhoto = false,
-                        error = e.message ?: "Could not upload the photo"
+                        error = e.message ?: "Could not save the photo"
                     )
                 }
             }

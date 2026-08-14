@@ -1,13 +1,16 @@
 package com.tpc.trikride.repositories
 
+import android.content.Context
 import android.net.Uri
 import com.google.android.gms.tasks.Task
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.FirebaseDatabase
-import com.google.firebase.storage.FirebaseStorage
 import com.tpc.trikride.models.User
 import com.tpc.trikride.models.UserType
+import com.tpc.trikride.utils.ProfilePhoto
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.suspendCancellableCoroutine
+import kotlinx.coroutines.withContext
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
 
@@ -19,8 +22,7 @@ import kotlin.coroutines.resumeWithException
  */
 class AuthRepository(
     private val auth: FirebaseAuth = FirebaseAuth.getInstance(),
-    private val database: FirebaseDatabase = FirebaseDatabase.getInstance(),
-    private val storage: FirebaseStorage = FirebaseStorage.getInstance()
+    private val database: FirebaseDatabase = FirebaseDatabase.getInstance()
 ) {
     val currentUserId: String? get() = auth.currentUser?.uid
 
@@ -59,15 +61,29 @@ class AuthRepository(
     }
 
     /**
-     * Uploads a profile photo to Cloud Storage and saves the download URL on
-     * the user record. Returns the URL.
+     * Shrinks the chosen image and stores it in the database as base64.
+     *
+     * Cloud Storage would be the usual home for this, but new Firebase projects
+     * require a paid plan to provision a bucket and this one runs on the free
+     * tier. Photos live under their own node so that reading a list of users
+     * does not pull every avatar with it. Returns the encoded photo.
      */
-    suspend fun uploadProfilePhoto(uid: String, imageUri: Uri): String {
-        val ref = storage.reference.child("profile_photos/$uid.jpg")
-        ref.putFile(imageUri).await()
-        val url = ref.downloadUrl.await().toString()
-        database.getReference("users").child(uid).child("profileImageUrl").setValue(url).await()
-        return url
+    suspend fun saveProfilePhoto(context: Context, uid: String, imageUri: Uri): String {
+        val encoded = withContext(Dispatchers.IO) { ProfilePhoto.encode(context, imageUri) }
+            ?: error("That image could not be processed. Try a different photo.")
+        database.getReference("profilePhotos").child(uid).setValue(
+            mapOf(
+                "data" to encoded,
+                "updatedAt" to System.currentTimeMillis().toString()
+            )
+        ).await()
+        return encoded
+    }
+
+    /** The stored photo for a user, or an empty string when there is none. */
+    suspend fun loadProfilePhoto(uid: String): String {
+        val snapshot = database.getReference("profilePhotos").child(uid).child("data").get().await()
+        return snapshot.getValue(String::class.java).orEmpty()
     }
 
     suspend fun updateProfile(uid: String, fullName: String, phone: String) {

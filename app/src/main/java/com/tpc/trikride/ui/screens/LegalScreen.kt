@@ -87,7 +87,7 @@ TrikRide — Privacy Policy
 Last updated: 2026
 
 1. Information We Collect
-We collect the information you provide during registration (name, email, phone number, and — for drivers — license and tricycle details) and information generated while using the app (ride requests, pickup/destination, and ride history).
+We collect the information you provide during registration (name, email, phone number, date of birth, and — for drivers — license and tricycle details), an optional profile photo, and information generated while using the app (ride requests, pickup/destination, ride history, and any concerns you report).
 
 2. How We Use Information
 Your information is used to create your account, match passengers with drivers, price rides, support driver verification, and improve the service.
@@ -96,7 +96,7 @@ Your information is used to create your account, match passengers with drivers, 
 Location is used to show pickup/destination and, for drivers, availability. Location is only used while you are using the relevant features of the app.
 
 4. Data Storage
-Account and ride data are stored securely using Google Firebase. Communications with the server are encrypted in transit.
+Account, ride, and profile photo data are stored in Google Firebase. A profile photo is reduced to a small thumbnail before it is stored. Communications with the server are encrypted in transit. TrikRide does not collect card, bank, or any other payment details; fares are paid in cash directly to the driver.
 
 5. Sharing
 A passenger's ride details are shared with the assigned driver (and vice versa) to complete the ride. Administrators can view driver records and ride logs to operate and monitor the service. We do not sell your personal information.

@@ -36,6 +36,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.foundation.Image
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
@@ -44,7 +45,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import androidx.core.content.FileProvider
-import coil.compose.AsyncImage
+import com.tpc.trikride.utils.ProfilePhoto
 import java.io.File
 
 /** Creates a temp file in the cache and returns a FileProvider uri for it. */
@@ -56,11 +57,14 @@ private fun newCameraUri(context: Context): Uri {
 
 /**
  * Circular avatar that opens a camera-or-gallery chooser when tapped.
- * Shows [imageUrl] when the user has a photo, otherwise their [initials].
+ *
+ * [photoData] is the base64 JPEG held in the database, since profile photos do
+ * not go to Cloud Storage on this project. Falls back to the user's [initials]
+ * when they have not set one.
  */
 @Composable
 fun AvatarPicker(
-    imageUrl: String?,
+    photoData: String?,
     initials: String,
     isUploading: Boolean,
     onImagePicked: (Uri) -> Unit,
@@ -70,6 +74,8 @@ fun AvatarPicker(
     val context = LocalContext.current
     var showChooser by remember { mutableStateOf(false) }
     var pendingCameraUri by remember { mutableStateOf<Uri?>(null) }
+    // Decoding is cheap at this size, but not free, so tie it to the data.
+    val photo = remember(photoData) { ProfilePhoto.decode(photoData) }
 
     val galleryLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.PickVisualMedia()
@@ -116,8 +122,8 @@ fun AvatarPicker(
     ) {
         when {
             isUploading -> CircularProgressIndicator(modifier = Modifier.size(size / 3))
-            !imageUrl.isNullOrBlank() -> AsyncImage(
-                model = imageUrl,
+            photo != null -> Image(
+                bitmap = photo,
                 contentDescription = "Profile photo",
                 contentScale = ContentScale.Crop,
                 modifier = Modifier.fillMaxSize()

@@ -52,8 +52,12 @@ prices rides; a disabled one cannot be selected at all.
 ## Built with
 
 Kotlin 2.1 and Jetpack Compose with Material 3, against Firebase Authentication,
-Realtime Database, Cloud Storage, and Cloud Messaging. MVVM with a repository layer.
-Minimum Android 7.0, target Android 14.
+Realtime Database, and Cloud Messaging. MVVM with a repository layer. Minimum
+Android 7.0, target Android 14.
+
+The whole thing runs on Firebase's free Spark plan with no card on file. Cloud Storage
+would need the paid plan, so profile photos are shrunk to 256 pixels square, compressed,
+and kept in the database instead — a few kilobytes each.
 
 There is no server to run. Firebase provides the backend, which is deliberate: a project
 handed to a municipal drivers' association cannot depend on a machine somebody has to

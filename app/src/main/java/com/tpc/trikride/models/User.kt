@@ -9,6 +9,8 @@ data class User(
     val idNumber: String = "",
     val birthDate: String = "",
     val userType: UserType = UserType.PASSENGER,
+    // Kept for compatibility with records written before photos moved into the
+    // database; nothing writes it now.
     val profileImageUrl: String = "",
     val createdAt: String = "",
     val updatedAt: String = ""
