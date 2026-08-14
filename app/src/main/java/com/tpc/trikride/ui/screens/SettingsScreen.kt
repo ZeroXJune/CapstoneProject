@@ -19,7 +19,9 @@ import androidx.compose.material.icons.filled.LightMode
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Phone
+import androidx.compose.material.icons.filled.Gavel
 import androidx.compose.material.icons.filled.PrivacyTip
+import androidx.compose.material.icons.filled.Shield
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -172,8 +174,14 @@ fun SettingsScreen(
         }
 
         GroupTitle("Legal & About")
-        SettingsRow(Icons.Filled.Description, "Terms & Conditions") { showDoc = LegalDoc.TERMS }
-        SettingsRow(Icons.Filled.PrivacyTip, "Privacy Policy") { showDoc = LegalDoc.PRIVACY }
+        SettingsRow(Icons.Filled.Description, LegalDoc.TERMS.title) { showDoc = LegalDoc.TERMS }
+        SettingsRow(Icons.Filled.PrivacyTip, LegalDoc.PRIVACY.title) { showDoc = LegalDoc.PRIVACY }
+        SettingsRow(Icons.Filled.Shield, LegalDoc.COMMUNITY.title) { showDoc = LegalDoc.COMMUNITY }
+        if (userType == UserType.DRIVER) {
+            SettingsRow(Icons.Filled.Gavel, LegalDoc.DRIVER_AGREEMENT.title) {
+                showDoc = LegalDoc.DRIVER_AGREEMENT
+            }
+        }
         Row(
             modifier = Modifier
                 .fillMaxWidth()

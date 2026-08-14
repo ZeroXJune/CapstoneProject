@@ -13,7 +13,13 @@ data class User(
     // database; nothing writes it now.
     val profileImageUrl: String = "",
     val createdAt: String = "",
-    val updatedAt: String = ""
+    val updatedAt: String = "",
+    // Which version of the legal documents this account has accepted. Empty
+    // means the account predates consent tracking and must accept before use.
+    val acceptedLegalVersion: String = "",
+    val acceptedLegalAt: String = "",
+    /** Drivers accept an additional agreement; blank for passengers. */
+    val acceptedDriverAgreementVersion: String = ""
 )
 
 enum class UserType {

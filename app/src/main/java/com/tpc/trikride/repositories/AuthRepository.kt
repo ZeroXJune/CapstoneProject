@@ -7,6 +7,7 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.FirebaseDatabase
 import com.tpc.trikride.models.User
 import com.tpc.trikride.models.UserType
+import com.tpc.trikride.utils.Constants
 import com.tpc.trikride.utils.ProfilePhoto
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.suspendCancellableCoroutine
@@ -48,7 +49,13 @@ class AuthRepository(
             firstName = fullName,
             birthDate = birthDate,
             userType = userType,
-            createdAt = System.currentTimeMillis().toString()
+            createdAt = System.currentTimeMillis().toString(),
+            // The sign-up form requires the terms, privacy notice and community
+            // guidelines to be ticked, so that consent is recorded here. Drivers
+            // are asked for the Driver Agreement separately once their account
+            // type is known.
+            acceptedLegalVersion = Constants.LEGAL_VERSION,
+            acceptedLegalAt = System.currentTimeMillis().toString()
         )
         database.getReference("users").child(uid).setValue(user).await()
         return uid
@@ -78,6 +85,32 @@ class AuthRepository(
             )
         ).await()
         return encoded
+    }
+
+    /**
+     * What the account has already agreed to. Returned as the accepted legal
+     * version and the accepted driver-agreement version, either of which is
+     * blank when that consent has not been given.
+     */
+    suspend fun loadConsent(uid: String): Pair<String, String> {
+        val ref = database.getReference("users").child(uid)
+        val legal = ref.child("acceptedLegalVersion").get().await()
+            .getValue(String::class.java).orEmpty()
+        val driver = ref.child("acceptedDriverAgreementVersion").get().await()
+            .getValue(String::class.java).orEmpty()
+        return legal to driver
+    }
+
+    /** Records acceptance of the current documents against the account. */
+    suspend fun recordConsent(uid: String, version: String, includeDriverAgreement: Boolean) {
+        val updates = mutableMapOf<String, Any?>(
+            "acceptedLegalVersion" to version,
+            "acceptedLegalAt" to System.currentTimeMillis().toString()
+        )
+        if (includeDriverAgreement) {
+            updates["acceptedDriverAgreementVersion"] = version
+        }
+        database.getReference("users").child(uid).updateChildren(updates).await()
     }
 
     /** The stored photo for a user, or an empty string when there is none. */

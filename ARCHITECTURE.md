@@ -57,6 +57,7 @@ viewmodels/
   AdminViewModel       drivers, users, rides, complaints, fare table, import
   ProfileViewModel     profile edit, photo upload, password reset
   SupportViewModel     complaint submission, notification centre
+  ConsentViewModel     checks and records agreement to the legal documents
 
 ui/screens/
   MainAppScreen        routing: bootstrap → onboarding → auth → role dashboard
@@ -67,7 +68,8 @@ ui/screens/
   AdminReportsScreen   period selection, summary, CSV export
   NotificationsScreen  notification centre
   SettingsScreen       shared profile screen for all three roles
-  LegalScreen          terms of service and privacy notice
+  ConsentScreen        the gate between sign-in and the dashboard
+  LegalScreen          terms, privacy, community guidelines, driver agreement
 
 ui/components/
   CommonComponents.kt  PrimaryButton, SecondaryButton, SectionCard, SkeletonBox,
@@ -136,6 +138,14 @@ other device. There is no lock; the delete is the resolution.
 head count. It reads the posted rate, raises it to the ordinance minimum if lower, and
 multiplies. The priced fare travels on the `RideRequest`, so the driver sees the same
 number the passenger agreed to rather than recomputing it.
+
+**Consent.** `MainAppScreen` will not route to a dashboard until `ConsentViewModel`
+confirms the account has accepted the current documents. `users/{uid}` carries
+`acceptedLegalVersion` and, for drivers, `acceptedDriverAgreementVersion`, both compared
+against `Constants.LEGAL_VERSION`. A read failure is treated as "not accepted" rather
+than waved through, since guessing in the permissive direction is the wrong default for a
+consent check. Registration writes the first of these, because the sign-up form already
+required the tick.
 
 **Session.** Firebase keeps the user signed in across restarts. `AuthViewModel`
 constructs with `hasExistingSession` set synchronously from `repo.currentUserId`, so the

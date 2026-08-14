@@ -450,7 +450,7 @@ The study followed a systematic procedure to ensure the proper development, impl
 
 **Data Analysis.** The collected data were analyzed using the statistical treatment described in Section 1.12, and the results formed the basis of the conclusions and recommendations in Chapter 5.
 
-**Ethical Considerations.** Participation was voluntary, and respondents were informed of the purpose of the study before taking part. Names were optional on the instrument. Personal data collected by the application itself, comprising name, email address, mobile number, date of birth, and an optional photograph, are held in the project's Firebase instance, are used only to operate the service, and are described to the user in the privacy notice available inside the application. No payment or financial information is collected by the system at any point.
+**Ethical Considerations.** Participation was voluntary, and respondents were informed of the purpose of the study before taking part. Within the application itself, users are required to read and accept the Terms and Conditions, the Privacy Policy, and the Safety and Community Guidelines before the service becomes available to them, and drivers additionally accept the Driver Agreement; the acceptance is recorded against the account. Names were optional on the instrument. Personal data collected by the application itself, comprising name, email address, mobile number, date of birth, and an optional photograph, are held in the project's Firebase instance, are used only to operate the service, and are described to the user in the privacy notice available inside the application. No payment or financial information is collected by the system at any point.
 
 ## 1.12 Data Analysis
 
@@ -826,6 +826,8 @@ Data flows in one direction. A user event goes from View to ViewModel to Reposit
 
 **Session handling.** Sessions persist across application restarts, which is a convenience feature, but signing out clears the session immediately and returns the user to the sign-in screen.
 
+**Recorded consent.** The Terms and Conditions, Privacy Policy, Safety and Community Guidelines, and Driver Agreement are carried inside the application and are readable at any time from the profile screen. No account reaches a dashboard until it has accepted the documents that apply to it, with each one ticked separately after being made available to read in full; the only alternative offered is to sign out. The version accepted and the moment of acceptance are stored on the account, so that consent can be evidenced rather than assumed, an account created before consent was tracked is asked at its next launch, and a revision to the documents asks every user again.
+
 **Audit trail.** Every ride, every verification decision, and every concern is stored with timestamps, producing a record that can be examined after the fact and exported for review.
 
 ## 3.9 System Architecture
@@ -853,7 +855,9 @@ Requirements were derived from three sources: the problems documented in the nee
 |:---|:---|:---|:---|
 | FR-01 | The system shall allow a user to register with a full name, date of birth, email address, mobile number, and password. | All | 1, 2 |
 | FR-02 | The system shall enforce a password of at least eight characters containing an uppercase letter, a lowercase letter, and a digit. | All | 2 |
-| FR-03 | The system shall require the user to accept the terms of service and privacy notice before an account is created. | All | 2 |
+| FR-03 | The system shall require the user to accept the Terms and Conditions, the Privacy Policy, and the Safety and Community Guidelines before an account is created. | All | 2 |
+| FR-03a | The system shall prevent any signed-in account from reaching a dashboard until it has accepted the current version of the applicable documents, and shall record the version accepted and the time of acceptance against the account. | All | 2 |
+| FR-03b | The system shall require a driver to accept the Driver Agreement before operating as a driver. | Driver | 2 |
 | FR-04 | The system shall authenticate a user by email address and password. | All | 1, 2 |
 | FR-05 | The system shall keep a user signed in across application restarts until they sign out. | All | 4 |
 | FR-06 | The system shall allow a user to edit their profile and set a photograph from the camera or the gallery. | All | 6 |
@@ -1020,7 +1024,7 @@ The database is a JSON tree with seven top-level nodes.
 
 | Node | Key | Contents | Written by |
 |:---|:---|:---|:---|
-| `users` | user identifier | Email, mobile number, given and family name, date of birth, role, photograph URL, timestamps | The account holder |
+| `users` | user identifier | Email, mobile number, given and family name, date of birth, role, accepted document versions and the time of acceptance, timestamps | The account holder |
 | `drivers` | user identifier | Licence number and expiry, tricycle number, verification status, availability, rating, ride count, documents | The driver; verification status by an administrator |
 | `rideRequests` | request identifier | Passenger identifier, pickup, destination, passenger count, luggage, priced fare, fare stop, rate column, requested and expiry timestamps | The passenger; deleted on acceptance or expiry |
 | `rides` | ride identifier | Passenger and driver identifiers, pickup, destination, status, fares, fare stop, rate column, lifecycle timestamps, passenger count, luggage, notes | The system on acceptance; status by the driver |
@@ -1198,6 +1202,8 @@ The delivered system is a single Android application that presents one of three 
 
 **On first launch**, a new user is shown an introductory carousel of five screens explaining what the application does. The carousel appears once. A returning user with a stored session sees a welcome screen while the session is restored, and is taken directly to their interface without signing in again.
 
+**Before any interface opens**, the application confirms that the account has accepted the current Terms and Conditions, Privacy Policy, and Safety and Community Guidelines, and, for a driver account, the Driver Agreement. Anything outstanding is presented on a consent screen where each document can be opened and read in full and must be ticked individually; the button that continues is disabled until all of them are, and the only other option is to sign out.
+
 **The passenger interface** has four tabs. *Home* shows any ride in progress, or the booking entry point. Booking is a single scrolling screen: pickup point, destination, rate column, passenger count, luggage, and notes, with the itemized fare appearing as soon as a destination is chosen. Submitting a request switches the screen to a searching state, and then to a tracking view with a status timeline once a driver accepts. On completion the passenger is shown a summary and invited to rate the ride. *History* lists completed rides. *Support* provides the concern form and contact details. *Profile* holds profile editing, the photograph picker, the theme switch, the terms and privacy notice, and sign-out.
 
 **The driver interface** has four tabs. *Dashboard* shows the availability toggle, total earnings, and any ride in progress with the button that advances it to its next state. *Requests* lists open requests, each with the route, the fare, the rate column, the passenger count, the declared luggage, and a countdown to expiry. *History* lists completed rides. *Profile* mirrors the passenger's, with the addition of a card showing the driver's credentials and verification status.
@@ -1214,7 +1220,7 @@ The application is distributed to users as a signed release package. Two distrib
 
 The primary route is **Firebase App Distribution**, which is included in the platform's free tier. Testers are invited by email address and receive a link that installs the application, and subsequent releases are pushed to the same group. App Distribution records which tester installed which version, which provides a verifiable record of participation in the evaluation.
 
-The secondary route is **direct distribution of the installation package**, published as a release on the project's repository and circulated as a link or a QR code. This requires the user to permit installation from outside the application store, so an illustrated installation guide is provided as part of the user manual in Appendix I.
+The secondary route is **direct distribution of the installation package**, published as a release on the project's repository and circulated as a link or a QR code. This requires the user to permit installation from outside the application store, so an illustrated installation guide is provided as part of the user manual in Appendix J.
 
 Publication to the Google Play Store was not pursued. It requires a one-time developer registration fee and, for new individual accounts, a closed testing period before public release, neither of which suits the timeline of a capstone study. The application is not architecturally prevented from being published there later.
 
@@ -1248,7 +1254,7 @@ Training is organized by role and kept short, on the reasoning that a system req
 
 | Module | Functions delivered | Requirements met |
 |:---|:---|:---|
-| Authentication and onboarding | Registration with password policy and terms consent, sign-in, session persistence, remembered email, password reset, introductory carousel, welcome screen | FR-01 to FR-05, FR-07, FR-08 |
+| Authentication and onboarding | Registration with password policy and document consent, a consent gate that blocks the dashboard until the current documents are accepted, the Driver Agreement for driver accounts, sign-in, session persistence, remembered email, password reset, introductory carousel, welcome screen | FR-01 to FR-05, FR-07, FR-08 |
 | Profile | Profile editing, photograph capture and selection, theme preference, terms and privacy notice, sign-out | FR-06 |
 | Passenger booking | Pickup selection, searchable destination picker across 240 stops plus two flat rates, rate column selection, passenger count and luggage, itemized fare display, request submission and cancellation | FR-09 to FR-14 |
 | Matching | Broadcast of requests to available verified drivers, five-minute expiry, first-acceptance matching with withdrawal from other devices | FR-15 to FR-17 |
@@ -1276,7 +1282,7 @@ Reports are produced as comma-separated-value files, which open without conversi
 
 ### Screenshots
 
-System screenshots are presented in Appendix H.
+System screenshots are presented in Appendix I.
 
 ## 4.9 System Evaluation
 
@@ -1338,7 +1344,7 @@ The developed system was evaluated using a researcher-made questionnaire adapted
 | Reliability | | | | | | | |
 | **Overall** | | | | | | | |
 
-*[Tables 19 to 21 are to be completed following data collection. Item-level responses are to be recorded in Appendix F, and the computations in Appendix G. The independent samples t-test is evaluated at a 0.05 level of significance; the decision column records whether the null hypothesis of no difference between passenger and driver evaluations is rejected.]*
+*[Tables 19 to 21 are to be completed following data collection. Item-level responses are to be recorded in Appendix G, and the computations in Appendix H. The independent samples t-test is evaluated at a 0.05 level of significance; the decision column records whether the null hypothesis of no difference between passenger and driver evaluations is rejected.]*
 
 ### Interpretation
 
@@ -1366,7 +1372,7 @@ This study set out to develop and evaluate a Smart Tricycle Ride and Driver Onbo
 
 **On the difference between passenger and driver evaluations.**
 
-*[To be completed following the t-test computation recorded in Table 21 and Appendix G.]*
+*[To be completed following the t-test computation recorded in Table 21 and Appendix H.]*
 
 ## 5.2 Conclusions
 
@@ -1647,7 +1653,33 @@ Sex: Male ☐  Female ☐    Age: _________
 
 [[PB]]
 
-## Appendix D — Interview Guide
+## Appendix D — Legal Documents Presented In-App
+
+The following documents are carried inside the application, are readable at any time from
+the profile screen, and must be accepted before the service becomes available. They are
+reproduced here as issued, effective 28 July 2026.
+
+**D.1 Terms and Conditions.** Ten sections covering eligibility, account registration,
+ride booking obligations for passengers and drivers, prohibited activities, limitation of
+liability, account suspension, intellectual property, amendments, governing rules, and
+acceptance.
+
+**D.2 Privacy Policy.** Eight sections covering what is collected, how it is used,
+location, storage, sharing, user choices, children, and contact.
+
+**D.3 Safety and Community Guidelines.** Commitment, respect, safe riding, driver
+responsibilities, passenger responsibilities, prohibited conduct, reporting safety
+concerns, and account enforcement.
+
+**D.4 Driver Agreement.** Driver eligibility, driver responsibilities, professional
+conduct, safety requirements, suspension and termination, limitation of responsibility,
+and agreement.
+
+*[Insert the full text of each document here. The text held in the application is
+reproduced verbatim from the issued documents; the source is
+`app/src/main/java/com/tpc/trikride/ui/screens/LegalScreen.kt`.]*
+
+## Appendix E — Interview Guide
 
 Semi-structured interviews were conducted with officers of the drivers' association and with a subset of driver-respondents, to obtain context that a Likert instrument cannot capture.
 
@@ -1673,15 +1705,15 @@ Semi-structured interviews were conducted with officers of the drivers' associat
 2. Before this study, did you know there was an official fare schedule?
 3. What would make you go back to hailing at the roadside instead of using the application?
 
-## Appendix E — Evaluation Forms
+## Appendix F — Evaluation Forms
 
 The evaluation form administered to respondents is the System Evaluation Questionnaire reproduced as Appendix C. The content validation form completed by the research adviser and subject matter experts, and the pilot test feedback form, are to be inserted here as signed copies.
 
-## Appendix F — Raw Data
+## Appendix G — Raw Data
 
 *[Item-level responses are to be tabulated here following data collection, as one row per respondent and one column per questionnaire item, separately for passengers and for drivers, together with the transcribed open-ended responses.]*
 
-## Appendix G — Statistical Computation
+## Appendix H — Statistical Computation
 
 *[The computation of the sample size using Slovin's formula, the weighted mean computation for each item and each characteristic, and the independent samples t-test comparing passenger and driver evaluations are to be shown here.]*
 
@@ -1699,7 +1731,7 @@ $$t = \frac{\bar{x}_1 - \bar{x}_2}{\sqrt{\dfrac{s_1^2}{n_1} + \dfrac{s_2^2}{n_2}
 
 evaluated at $\alpha = 0.05$.
 
-## Appendix H — System Screenshots
+## Appendix I — System Screenshots
 
 *[Screenshots are to be captured from the running application and inserted here. The following set is recommended, covering every module in Table 15.]*
 
@@ -1732,21 +1764,21 @@ evaluated at $\alpha = 0.05$.
 27. Profile screen with a photograph set
 28. Dark theme, any two screens
 
-## Appendix I — User Manual
+## Appendix J — User Manual
 
 *[The complete illustrated manual is to accompany this appendix. Its structure is given below.]*
 
 **Part 1 — Installation.** Obtaining the installation package; permitting installation from outside the application store; installing; first launch.
 
-**Part 2 — For Passengers.** Registering an account; the password rules; signing in and staying signed in; setting a profile photograph; booking a ride step by step; understanding the fare breakdown; choosing the discounted rate and what identification to bring; tracking a ride; rating a driver; viewing history; reporting a concern; reading notifications; switching to dark theme; signing out.
+**Part 2 — For Passengers.** Registering an account; the password rules; reading and accepting the Terms and Conditions, Privacy Policy and Safety and Community Guidelines; signing in and staying signed in; setting a profile photograph; booking a ride step by step; understanding the fare breakdown; choosing the discounted rate and what identification to bring; tracking a ride; rating a driver; viewing history; reporting a concern; reading notifications; switching to dark theme; signing out.
 
-**Part 3 — For Drivers.** Registering; submitting licence and tricycle details; what happens while verification is pending; going online and offline; reading a request card; accepting before the countdown expires; advancing a ride through its stages; viewing earnings and history; reporting a concern.
+**Part 3 — For Drivers.** Registering; accepting the Driver Agreement; submitting licence and tricycle details; what happens while verification is pending; going online and offline; reading a request card; accepting before the countdown expires; advancing a ride through its stages; viewing earnings and history; reporting a concern.
 
 **Part 4 — For Administrators.** Signing in as an administrator; verifying and rejecting driver applications; loading the official fare table for the first time; searching and filtering the fare table; correcting an entry and clearing its review flag; adding and deactivating entries; editing the minimum fares and flat rates; reviewing and resolving concerns; reading the live monitor; selecting a report period; exporting and sharing a report.
 
 **Part 5 — Troubleshooting.** The application says it cannot reach the database; a booking will not submit; no drivers appear to be online; a fare looks wrong; a photograph will not upload; how to report a problem.
 
-## Appendix J — Source Code
+## Appendix K — Source Code
 
 The complete source code of the system is maintained in a Git repository and is available on request. The repository is organized as follows.
 
@@ -1791,13 +1823,13 @@ fun quote(
 }
 ```
 
-## Appendix K — Database Schema
+## Appendix L — Database Schema
 
 The structure of the Realtime Database is documented in Table 8 and illustrated in Figure 11. The security rules governing access are reproduced below in outline.
 
 | Node | Read | Write |
 |:---|:---|:---|
-| `users/{uid}` | The account holder and administrators | The account holder, except `userType`, which is set at registration |
+| `users/{uid}` | The account holder and administrators | The account holder, including the accepted-document fields, except `userType`, which is set at registration |
 | `drivers/{uid}` | The driver, administrators, and authenticated users reading availability | The driver, except `verificationStatus`, which is writable only by administrators |
 | `rideRequests/{id}` | Authenticated, verified, available drivers and the requesting passenger | The requesting passenger to create and cancel; the accepting driver to delete on acceptance |
 | `rides/{id}` | The passenger and driver named on the ride, and administrators | The accepting driver for status; the system for creation |
@@ -1806,7 +1838,7 @@ The structure of the Realtime Database is documented in Table 8 and illustrated 
 | `notifications/{uid}` | The named user | The system to create; the named user to mark as read |
 | `profilePhotos/{uid}` | All authenticated users | The account holder only |
 
-## Appendix L — Test Cases
+## Appendix M — Test Cases
 
 The test cases executed in this study are documented in Tables 11 through 14 in Section 4.5, covering unit testing, integration testing, system testing, and security testing. The user acceptance test tasks are as follows.
 
@@ -1817,7 +1849,7 @@ The test cases executed in this study are documented in Tables 11 through 14 in 
 | UAT-03 | Passenger | Find out what the discounted fare would be for the same trip | The rate column is switched and the lower fare is read correctly |
 | UAT-04 | Passenger | Report a problem with a completed ride | A concern is submitted under an appropriate category |
 | UAT-05 | Passenger | Find last week's rides | Ride history is located |
-| UAT-06 | Driver | Register and submit credentials | Credentials are submitted without assistance |
+| UAT-06 | Driver | Register, accept the Driver Agreement, and submit credentials | The agreement is read and accepted and credentials are submitted without assistance |
 | UAT-07 | Driver | Begin receiving requests | The availability toggle is found and set to online |
 | UAT-08 | Driver | Accept a request and carry the ride to completion | Every status stage is advanced in order |
 | UAT-09 | Driver | Determine earnings for the period | The earnings figure is located |
@@ -1825,13 +1857,13 @@ The test cases executed in this study are documented in Tables 11 through 14 in 
 | UAT-11 | Administrator | Correct a fare that reads incorrectly | The entry is found by search, edited, and saved |
 | UAT-12 | Administrator | Produce last month's ride report | The period is selected and the file is exported |
 
-## Appendix M — Test Results
+## Appendix N — Test Results
 
 The results of unit, integration, system, and security testing are recorded in Tables 11 through 14. User acceptance test results, performance measurements, and the defect log are to be inserted here following the evaluation period.
 
 *[The defect log should record, for each defect found: an identifier, the module, a description, the severity, the date found, the resolution, and the date resolved.]*
 
-## Appendix N — Sample Reports
+## Appendix O — Sample Reports
 
 *[Exported files are to be inserted here as printed extracts. The following three are produced by the system.]*
 
@@ -1849,19 +1881,19 @@ Driver, Driver email, Pickup, Destination, Passengers, Luggage, Status,
 Estimated fare, Actual fare, Notes
 ```
 
-## Appendix O — Documentation of Data Gathering
+## Appendix P — Documentation of Data Gathering
 
 *[Photographs and records of the data gathering activities are to be inserted here, with the consent of those pictured.]*
 
 The following should be documented: the needs assessment administration to students and to drivers; the meeting with officers of the drivers' association; the photographs of the posted FeTODAT fare sheet from which the fare table was transcribed; the driver orientation session; the evaluation period; and the administration of the evaluation questionnaire.
 
-## Appendix P — Gantt Chart
+## Appendix Q — Gantt Chart
 
 ![Figure 14. Gantt Chart of Project Activities](figures/fig14_gantt.png){width=6.0in}
 
 [[PB]]
 
-## Appendix Q — Researchers' Biodata
+## Appendix R — Researchers' Biodata
 
 ### CURRICULUM VITAE
 

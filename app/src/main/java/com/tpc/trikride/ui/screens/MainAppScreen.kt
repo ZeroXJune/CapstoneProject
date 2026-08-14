@@ -43,6 +43,7 @@ import com.tpc.trikride.ui.theme.ForestGreen
 import com.tpc.trikride.utils.AuthPrefs
 import com.tpc.trikride.utils.PasswordRules
 import com.tpc.trikride.viewmodels.AuthViewModel
+import com.tpc.trikride.viewmodels.ConsentViewModel
 
 private enum class AppScreen { LOGIN, REGISTER, ACCOUNT_SELECTION }
 
@@ -55,8 +56,12 @@ private data class RegistrationData(
 )
 
 @Composable
-fun MainAppScreen(authViewModel: AuthViewModel = viewModel()) {
+fun MainAppScreen(
+    authViewModel: AuthViewModel = viewModel(),
+    consentViewModel: ConsentViewModel = viewModel()
+) {
     val state by authViewModel.state.collectAsState()
+    val consent by consentViewModel.state.collectAsState()
     val context = LocalContext.current
     var screen by remember { mutableStateOf(AppScreen.LOGIN) }
     var pendingReg by remember { mutableStateOf<RegistrationData?>(null) }
@@ -80,20 +85,47 @@ fun MainAppScreen(authViewModel: AuthViewModel = viewModel()) {
         return
     }
 
-    // Signed in with a known account type → straight to the dashboard.
+    // Signed in with a known account type. Before the dashboard, the account
+    // has to have agreed to the current legal documents — which catches both
+    // accounts made before consent was tracked and any later amendment.
     if (state.userId != null && state.userType != null) {
+        val uid = state.userId!!
+        val type = state.userType!!
+
+        LaunchedEffect(uid, type) { consentViewModel.check(uid, type) }
+
+        if (consent.isChecking) {
+            SplashScreen()
+            return
+        }
+        if (consent.needsConsent) {
+            ConsentScreen(
+                includeLegal = consent.needsLegal,
+                includeDriverAgreement = consent.needsDriverAgreement,
+                isSaving = consent.isSaving,
+                error = consent.error,
+                onAccept = { consentViewModel.accept(uid, type) },
+                onDecline = {
+                    consentViewModel.reset()
+                    authViewModel.signOut()
+                    screen = AppScreen.LOGIN
+                }
+            )
+            return
+        }
+
         when (state.userType) {
             UserType.PASSENGER -> PassengerHomeScreen(
-                userId = state.userId!!,
-                onSignOut = authViewModel::signOut
+                userId = uid,
+                onSignOut = { consentViewModel.reset(); authViewModel.signOut() }
             )
             UserType.DRIVER -> DriverHomeScreen(
-                userId = state.userId!!,
-                onSignOut = authViewModel::signOut
+                userId = uid,
+                onSignOut = { consentViewModel.reset(); authViewModel.signOut() }
             )
             UserType.ADMIN -> AdminDashboardScreen(
-                userId = state.userId!!,
-                onSignOut = authViewModel::signOut
+                userId = uid,
+                onSignOut = { consentViewModel.reset(); authViewModel.signOut() }
             )
             null -> Unit
         }
@@ -106,7 +138,11 @@ fun MainAppScreen(authViewModel: AuthViewModel = viewModel()) {
             isLoading = state.isLoading,
             error = state.error,
             onSelect = { authViewModel.chooseAccountType(it) },
-            onBack = { authViewModel.signOut(); screen = AppScreen.LOGIN }
+            onBack = {
+                consentViewModel.reset()
+                authViewModel.signOut()
+                screen = AppScreen.LOGIN
+            }
         )
         return
     }
@@ -389,19 +425,24 @@ private fun RegisterScreen(
         }
 
         Spacer(modifier = Modifier.height(12.dp))
-        Row(verticalAlignment = Alignment.CenterVertically) {
+        Row(verticalAlignment = Alignment.Top) {
             Checkbox(checked = accepted, onCheckedChange = { accepted = it })
-            Column {
-                Text("I agree to TrikRide's", style = MaterialTheme.typography.bodySmall)
-                Row {
-                    Text("Terms", style = MaterialTheme.typography.bodySmall,
-                        fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary,
-                        modifier = Modifier.clickable { showDoc = LegalDoc.TERMS })
-                    Text(" and ", style = MaterialTheme.typography.bodySmall)
-                    Text("Privacy Policy", style = MaterialTheme.typography.bodySmall,
-                        fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary,
-                        modifier = Modifier.clickable { showDoc = LegalDoc.PRIVACY })
-                }
+            Column(modifier = Modifier.padding(top = 12.dp)) {
+                Text("I have read and agree to TrikRide's",
+                    style = MaterialTheme.typography.bodySmall)
+                Spacer(modifier = Modifier.height(2.dp))
+                Text(LegalDoc.TERMS.title, style = MaterialTheme.typography.bodySmall,
+                    fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.clickable { showDoc = LegalDoc.TERMS })
+                Text(LegalDoc.PRIVACY.title, style = MaterialTheme.typography.bodySmall,
+                    fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.clickable { showDoc = LegalDoc.PRIVACY })
+                Text(LegalDoc.COMMUNITY.title, style = MaterialTheme.typography.bodySmall,
+                    fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.clickable { showDoc = LegalDoc.COMMUNITY })
+                Spacer(modifier = Modifier.height(4.dp))
+                Text("Tap a title to read it.", style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
         }
 

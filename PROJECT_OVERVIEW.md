@@ -42,6 +42,14 @@ rides, drivers, and concerns.
 privacy text, an in-app notification centre with unread counts, skeleton loading,
 pull-to-refresh, and a concern form for passengers and drivers.
 
+**Agreements.** The Terms and Conditions, Privacy Policy, Safety and Community
+Guidelines, and Driver Agreement are all in the app and all readable from Settings. The
+first three are ticked at sign-up; drivers accept the fourth after choosing their account
+type. A consent gate between sign-in and the dashboard enforces it — every document
+ticked separately, or sign out. Acceptance is recorded against
+`Constants.LEGAL_VERSION`, so revising the documents means changing that string and
+everyone is asked again on their next launch.
+
 **Runs on the free tier.** Auth, Realtime Database, Cloud Messaging, and App Distribution
 are all free and none of them asks for a card. Cloud Storage is the one Firebase service
 that needs the paid Blaze plan, so it is not used: profile photos are squared off at 256
@@ -87,7 +95,8 @@ marked as such. Nothing there is invented and nothing should be.
 `docs/capstone_manuscript.md` is the written documentation in Markdown, and
 `docs/TrikRide_Capstone_Documentation.docx` is the same thing built for submission,
 following the department's required format: preliminaries, five chapters, references in
-APA 7, and appendices A through Q.
+APA 7, and appendices A through R. The format discussion listed A through Q; Appendix D
+was added for the legal documents carried in the app, which pushed the rest down one.
 
 Chapters 1 through 4 are complete. Section 4.9's results tables, Chapter 5's summary and
 conclusions, and several appendices (raw data, statistical computation, screenshots,

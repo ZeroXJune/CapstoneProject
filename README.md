@@ -32,6 +32,18 @@ see requests with a countdown, accept, and move the ride through its stages.
 **Administrators** verify drivers, keep the fare table correct, answer concerns, watch
 activity live, and export a month or a year of it as a spreadsheet.
 
+## Agreements
+
+Four documents ship inside the app: the Terms and Conditions, the Privacy Policy, the
+Safety and Community Guidelines, and a Driver Agreement. The first three are ticked at
+sign-up. Drivers are asked for the fourth once they pick a driver account.
+
+Nobody reaches a dashboard without agreeing. A consent screen sits between sign-in and
+the app, and it only lets you past when every document has been separately ticked; the
+alternative is signing out. What was accepted is stored on the account against a version
+string, so an account created before this existed gets asked on its next launch, and
+bumping `Constants.LEGAL_VERSION` when the documents are revised asks everyone again.
+
 ## Fares
 
 The app does not estimate. It looks up the posted rate for the destination, raises it to

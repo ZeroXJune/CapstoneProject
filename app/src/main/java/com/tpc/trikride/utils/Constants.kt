@@ -11,6 +11,13 @@ object Constants {
     const val MAX_PASSENGERS = 5
 
     /**
+     * The date carried on the issued legal documents. Consent is recorded
+     * against this string, so publishing a revised set is a matter of changing
+     * it here: every user is then asked to accept again on their next launch.
+     */
+    const val LEGAL_VERSION = "2026-07-28"
+
+    /**
      * Common pickup/dropoff points around Talibon Polytechnic College.
      * Coordinates are approximate landmarks in Talibon, Bohol; refine them
      * during field validation with the drivers' association.
