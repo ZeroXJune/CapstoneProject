@@ -1,5 +1,7 @@
 package com.tpc.trikride.ui.screens
 
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
@@ -19,11 +21,11 @@ import androidx.compose.material.icons.filled.DirectionsBike
 import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.LocationOn
-import androidx.compose.material.icons.filled.Map
 import androidx.compose.material.icons.filled.MyLocation
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Phone
+import androidx.compose.material.icons.filled.Place
 import androidx.compose.material.icons.filled.Remove
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Star
@@ -36,9 +38,9 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
@@ -52,18 +54,25 @@ import com.tpc.trikride.models.Location
 import com.tpc.trikride.models.Ride
 import com.tpc.trikride.models.RideStatus
 import com.tpc.trikride.models.UserType
+import com.tpc.trikride.ui.components.MapPin
+import com.tpc.trikride.ui.components.PickerMap
 import com.tpc.trikride.ui.components.PrimaryButton
 import com.tpc.trikride.ui.components.RefreshableBox
 import com.tpc.trikride.ui.components.SecondaryButton
 import com.tpc.trikride.ui.components.SectionCard
 import com.tpc.trikride.ui.components.SkeletonCard
+import com.tpc.trikride.ui.components.TALIBON_CENTRE
+import com.tpc.trikride.ui.components.TrikMap
 import com.tpc.trikride.ui.theme.EmeraldGreen
 import com.tpc.trikride.ui.theme.ForestGreen
 import com.tpc.trikride.ui.theme.RatingColor
 import com.tpc.trikride.utils.Constants
 import com.tpc.trikride.utils.FareEngine
+import com.tpc.trikride.utils.LocationProvider
+import com.tpc.trikride.utils.ReverseGeocoder
 import com.tpc.trikride.viewmodels.PassengerViewModel
 import com.tpc.trikride.viewmodels.SupportViewModel
+import kotlinx.coroutines.launch
 
 private enum class PassengerTab { HOME, HISTORY, SUPPORT, PROFILE }
 
@@ -84,6 +93,7 @@ fun PassengerHomeScreen(
     val error by viewModel.errorMessage.collectAsState()
     val fareConfig by viewModel.fareConfig.collectAsState()
     val fareStops by viewModel.fareStops.collectAsState()
+    val driverLocation by viewModel.driverLocation.collectAsState()
 
     val notifications by supportViewModel.notifications.collectAsState()
     val unreadCount = notifications.count { !it.read }
@@ -125,7 +135,7 @@ fun PassengerHomeScreen(
                             ride = completedRide!!,
                             onBackHome = { completedRide = null; lastActive = null }
                         )
-                        active != null -> RideTrackingContent(active)
+                        active != null -> RideTrackingContent(active, driverLocation)
                         pendingRequest != null -> SearchingContent(onCancel = viewModel::cancelPendingRequest)
                         showBooking -> BookingContent(
                             error = error,
@@ -377,6 +387,7 @@ private fun BookingContent(
     val selectedLuggage = remember { mutableStateListOf<String>() }
     var notes by remember { mutableStateOf("") }
     var pickingDestination by remember { mutableStateOf(false) }
+    var pinningPickup by remember { mutableStateOf(false) }
 
     // The sheet carries two rates that are not tied to a numbered stop, so they
     // are offered alongside the rest rather than being admin-only trivia.
@@ -398,7 +409,16 @@ private fun BookingContent(
         }
         Spacer(modifier = Modifier.height(12.dp))
 
-        MapPlaceholder(height = 160.dp)
+        TrikMap(
+            height = 180.dp,
+            connectPins = pickup?.hasCoordinates == true && destination?.hasCoordinates == true,
+            pins = buildList {
+                pickup?.takeIf { it.hasCoordinates }
+                    ?.let { add(MapPin(it, "Pickup", EmeraldGreen)) }
+                destination?.takeIf { it.hasCoordinates }
+                    ?.let { add(MapPin(it.location, it.name, ForestGreen, emphasis = true)) }
+            }
+        )
         Spacer(modifier = Modifier.height(16.dp))
 
         error?.let {
@@ -436,7 +456,19 @@ private fun BookingContent(
         }
 
         LocationField("Pickup Location", Icons.Filled.MyLocation, pickup) { pickup = it }
-        Spacer(modifier = Modifier.height(12.dp))
+        Spacer(modifier = Modifier.height(6.dp))
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.End
+        ) {
+            TextButton(onClick = { pinningPickup = true }) {
+                Icon(Icons.Filled.Place, contentDescription = null,
+                    modifier = Modifier.size(16.dp))
+                Spacer(modifier = Modifier.width(4.dp))
+                Text("Not on the list? Pin it on the map")
+            }
+        }
+        Spacer(modifier = Modifier.height(6.dp))
 
         // 240 stops is too many for a dropdown, so this opens a searchable list.
         OutlinedTextField(
@@ -620,6 +652,14 @@ private fun BookingContent(
         Spacer(modifier = Modifier.height(16.dp))
     }
 
+    if (pinningPickup) {
+        PickupPinner(
+            initial = pickup ?: TALIBON_CENTRE,
+            onDismiss = { pinningPickup = false },
+            onPicked = { pickup = it; pinningPickup = false }
+        )
+    }
+
     if (pickingDestination) {
         DestinationPicker(
             stops = bookable,
@@ -627,6 +667,129 @@ private fun BookingContent(
             onDismiss = { pickingDestination = false },
             onPick = { destination = it; pickingDestination = false }
         )
+    }
+}
+
+/**
+ * Full-screen map for pinning a pickup point that is not on the list.
+ *
+ * The map moves under a fixed centre pin rather than asking the user to drag a
+ * marker, which is far easier one-handed. "Use my location" is offered but not
+ * required: a passenger can pin the corner they will actually be standing on,
+ * which is often not where they are standing now.
+ */
+@Composable
+private fun PickupPinner(
+    initial: Location,
+    onDismiss: () -> Unit,
+    onPicked: (Location) -> Unit
+) {
+    val context = LocalContext.current
+    val scope = rememberCoroutineScope()
+    var centre by remember { mutableStateOf(initial) }
+    var label by remember { mutableStateOf("") }
+    var locating by remember { mutableStateOf(false) }
+
+    val permissionLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { granted ->
+        if (granted) {
+            locating = true
+            scope.launch {
+                LocationProvider.current(context)?.let { centre = it }
+                locating = false
+            }
+        }
+    }
+
+    // Describe wherever the pin has settled, a beat after it stops moving.
+    LaunchedEffect(centre.latitude, centre.longitude) {
+        label = ""
+        kotlinx.coroutines.delay(400)
+        label = ReverseGeocoder.describe(context, centre)
+    }
+
+    Dialog(
+        onDismissRequest = onDismiss,
+        properties = DialogProperties(usePlatformDefaultWidth = false)
+    ) {
+        Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
+            Column(modifier = Modifier.fillMaxSize()) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(start = 4.dp, end = 16.dp, top = 8.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    IconButton(onClick = onDismiss) {
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Close")
+                    }
+                    Text(
+                        "Set your pickup point",
+                        style = MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+                Text(
+                    "Move the map so the pin sits where you want to be picked up.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(horizontal = 20.dp)
+                )
+                Spacer(modifier = Modifier.height(10.dp))
+
+                PickerMap(
+                    height = 380.dp,
+                    centre = centre,
+                    pinColor = EmeraldGreen,
+                    onMoved = { centre = it },
+                    modifier = Modifier.padding(horizontal = 20.dp)
+                )
+
+                Spacer(modifier = Modifier.height(12.dp))
+                Column(modifier = Modifier.padding(horizontal = 20.dp)) {
+                    SecondaryButton(
+                        text = if (locating) "Finding you..." else "Use my current location",
+                        onClick = {
+                            if (LocationProvider.hasPermission(context)) {
+                                locating = true
+                                scope.launch {
+                                    LocationProvider.current(context)?.let { centre = it }
+                                    locating = false
+                                }
+                            } else {
+                                permissionLauncher.launch(
+                                    android.Manifest.permission.ACCESS_FINE_LOCATION
+                                )
+                            }
+                        },
+                        enabled = !locating
+                    )
+                    Spacer(modifier = Modifier.height(12.dp))
+                    SectionCard {
+                        Column {
+                            Text(
+                                "Pickup point",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                            Text(
+                                label.ifBlank { "Locating..." },
+                                style = MaterialTheme.typography.bodyMedium,
+                                fontWeight = FontWeight.SemiBold
+                            )
+                        }
+                    }
+                    Spacer(modifier = Modifier.height(12.dp))
+                    PrimaryButton(
+                        text = "Use this point",
+                        onClick = { onPicked(centre.copy(address = label.ifBlank { "Pinned location" })) },
+                        enabled = centre.hasCoordinates
+                    )
+                }
+                Spacer(modifier = Modifier.height(20.dp))
+            }
+        }
     }
 }
 
@@ -834,7 +997,7 @@ private fun SearchingContent(onCancel: () -> Unit) {
 }
 
 @Composable
-private fun RideTrackingContent(ride: Ride) {
+private fun RideTrackingContent(ride: Ride, driverLocation: Location?) {
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -890,7 +1053,25 @@ private fun RideTrackingContent(ride: Ride) {
         }
         Spacer(modifier = Modifier.height(16.dp))
 
-        MapPlaceholder(height = 160.dp)
+        TrikMap(
+            height = 200.dp,
+            connectPins = true,
+            pins = buildList {
+                if (ride.pickupLocation.hasCoordinates) {
+                    add(MapPin(ride.pickupLocation, "Pickup", EmeraldGreen))
+                }
+                driverLocation?.let { add(MapPin(it, "Your driver", RatingColor, emphasis = true)) }
+            }
+        )
+        if (driverLocation == null) {
+            Spacer(modifier = Modifier.height(6.dp))
+            Text(
+                "Waiting for your driver's location. It appears once they are moving " +
+                    "with the app open.",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
         Spacer(modifier = Modifier.height(16.dp))
 
         // Trip route
@@ -1043,32 +1224,6 @@ private fun SummaryRow(label: String, value: String) {
     ) {
         Text(label, color = MaterialTheme.colorScheme.onSurfaceVariant)
         Text(value, fontWeight = FontWeight.SemiBold, textAlign = TextAlign.End)
-    }
-}
-
-@Composable
-private fun MapPlaceholder(height: Dp) {
-    Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(height)
-            .clip(RoundedCornerShape(18.dp))
-            .background(MaterialTheme.colorScheme.surfaceVariant),
-        contentAlignment = Alignment.Center
-    ) {
-        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-            Icon(
-                Icons.Filled.Map,
-                contentDescription = null,
-                tint = MaterialTheme.colorScheme.primary,
-                modifier = Modifier.size(40.dp)
-            )
-            Text(
-                "Live map",
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-        }
     }
 }
 

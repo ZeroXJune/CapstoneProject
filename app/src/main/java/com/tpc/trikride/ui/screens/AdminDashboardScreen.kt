@@ -936,6 +936,8 @@ private fun FareStopDialog(
     var discounted by remember { mutableStateOf(if (stop.discountedFare == 0.0) "" else "%.2f".format(stop.discountedFare)) }
     var active by remember { mutableStateOf(stop.active) }
     var reviewed by remember { mutableStateOf(!stop.needsReview) }
+    var lat by remember { mutableStateOf(if (stop.latitude == 0.0) "" else stop.latitude.toString()) }
+    var lng by remember { mutableStateOf(if (stop.longitude == 0.0) "" else stop.longitude.toString()) }
 
     val regularValue = regular.toDoubleOrNull()
     val discountedValue = discounted.toDoubleOrNull()
@@ -995,6 +997,28 @@ private fun FareStopDialog(
                 }
 
                 Spacer(modifier = Modifier.height(12.dp))
+                Text(
+                    "Map position (optional)",
+                    style = MaterialTheme.typography.bodyMedium,
+                    fontWeight = FontWeight.SemiBold
+                )
+                Text(
+                    "Leave blank if unknown. A stop without a position still " +
+                        "prices and books normally; it just does not show on the map.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+                Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                    Box(modifier = Modifier.weight(1f)) {
+                        MoneyField("Latitude", lat) { lat = it }
+                    }
+                    Box(modifier = Modifier.weight(1f)) {
+                        MoneyField("Longitude", lng) { lng = it }
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(12.dp))
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween,
@@ -1048,7 +1072,9 @@ private fun FareStopDialog(
                             regularFare = regularValue ?: 0.0,
                             discountedFare = discountedValue ?: 0.0,
                             active = active,
-                            needsReview = stop.needsReview && !reviewed
+                            needsReview = stop.needsReview && !reviewed,
+                            latitude = lat.toDoubleOrNull() ?: 0.0,
+                            longitude = lng.toDoubleOrNull() ?: 0.0
                         )
                     )
                 }

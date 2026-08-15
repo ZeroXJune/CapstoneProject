@@ -24,7 +24,12 @@ data class FareStop(
     val active: Boolean = true,
     val needsReview: Boolean = false,
     val confidence: String = "High",
-    val note: String = ""
+    val note: String = "",
+    // Optional. The posted sheet gives names, not coordinates, so these are
+    // filled in by the administrator over time. A stop without them still
+    // prices and books normally; it just does not appear on the map.
+    val latitude: Double = 0.0,
+    val longitude: Double = 0.0
 ) {
     /**
      * What the passenger sees in the picker. Excluded from the database write,
@@ -33,6 +38,13 @@ data class FareStop(
      */
     @get:Exclude
     val label: String get() = if (zone.isBlank()) name else "$name — $zone"
+
+    @get:Exclude
+    val hasCoordinates: Boolean get() = latitude != 0.0 || longitude != 0.0
+
+    @get:Exclude
+    val location: Location
+        get() = Location(latitude = latitude, longitude = longitude, address = label)
 }
 
 /** Which column of the fare sheet applies to this passenger. */

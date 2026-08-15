@@ -132,26 +132,19 @@ price a ride but only an administrator can change.
 While you are still testing, you may want the looser test-mode rules Firebase offers.
 Do not leave them on once real accounts exist.
 
-## Step 5: Google Maps API Setup
+## Step 5: Maps (nothing to do)
 
-1. Go to [Google Cloud Console](https://console.cloud.google.com/)
-2. Enable Maps SDK for Android
-3. Create API key with Android restrictions
-4. Add the key to `.env` in the project root. Copy `.env.example` first:
-   ```bash
-   cp .env.example .env
-   ```
-   ```properties
-   MAPS_API_KEY=AIza...your_key_here
-   SUPPORT_HOTLINE=+63...
-   SUPPORT_EMAIL=support@example.com
-   ```
-   Both `.env` and `local.properties` are gitignored, and the build reads `.env` first
-   and falls back to `local.properties`. The key is injected into the manifest through
-   a placeholder, so it never appears in a committed file.
+Maps are drawn from OpenStreetMap through osmdroid. There is no API key to obtain, no
+billing account to attach, and nothing to configure — it works on a fresh clone.
 
-   Maps are not used in the current build — map panels are placeholders — so you can
-   leave `MAPS_API_KEY` blank until you are ready for them.
+`MAPS_API_KEY` remains in `.env.example` and in the manifest so that switching to Google
+Maps later is a matter of supplying a key, but leaving it blank is correct and costs you
+nothing. Google's Android SDK does render at no charge, provided no Map ID is used, but
+the key behind it stops working if the billing account is ever suspended.
+
+Location comes from the device's own GPS through Google Play Services, which is also free.
+The app asks for the location permission the first time a driver goes online, and never
+requests background location.
 
 ## Step 6: Build and Run
 

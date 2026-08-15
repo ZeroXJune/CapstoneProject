@@ -42,6 +42,13 @@ rides, drivers, and concerns.
 privacy text, an in-app notification centre with unread counts, skeleton loading,
 pull-to-refresh, and a concern form for passengers and drivers.
 
+**Maps and live tracking.** Real OpenStreetMap maps on the booking and tracking screens
+through osmdroid — no key, no billing, nothing that expires. Drivers publish their
+position while online with the app open, and passengers watch it move. Pickup can be
+pinned anywhere on the map and is reverse-geocoded to a readable label. Destinations stay
+on the fare table, since the ordinance fixes the price per named stop. Fare stops can
+carry coordinates, editable in the admin fare screen, and appear on the map once they do.
+
 **Agreements.** The Terms and Conditions, Privacy Policy, Safety and Community
 Guidelines, and Driver Agreement are all in the app and all readable from Settings. The
 first three are ticked at sign-up; drivers accept the fourth after choosing their account
@@ -65,10 +72,6 @@ every user without dragging every avatar across the network.
 
 ## What is not built, and why
 
-**Live maps.** Map panels are styled placeholders. Displaying a Google map on Android
-carries no charge, but a billing account is still required to obtain a key, so this waits
-until deployment. The fare stops would need coordinates attached first.
-
 **Push to a sleeping phone.** FCM is wired into the app, but delivering a notification
 when the app is not running needs a server-side sender. That is a small set of Cloud
 Functions, deferred.
@@ -87,6 +90,10 @@ need a number or removal. One of those, San Roque "Dina/Gabril", looks like a du
 "Gabriel & Dina", which is already in the table at ₱36/₱40.
 
 **`.env`.** Copy `.env.example` and fill it in. The build reads it.
+
+**Stop coordinates.** None of the 240 fare stops has a position yet. They book and price
+fine without one; they just do not appear on the map. Filling in the dozen or so common
+destinations as you verify their fares would cover a demo.
 
 **The keystore.** Generate it, back it up in two places, and put the four
 `RELEASE_*` values in `.env`. Nothing can be distributed until this exists, and nothing

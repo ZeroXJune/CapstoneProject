@@ -157,9 +157,12 @@ dependencies {
     implementation("com.google.firebase:firebase-messaging-ktx")
     implementation("com.google.firebase:firebase-analytics-ktx")
 
-    // Google Maps
-    implementation("com.google.maps.android:maps-compose:4.3.1")
-    implementation("com.google.android.gms:play-services-maps:18.2.0")
+    // Maps. OpenStreetMap tiles through osmdroid: no API key, no billing
+    // account, no card. Google's SDK is free to display but will not issue a
+    // key without billing enabled, which this project deliberately avoids.
+    implementation("org.osmdroid:osmdroid-android:6.1.20")
+
+    // Device location. Free; nothing here touches a billed API.
     implementation("com.google.android.gms:play-services-location:21.3.0")
 
     // Networking

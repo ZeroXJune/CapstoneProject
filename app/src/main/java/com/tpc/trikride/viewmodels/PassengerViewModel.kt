@@ -8,6 +8,7 @@ import com.tpc.trikride.models.FareType
 import com.tpc.trikride.models.Location
 import com.tpc.trikride.models.Ride
 import com.tpc.trikride.models.RideRequest
+import com.tpc.trikride.repositories.DriverRepository
 import com.tpc.trikride.repositories.FareRepository
 import com.tpc.trikride.repositories.RideRepository
 import com.tpc.trikride.utils.FareEngine
@@ -18,13 +19,16 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class PassengerViewModel(
     private val rideRepository: RideRepository = RideRepository(),
-    private val fareRepository: FareRepository = FareRepository()
+    private val fareRepository: FareRepository = FareRepository(),
+    private val driverRepository: DriverRepository = DriverRepository()
 ) : ViewModel() {
 
     private val passengerId = MutableStateFlow<String?>(null)
@@ -59,6 +63,21 @@ class PassengerViewModel(
         .flatMapLatest { rideRepository.passengerRideHistory(it) }
         .catch { _errorMessage.value = it.message }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
+
+    /**
+     * Where the assigned driver is, while a ride is in progress.
+     *
+     * Null until a driver has accepted and started reporting a position. The
+     * driver only publishes while their app is open and they are online, so a
+     * gap here means exactly that rather than a fault.
+     */
+    val driverLocation: StateFlow<Location?> = activeRides
+        .map { rides -> rides.firstOrNull()?.driverId.orEmpty() }
+        .flatMapLatest { id ->
+            if (id.isBlank()) flowOf(null) else driverRepository.driverLocation(id)
+        }
+        .catch { _errorMessage.value = it.message }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
 
     private val _loadingHistory = MutableStateFlow(true)
     val loadingHistory: StateFlow<Boolean> = _loadingHistory

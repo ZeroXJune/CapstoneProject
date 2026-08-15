@@ -114,10 +114,23 @@ docs/
   figures/                            generated diagrams
 ```
 
-## Not in this build
+## Maps and live tracking
 
-Live maps. Map areas are styled placeholders. Displaying a Google map on Android is not
-billed, but a billing account is still needed for a key, so this waits for deployment.
+Booking and ride tracking both show a real map, drawn from OpenStreetMap through osmdroid.
+No API key, no billing account, nothing that can expire.
+
+A driver publishes their position while they are online and the app is open — no
+background service and no background-location permission, so nothing is tracked when they
+are off duty. The passenger sees that position move on the tracking screen once a driver
+accepts.
+
+Pickup can be chosen from the campus list or pinned anywhere on the map, with the point
+reverse-geocoded to a readable label. Destinations stay on the posted fare table, because
+the fare is fixed per named stop by ordinance and must not depend on where someone drops a
+pin. Stops can carry coordinates so they appear on the map; the admin fills those in over
+time and a stop without them still books normally.
+
+## Not in this build
 
 Push notifications to a phone that is not running the app. FCM is wired up, but sending
 requires Cloud Functions.

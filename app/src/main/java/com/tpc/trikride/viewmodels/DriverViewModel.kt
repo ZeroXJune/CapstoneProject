@@ -1,5 +1,6 @@
 package com.tpc.trikride.viewmodels
 
+import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.tpc.trikride.models.Driver
@@ -9,7 +10,9 @@ import com.tpc.trikride.models.NotificationType
 import com.tpc.trikride.repositories.DriverRepository
 import com.tpc.trikride.repositories.RideRepository
 import com.tpc.trikride.repositories.SupportRepository
+import com.tpc.trikride.utils.LocationProvider
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -28,6 +31,13 @@ class DriverViewModel(
 ) : ViewModel() {
 
     private val driverId = MutableStateFlow<String?>(null)
+
+    /** Publishes position while the driver is online; cancelled when offline. */
+    private var locationJob: Job? = null
+
+    /** The driver's own last known position, for centring their map. */
+    private val _myLocation = MutableStateFlow<com.tpc.trikride.models.Location?>(null)
+    val myLocation: StateFlow<com.tpc.trikride.models.Location?> = _myLocation
 
     private val _errorMessage = MutableStateFlow<String?>(null)
     val errorMessage: StateFlow<String?> = _errorMessage
@@ -102,6 +112,36 @@ class DriverViewModel(
                 _isRegistering.value = false
             }
         }
+    }
+
+    /**
+     * Starts publishing the driver's position to the database.
+     *
+     * Only while online and only while a screen is collecting: the flow removes
+     * its callback when this job is cancelled, so a driver who goes offline or
+     * closes the app stops being tracked. There is no background service, which
+     * keeps the app clear of the background-location permission and of draining
+     * a battery the driver needs for the rest of their shift.
+     */
+    fun startPublishingLocation(context: Context) {
+        val id = driverId.value ?: return
+        if (locationJob?.isActive == true) return
+        locationJob = viewModelScope.launch {
+            LocationProvider.updates(context).collect { fix ->
+                _myLocation.value = fix
+                runCatching { driverRepository.updateLocation(id, fix) }
+            }
+        }
+    }
+
+    fun stopPublishingLocation() {
+        locationJob?.cancel()
+        locationJob = null
+    }
+
+    override fun onCleared() {
+        super.onCleared()
+        stopPublishingLocation()
     }
 
     fun setAvailability(isAvailable: Boolean) {

@@ -84,4 +84,13 @@ data class Location(
     val longitude: Double = 0.0,
     val address: String = "",
     val timestamp: String = ""
-)
+) {
+    /**
+     * Whether this carries a real position. A default Location is 0,0, which is
+     * a point in the Atlantic, so plotting it would send the map to the wrong
+     * hemisphere rather than show nothing.
+     */
+    @get:com.google.firebase.database.Exclude
+    val hasCoordinates: Boolean
+        get() = latitude != 0.0 || longitude != 0.0
+}

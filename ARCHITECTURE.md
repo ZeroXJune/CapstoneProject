@@ -75,6 +75,7 @@ ui/components/
   CommonComponents.kt  PrimaryButton, SecondaryButton, SectionCard, SkeletonBox,
                        SkeletonCard, RefreshableBox, SimplePlaceholder, TrikTextField
   AvatarPicker.kt      circular avatar with a camera/gallery chooser
+  TrikMap.kt           OpenStreetMap view and the centre-pin location picker
 
 utils/
   FareEngine.kt     prices a ride from the table
@@ -83,6 +84,8 @@ utils/
   ReportExporter.kt writes through the file picker, or shares
   PasswordRules.kt  password policy, evaluated live as the user types
   ProfilePhoto.kt   shrinks and base64-encodes an avatar for the database
+  LocationProvider.kt  device position from the fused provider, as a Flow
+  ReverseGeocoder.kt   turns a pinned point into a readable label
   AuthPrefs.kt      remembered email, onboarding-seen flag
   LocationUtils.kt  haversine distance
   Constants.kt      pickup points, request TTL, max passengers
@@ -138,6 +141,25 @@ other device. There is no lock; the delete is the resolution.
 head count. It reads the posted rate, raises it to the ordinance minimum if lower, and
 multiplies. The priced fare travels on the `RideRequest`, so the driver sees the same
 number the passenger agreed to rather than recomputing it.
+
+**Maps.** `TrikMap.kt` is the only file that knows what renders a map. It draws
+OpenStreetMap tiles through osmdroid, which needs no API key and no billing account, so
+there is nothing that can lapse and take the maps down. Google's Android SDK renders free
+of charge as well, provided no Map ID is used, but its key depends on a live billing
+account — a poor dependency for something handed to a drivers' association. Swapping
+renderers means changing that one file.
+
+Two things in `configureOsmdroid` are not optional. The tile cache goes in app-private
+storage, or osmdroid asks for a storage permission it does not need. And the user agent is
+set to the package name, because OpenStreetMap's servers block osmdroid's default agent
+and the symptom is blank tiles rather than an error.
+
+**Location.** A driver publishes position only while online and only while a screen is
+collecting: `LocationProvider.updates` is a `callbackFlow` that removes its listener on
+cancellation, and `DriverViewModel` cancels the job when availability goes false. There is
+no foreground service and no background-location permission. That is a deliberate limit —
+background tracking costs battery the driver needs for their shift, and it is not a
+reasonable thing to run on someone who has gone off duty.
 
 **Consent.** `MainAppScreen` will not route to a dashboard until `ConsentViewModel`
 confirms the account has accepted the current documents. `users/{uid}` carries

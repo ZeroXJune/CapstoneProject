@@ -1,5 +1,7 @@
 package com.tpc.trikride.ui.screens
 
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -21,6 +23,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
@@ -44,6 +47,7 @@ import kotlinx.coroutines.delay
 import androidx.compose.material.icons.filled.Badge
 import androidx.compose.material.icons.filled.CreditCard
 import androidx.compose.material.icons.filled.DateRange
+import com.tpc.trikride.utils.LocationProvider
 import com.tpc.trikride.viewmodels.DriverViewModel
 import com.tpc.trikride.viewmodels.SupportViewModel
 
@@ -67,6 +71,25 @@ fun DriverHomeScreen(
     val isRegistering by viewModel.isRegistering.collectAsState()
     val error by viewModel.errorMessage.collectAsState()
     val earnings by viewModel.earnings.collectAsState()
+
+    // Publish position only while online, and only while this screen exists.
+    // Going offline or leaving the app stops it; there is no background service.
+    val context = LocalContext.current
+    val locationPermission = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { granted -> if (granted) viewModel.startPublishingLocation(context) }
+
+    LaunchedEffect(driver?.isAvailable) {
+        if (driver?.isAvailable == true) {
+            if (LocationProvider.hasPermission(context)) {
+                viewModel.startPublishingLocation(context)
+            } else {
+                locationPermission.launch(android.Manifest.permission.ACCESS_FINE_LOCATION)
+            }
+        } else {
+            viewModel.stopPublishingLocation()
+        }
+    }
 
     val profile = driver
     if (profile == null) {

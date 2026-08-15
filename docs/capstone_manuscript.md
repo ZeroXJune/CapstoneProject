@@ -333,6 +333,8 @@ This study covers the development of a Smart Tricycle Ride and Driver Onboarding
 5. Enables drivers to register, submit credentials, toggle their availability, receive and manage ride requests, and record the progress of a ride from acceptance to completion.
 6. Provides driver registration and verification controlled by an administrator, so that unverified drivers cannot accept passengers.
 7. Gives both parties a shared, live view of ride status, and a history of completed rides.
+7a. Displays an interactive map on the booking and tracking screens, and shows the assigned driver's position as it changes while the ride is under way.
+7b. Allows a passenger to set a pickup point either from the defined list or by pinning any point on the map, with the pinned point described in words where the device can resolve an address.
 8. Allows passengers and drivers to raise concerns, and allows an administrator to review, annotate, and resolve them.
 9. Notifies users in-app of the events that concern them.
 10. Provides an administrative fare table that can be searched, filtered, corrected, and extended without modifying the application's code.
@@ -345,12 +347,15 @@ This study covers the development of a Smart Tricycle Ride and Driver Onboarding
 3. The system requires an internet connection. It does not operate offline.
 4. The system does not include online payment integration. All fares are settled in cash between the passenger and the driver.
 5. The system does not cover other transportation types such as jeepneys, buses, or motorcycle taxis.
-6. Live map display and turn-by-turn navigation are not included in the evaluated build. Locations are selected from a defined list of pickup points and from the FeTODAT destination schedule rather than from an interactive map, and map areas within the interface are represented by styled placeholders.
-7. Push notifications are delivered within the application. Delivery of notifications to a device that is not running the application requires a server-side component that is outside the scope of this study.
-8. Sign-in is by email address and password. Federated sign-in through third-party identity providers is not included.
-9. The accuracy of the fare table depends on the accuracy of the published FeTODAT schedule as transcribed. Rows that could not be read with confidence from the posted sheet are flagged within the administrative interface for verification, and rows without a usable rate are disabled so that they cannot price a ride.
-10. Implementation of the system beyond the study is subject to the cooperation and coordination of the local tricycle drivers' association in Talibon, Bohol.
-11. Adoption depends on the willingness of drivers and passengers to use the system.
+6. Turn-by-turn navigation is not included. The booking and tracking screens show an interactive map with the relevant positions on it, but the system does not compute or display a driving route, because route calculation is a billed web service and the study operates at no cost.
+7. A driver's position is published only while the application is open and the driver is marked online. There is no background tracking, so a passenger sees no position for a driver who has closed the application.
+8. Destinations are selected from the published FeTODAT schedule rather than by pinning a point on the map, because the governing ordinance fixes the fare for each named destination. A pickup point may be pinned freely, as it does not affect the fare.
+9. Fare stops carry a map position only where an administrator has supplied one. A stop without coordinates books and prices normally but does not appear on the map.
+10. Push notifications are delivered within the application. Delivery of notifications to a device that is not running the application requires a server-side component that is outside the scope of this study.
+11. Sign-in is by email address and password. Federated sign-in through third-party identity providers is not included.
+12. The accuracy of the fare table depends on the accuracy of the published FeTODAT schedule as transcribed. Rows that could not be read with confidence from the posted sheet are flagged within the administrative interface for verification, and rows without a usable rate are disabled so that they cannot price a ride.
+13. Implementation of the system beyond the study is subject to the cooperation and coordination of the local tricycle drivers' association in Talibon, Bohol.
+14. Adoption depends on the willingness of drivers and passengers to use the system.
 
 ## 1.6 Significance of the Study
 
@@ -684,6 +689,8 @@ The minimum SDK of API level 24 was chosen deliberately. Android 7.0 was release
 | Firebase Authentication | via Firebase BOM | Email and password sign-in and session management |
 | Firebase Realtime Database | via Firebase BOM | Live data storage and synchronization |
 | Firebase Cloud Messaging | via Firebase BOM | Notification delivery |
+| osmdroid | 6.1.20 | OpenStreetMap map rendering |
+| Google Play Services Location | 21.3.0 | Device position from the fused location provider |
 | Kotlin Coroutines | bundled with Kotlin 2.1.0 | Asynchronous work and reactive data streams |
 | AndroidX Lifecycle ViewModel Compose | current stable | ViewModel integration with Compose |
 | AndroidX Activity Compose | current stable | Activity result contracts for camera, gallery, and file creation |
@@ -1262,6 +1269,7 @@ Training is organized by role and kept short, on the reasoning that a system req
 | Profile | Profile editing, photograph capture and selection, theme preference, terms and privacy notice, sign-out | FR-06 |
 | Passenger booking | Pickup selection, searchable destination picker across 240 stops plus two flat rates, rate column selection, passenger count and luggage, itemized fare display, request submission and cancellation | FR-09 to FR-14 |
 | Matching | Broadcast of requests to available verified drivers, five-minute expiry, first-acceptance matching with withdrawal from other devices | FR-15 to FR-17 |
+| Mapping and location | Interactive OpenStreetMap views on the booking and tracking screens; live publication of a driver's position while online; the passenger's view of that position; pinning a pickup point on the map with a reverse-geocoded label; optional coordinates on fare stops | FR-09, FR-18 |
 | Ride lifecycle | Shared status timeline through arriving, arrived, in progress, and completed; completion summary and rating; ride history for both parties | FR-18 to FR-20, FR-25 |
 | Driver onboarding | Credential submission, administrative verification with approval and rejection, gating of unverified drivers, notification of the decision | FR-21, FR-22, FR-27, FR-28 |
 | Driver operations | Availability toggle, request list with countdown, earnings total | FR-23, FR-24, FR-26 |
@@ -1406,7 +1414,11 @@ Based on the development and evaluation of the system, the following are recomme
 
 The following extensions are outside the scope of this study and are offered to researchers who take the work further.
 
-**Live mapping and navigation.** Integrating the Google Maps SDK would allow the passenger to watch the tricycle approach and would give the driver turn-by-turn guidance. Displaying a map in a mobile application is not itself billed by the platform, though a billing account must be attached to obtain a key, and route calculation is billed. Attaching coordinates to each of the 240 fare stops would be a prerequisite.
+**Turn-by-turn navigation.** The system shows positions but not routes. Adding guidance would require a routing service, which is billed by every major provider, or a self-hosted open-source routing engine. For journeys of this length the benefit is modest, but it would help a driver unfamiliar with an outlying sitio.
+
+**Coordinates for the whole fare table.** Only stops an administrator has positioned appear on the map. Surveying the coordinates of all 240, which a group of students with phones could do in a few afternoons, would let a passenger pick a destination from the map and have the system snap to the nearest posted stop rather than search a list.
+
+**Background position for drivers.** A driver's position is published only while the application is open. Publishing while it is backgrounded would need a foreground service and a persistent notification, and a considered answer on battery use and on what drivers are willing to have tracked.
 
 **Server-side push notifications.** The application registers with Firebase Cloud Messaging, but delivering a notification to a device on which the application is not running requires a server-side component. A small set of Cloud Functions triggered by database writes would deliver ride requests to drivers whose phones are in their pockets, which is where a driver's phone usually is.
 
