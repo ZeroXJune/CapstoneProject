@@ -67,15 +67,27 @@ fun MainAppScreen(
     var pendingReg by remember { mutableStateOf<RegistrationData?>(null) }
     var seenOnboarding by remember { mutableStateOf(AuthPrefs.hasSeenOnboarding(context)) }
 
-    // Checking for an existing signed-in session. Returning users get the
-    // welcome artwork; everyone else sees the branded splash.
-    if (state.isBootstrapping) {
+    val uid = state.userId
+    val type = state.userType
+
+    // Start the consent check the moment we know who is signed in, so it
+    // overlaps the rest of start-up rather than following it.
+    LaunchedEffect(uid, type) {
+        if (uid != null && type != null) consentViewModel.check(uid, type)
+    }
+
+    // Start-up has two waits — restoring the session, then reading what the
+    // account has agreed to — but they are one wait as far as anyone looking at
+    // the screen is concerned. Showing a different image for each made the app
+    // appear to load twice.
+    val settlingConsent = uid != null && type != null && consent.isChecking
+    if (state.isBootstrapping || settlingConsent) {
         if (state.hasExistingSession) WelcomeBackScreen() else SplashScreen()
         return
     }
 
     // First launch for a signed-out user: run the carousel once.
-    if (state.userId == null && !seenOnboarding) {
+    if (uid == null && !seenOnboarding) {
         OnboardingScreen(
             onFinish = {
                 AuthPrefs.setSeenOnboarding(context)
@@ -88,16 +100,7 @@ fun MainAppScreen(
     // Signed in with a known account type. Before the dashboard, the account
     // has to have agreed to the current legal documents — which catches both
     // accounts made before consent was tracked and any later amendment.
-    if (state.userId != null && state.userType != null) {
-        val uid = state.userId!!
-        val type = state.userType!!
-
-        LaunchedEffect(uid, type) { consentViewModel.check(uid, type) }
-
-        if (consent.isChecking) {
-            SplashScreen()
-            return
-        }
+    if (uid != null && type != null) {
         if (consent.needsConsent) {
             ConsentScreen(
                 includeLegal = consent.needsLegal,
@@ -114,7 +117,7 @@ fun MainAppScreen(
             return
         }
 
-        when (state.userType) {
+        when (type) {
             UserType.PASSENGER -> PassengerHomeScreen(
                 userId = uid,
                 onSignOut = { consentViewModel.reset(); authViewModel.signOut() }
@@ -127,13 +130,12 @@ fun MainAppScreen(
                 userId = uid,
                 onSignOut = { consentViewModel.reset(); authViewModel.signOut() }
             )
-            null -> Unit
         }
         return
     }
 
     // Signed in but no account type stored yet → pick one (persists to DB).
-    if (state.userId != null && state.needsAccountType) {
+    if (uid != null && state.needsAccountType) {
         AccountSelectionScreen(
             isLoading = state.isLoading,
             error = state.error,
