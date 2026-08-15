@@ -8,6 +8,7 @@ import com.tpc.trikride.models.RideStatus
 import com.tpc.trikride.models.User
 import java.util.Calendar
 import java.util.Locale
+import java.util.TimeZone
 
 /** The stretch of time a report covers. */
 sealed class ReportPeriod {
@@ -15,11 +16,22 @@ sealed class ReportPeriod {
     data class Year(val year: Int) : ReportPeriod()
     data object AllTime : ReportPeriod()
 
+    /**
+     * Any two dates the admin picks, both days included.
+     *
+     * [startMillis] and [endMillis] are stored as the first and last instant of
+     * the chosen days rather than as whatever midnight the picker handed back.
+     * A range whose end is midnight would leave out everything that happened on
+     * the last day, which is not what anyone means by "up to the 15th".
+     */
+    data class Custom(val startMillis: Long, val endMillis: Long) : ReportPeriod()
+
     val label: String
         get() = when (this) {
             is Month -> "${MONTH_NAMES[month]} $year"
             is Year -> "$year"
             AllTime -> "All time"
+            is Custom -> "${shortDate(startMillis)} to ${shortDate(endMillis)}"
         }
 
     /** Safe for a filename on any platform the admin might open this on. */
@@ -28,15 +40,30 @@ sealed class ReportPeriod {
             is Month -> "%04d-%02d".format(year, month + 1)
             is Year -> "%04d".format(year)
             AllTime -> "all-time"
+            is Custom -> "${fileDate(startMillis)}-to-${fileDate(endMillis)}"
+        }
+
+    /**
+     * Whether a chart of this period should have one bar per day or per month.
+     *
+     * A month is always daily. A custom range follows its own length: two
+     * months of days is a readable axis, a year of them is a smear.
+     */
+    val bucketsByDay: Boolean
+        get() = when (this) {
+            is Month -> true
+            is Custom -> endMillis - startMillis <= 62L * 86_400_000L
+            else -> false
         }
 
     fun contains(epochMillis: Long): Boolean {
         if (this is AllTime) return true
+        if (this is Custom) return epochMillis in startMillis..endMillis
         val cal = Calendar.getInstance().apply { timeInMillis = epochMillis }
         return when (this) {
             is Month -> cal.get(Calendar.YEAR) == year && cal.get(Calendar.MONTH) == month
             is Year -> cal.get(Calendar.YEAR) == year
-            AllTime -> true
+            else -> true
         }
     }
 
@@ -45,6 +72,56 @@ sealed class ReportPeriod {
             "January", "February", "March", "April", "May", "June",
             "July", "August", "September", "October", "November", "December"
         )
+
+        private fun shortDate(ms: Long): String {
+            val cal = Calendar.getInstance().apply { timeInMillis = ms }
+            return "%d %s %d".format(
+                cal.get(Calendar.DAY_OF_MONTH),
+                MONTH_NAMES[cal.get(Calendar.MONTH)].take(3),
+                cal.get(Calendar.YEAR)
+            )
+        }
+
+        private fun fileDate(ms: Long): String {
+            val cal = Calendar.getInstance().apply { timeInMillis = ms }
+            return "%04d%02d%02d".format(
+                cal.get(Calendar.YEAR), cal.get(Calendar.MONTH) + 1, cal.get(Calendar.DAY_OF_MONTH)
+            )
+        }
+
+        /**
+         * Turns two dates chosen in the date picker into a range that covers
+         * both days in full, in the device's own time zone.
+         *
+         * Material's picker reports a selection as midnight UTC on the chosen
+         * day, so the calendar date is read back in UTC and only then rebuilt
+         * locally. Treating the picker's instant as a local one moves the range
+         * a day in any zone behind UTC. A pair chosen back to front still means
+         * the days between them, so it is ordered first.
+         */
+        fun customRange(firstPickedUtc: Long, secondPickedUtc: Long): Custom {
+            val from = minOf(firstPickedUtc, secondPickedUtc)
+            val to = maxOf(firstPickedUtc, secondPickedUtc)
+            return Custom(localDay(from, endOfDay = false), localDay(to, endOfDay = true))
+        }
+
+        private fun localDay(pickedUtc: Long, endOfDay: Boolean): Long {
+            val utc = Calendar.getInstance(TimeZone.getTimeZone("UTC")).apply {
+                timeInMillis = pickedUtc
+            }
+            return Calendar.getInstance().apply {
+                clear()
+                set(
+                    utc.get(Calendar.YEAR),
+                    utc.get(Calendar.MONTH),
+                    utc.get(Calendar.DAY_OF_MONTH),
+                    if (endOfDay) 23 else 0,
+                    if (endOfDay) 59 else 0,
+                    if (endOfDay) 59 else 0
+                )
+                set(Calendar.MILLISECOND, if (endOfDay) 999 else 0)
+            }.timeInMillis
+        }
     }
 }
 
@@ -358,24 +435,28 @@ object ReportBuilder {
                 cal.get(Calendar.YEAR), cal.get(Calendar.MONTH) + 1, cal.get(Calendar.DAY_OF_MONTH)
             )
             counts[key] = (counts[key] ?: 0) + 1
-            // A month of days is labelled by day number; anything wider by month.
-            labels[key] = if (period is ReportPeriod.Month) {
+            // A short period is labelled by day number; a long one by month.
+            labels[key] = if (period.bucketsByDay) {
                 cal.get(Calendar.DAY_OF_MONTH).toString()
             } else {
                 ReportPeriod.MONTH_NAMES[cal.get(Calendar.MONTH)].take(3)
             }
         }
 
-        // Across a year or all time, collapse to one bar per month.
-        if (period !is ReportPeriod.Month) {
+        // Across a year, all time, or a long custom range, collapse to one bar per month.
+        if (!period.bucketsByDay) {
             val byMonth = linkedMapOf<String, Int>()
             counts.forEach { (key, n) ->
                 val month = key.substring(0, 7)
                 byMonth[month] = (byMonth[month] ?: 0) + n
             }
+            // A span crossing new year carries the year on the label, or two
+            // separate Januaries both read as "Jan".
+            val spansYears = byMonth.keys.map { it.substring(0, 4) }.distinct().size > 1
             return byMonth.map { (month, n) ->
                 val index = month.substring(5).toInt() - 1
-                ReportPeriod.MONTH_NAMES[index].take(3) to n
+                val name = ReportPeriod.MONTH_NAMES[index].take(3)
+                (if (spansYears) "$name ${month.substring(2, 4)}" else name) to n
             }
         }
         return counts.map { (key, n) -> (labels[key] ?: "") to n }

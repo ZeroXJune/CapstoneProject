@@ -15,11 +15,14 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.Description
 import androidx.compose.material.icons.filled.Download
 import androidx.compose.material.icons.filled.PictureAsPdf
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material3.Button
+import androidx.compose.material3.DatePickerDialog
+import androidx.compose.material3.DateRangePicker
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuBox
@@ -30,6 +33,8 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.rememberDateRangePickerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -79,11 +84,25 @@ fun AdminReportsContent(
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     val periods = remember(rides) { ReportBuilder.availablePeriods(rides) }
-    var period by remember(periods) { mutableStateOf(periods.first()) }
+    // Not keyed on the ride list: rides arrive live, and re-keying here would
+    // throw away a date range the admin had just finished picking.
+    var period by remember { mutableStateOf<ReportPeriod>(ReportPeriod.AllTime) }
     var status by remember { mutableStateOf<String?>(null) }
     // A year of rides is a long table to draw, so the export runs off the main
     // thread and the buttons stay disabled until it finishes.
     var busy by remember { mutableStateOf(false) }
+    var showRangePicker by remember { mutableStateOf(false) }
+
+    if (showRangePicker) {
+        DateRangeDialog(
+            onDismiss = { showRangePicker = false },
+            onConfirm = { start, end ->
+                period = ReportPeriod.customRange(start, end)
+                status = null
+                showRangePicker = false
+            }
+        )
+    }
 
     // Held between choosing a format and the file picker coming back.
     var pendingCsv by remember { mutableStateOf("") }
@@ -151,8 +170,8 @@ fun AdminReportsContent(
                     fontWeight = FontWeight.Bold
                 )
                 Text(
-                    "Export a month or a year of activity as a printable PDF or a " +
-                        "spreadsheet.",
+                    "Export a month, a year, or any range of dates as a printable " +
+                        "PDF or a spreadsheet.",
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -171,8 +190,17 @@ fun AdminReportsContent(
                     PeriodDropdown(
                         periods = periods,
                         selected = period,
-                        onSelected = { period = it; status = null }
+                        onSelected = { period = it; status = null },
+                        onCustomRequested = { showRangePicker = true }
                     )
+                    if (period is ReportPeriod.Custom) {
+                        Spacer(modifier = Modifier.height(6.dp))
+                        Text(
+                            "Both dates are included in full.",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
                 }
             }
         }
@@ -182,8 +210,8 @@ fun AdminReportsContent(
                 SimplePlaceholder(
                     icon = Icons.Filled.Description,
                     title = "No activity yet",
-                    message = "Once rides start coming through, monthly and yearly " +
-                        "reports will be available here."
+                    message = "Once rides start coming through, reports for any " +
+                        "month, year, or range of dates will be available here."
                 )
             }
             return@LazyColumn
@@ -361,7 +389,8 @@ fun AdminReportsContent(
 private fun PeriodDropdown(
     periods: List<ReportPeriod>,
     selected: ReportPeriod,
-    onSelected: (ReportPeriod) -> Unit
+    onSelected: (ReportPeriod) -> Unit,
+    onCustomRequested: () -> Unit
 ) {
     var expanded by remember { mutableStateOf(false) }
     ExposedDropdownMenuBox(expanded = expanded, onExpandedChange = { expanded = it }) {
@@ -383,7 +412,73 @@ private fun PeriodDropdown(
                     onClick = { onSelected(option); expanded = false }
                 )
             }
+            HorizontalDivider()
+            // The months and years above come from the data. This one does not,
+            // so it opens a picker rather than sitting in the same list.
+            DropdownMenuItem(
+                text = { Text("Choose exact dates…") },
+                leadingIcon = {
+                    Icon(
+                        Icons.Filled.DateRange,
+                        contentDescription = null,
+                        modifier = Modifier.size(18.dp)
+                    )
+                },
+                onClick = { expanded = false; onCustomRequested() }
+            )
         }
+    }
+}
+
+/**
+ * The date-range picker behind "Choose exact dates".
+ *
+ * Confirm stays disabled until both ends are chosen: a range with only a start
+ * has no meaning here, and running the report on a half-made selection is worse
+ * than making the admin finish it.
+ */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun DateRangeDialog(
+    onDismiss: () -> Unit,
+    onConfirm: (Long, Long) -> Unit
+) {
+    val state = rememberDateRangePickerState()
+    DatePickerDialog(
+        onDismissRequest = onDismiss,
+        confirmButton = {
+            val start = state.selectedStartDateMillis
+            val end = state.selectedEndDateMillis
+            TextButton(
+                onClick = { if (start != null && end != null) onConfirm(start, end) },
+                enabled = start != null && end != null
+            ) { Text("Use these dates") }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) { Text("Cancel") }
+        }
+    ) {
+        DateRangePicker(
+            state = state,
+            title = {
+                Text(
+                    "Report period",
+                    style = MaterialTheme.typography.titleMedium,
+                    modifier = Modifier.padding(start = 24.dp, top = 16.dp)
+                )
+            },
+            headline = {
+                Text(
+                    "Pick the first and last day",
+                    style = MaterialTheme.typography.titleLarge,
+                    modifier = Modifier.padding(start = 24.dp, bottom = 8.dp)
+                )
+            },
+            showModeToggle = false,
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(500.dp)
+        )
     }
 }
 

@@ -189,7 +189,18 @@ timeout: an unreachable database used to leave the app on a spinner forever.
 
 **Reports.** `ReportBuilder` buckets rides by month or year from epoch-millisecond
 strings. A timestamp that will not parse is excluded from every period rather than
-silently landing in the current one. `ReportExporter` writes through
+silently landing in the current one.
+
+The months and years on offer are built from rides that exist, so there are no empty
+periods to scroll past. `ReportPeriod.Custom` covers anything those two do not: two dates
+from a calendar, both days included in full. Material's range picker reports a selection
+as midnight UTC, so `customRange` reads the calendar date back in UTC and rebuilds the day
+locally — treating the picker's instant as a local one shifts the range a day in every
+zone behind UTC. A range picked back to front is ordered rather than rejected.
+
+Charts follow the period's length rather than its type: `bucketsByDay` puts one bar per
+day on a month or a range up to nine weeks, and one per month on anything longer. Labels
+carry the year when a span crosses new year, or two Januaries read the same. `ReportExporter` writes through
 `ActivityResultContracts.CreateDocument`, so no storage permission is needed, or shares
 through a `FileProvider` URI.
 

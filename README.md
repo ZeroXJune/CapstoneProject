@@ -30,7 +30,7 @@ to approve them. Until then they cannot accept anyone. Once approved they go onl
 see requests with a countdown, accept, and move the ride through its stages.
 
 **Administrators** verify drivers, keep the fare table correct, answer concerns, watch
-activity live, and export a month or a year of it. Each report comes out as a printable
+activity live, and export a month, a year, or any range of dates. Each report comes out as a printable
 PDF — headline figures and charts on the first page, every record behind it — or as a
 spreadsheet for anyone who wants to sort and total it themselves.
 

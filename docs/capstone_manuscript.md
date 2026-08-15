@@ -107,7 +107,7 @@ Students, faculty, and staff of Talibon Polytechnic College depend on tricycles 
 
 This study developed **TrikRide**, an Android application that connects passengers and tricycle drivers serving Talibon Polytechnic College, and that puts a verification step in front of drivers before they are allowed to accept passengers.
 
-The system serves three kinds of users. A passenger creates an account, chooses a destination from the fare schedule published by the Federation of Tricycle Operators and Drivers Association of Talibon, sees the exact fare before committing, and follows the ride from acceptance through to completion. A driver registers, submits a licence and tricycle details, and can accept requests only once an administrator has approved those documents. An administrator verifies drivers, maintains the fare table, reviews concerns raised by either side, watches activity as it happens, and exports monthly or yearly records as printable documents or spreadsheets.
+The system serves three kinds of users. A passenger creates an account, chooses a destination from the fare schedule published by the Federation of Tricycle Operators and Drivers Association of Talibon, sees the exact fare before committing, and follows the ride from acceptance through to completion. A driver registers, submits a licence and tricycle details, and can accept requests only once an administrator has approved those documents. An administrator verifies drivers, maintains the fare table, reviews concerns raised by either side, watches activity as it happens, and exports records for any month, year, or range of dates as printable documents or spreadsheets.
 
 Fares are not estimated. The application prices every ride from the 240 destinations on the posted FeTODAT schedule, which distinguishes the regular rate from the discounted rate for senior citizens, persons with disabilities, and students, and which sets a minimum fare of fifteen pesos for regular passengers and twelve pesos for discounted passengers. Because the rate table is held in the database rather than in code, the administrator corrects a price without a new release of the application.
 
@@ -366,7 +366,7 @@ This study covers the development of a Smart Tricycle Ride and Driver Onboarding
 
 **Talibon Polytechnic College.** A college that can offer organized, safe, and accessible transportation reflects well on the institution. This system contributes to that by bringing a previously informal service into a structured, accountable framework.
 
-**College Administration.** The system gives administrators a clearer view of transportation activity around the campus. With driver records, ride logs, and concerns held in one place, and with monthly and yearly reports that can be exported, it becomes easier to monitor operations, address complaints, and make evidence-based decisions about transportation policy.
+**College Administration.** The system gives administrators a clearer view of transportation activity around the campus. With driver records, ride logs, and concerns held in one place, and with reports that can be exported for any month, year, or range of dates, it becomes easier to monitor operations, address complaints, and make evidence-based decisions about transportation policy.
 
 **The Federation of Tricycle Operators and Drivers Association of Talibon.** Placing the published fare schedule inside an application that both parties can see supports the association's own rate-setting work, and gives it a record of disputes it can act on.
 
@@ -575,7 +575,7 @@ Table 1 compares the developed system with commercial ride-hailing platforms ope
 | **Angkas** | Motorcycle taxi booking; fixed distance-based fare; driver accreditation and training; helmet provision | Formalized an informal transport mode; strong driver screening; fare shown before booking | Motorcycle taxis only; operates in designated metropolitan areas and not in Talibon; central operator model unsuitable for a municipal drivers' association |
 | **JoyRide** | Motorcycle taxi and delivery; in-app booking; fixed fare display | Fare visible before booking; covers several Philippine cities | Motorcycle taxis only; not available in Talibon; no tricycle support |
 | **Current arrangement in Talibon** (terminal queue and roadside hailing) | Physical queueing; verbal fare agreement; fare schedule posted at terminals | No technology or literacy barrier; no data cost; works during power or network outages | Unpredictable waiting time; drivers idle or roaming; posted fare not available at the point of decision; no driver verification; no record of trips or complaints |
-| **TrikRide** (developed system) | Tricycle ride booking; destination selected from the official FeTODAT schedule; fare shown before booking with separate regular and discounted rates; administrator-controlled driver verification; live ride status; concern reporting; administrative monitoring and report export | Prices from the governing ordinance rather than a formula; discounted rate for seniors, persons with disabilities, and students is built in; verification gate before a driver can operate; fare table editable by the administrator without a software release; monthly and yearly reports exportable | Requires an Android device and an internet connection; no live map in the evaluated build; no online payment; coverage limited to Talibon; adoption depends on the drivers' association |
+| **TrikRide** (developed system) | Tricycle ride booking; destination selected from the official FeTODAT schedule; fare shown before booking with separate regular and discounted rates; administrator-controlled driver verification; live ride status; concern reporting; administrative monitoring and report export | Prices from the governing ordinance rather than a formula; discounted rate for seniors, persons with disabilities, and students is built in; verification gate before a driver can operate; fare table editable by the administrator without a software release; reports exportable for any month, year, or range of dates | Requires an Android device and an internet connection; no live map in the evaluated build; no online payment; coverage limited to Talibon; adoption depends on the drivers' association |
 
 Three observations follow from the comparison. First, no existing platform serves tricycles in Talibon, so the developed system does not displace an incumbent; it addresses a gap. Second, every commercial platform computes fares from distance and demand, which is the wrong model where a municipal ordinance fixes the price per destination. Third, none of the commercial platforms implements the statutory discount for senior citizens, persons with disabilities, and students, because none operates under a fare regime that mandates one.
 
@@ -901,7 +901,7 @@ Requirements were derived from three sources: the problems documented in the nee
 | FR-34 | The system shall allow an administrator to review a concern, record a note, and mark it open, in review, or resolved. | Administrator | 5 |
 | FR-35 | The system shall notify a user in-app of events concerning them and show a count of unread notifications. | All | 3, 5 |
 | FR-36 | The system shall show an administrator live counts of drivers, verification states, active rides, and completed rides. | Administrator | 5 |
-| FR-37 | The system shall produce ride activity, driver performance, and concern reports for a selected month, year, or the whole record. | Administrator | 5 |
+| FR-37 | The system shall produce ride activity, driver performance, and concern reports for a selected month, a selected year, the whole record, or a range between two dates chosen by the administrator. | Administrator | 5 |
 | FR-38 | The system shall export a report as a comma-separated-value file to a location chosen by the administrator, or share it to another application. | Administrator | 5 |
 | FR-39 | The system shall export a report as a portable-document-format file whose first page presents the headline figures and charts for the period and whose remaining pages carry the full record. | Administrator | 5 |
 
@@ -1177,6 +1177,7 @@ System testing exercised complete workflows end to end.
 | ST-05 | A ride is carried through to completion and rated | The ride appears in both parties' history with the correct fare | Pass |
 | ST-06 | An administrator exports a monthly ride report as a spreadsheet | The file contains every ride in that month and opens in a spreadsheet application | Pass |
 | ST-06a | An administrator exports the same report as a document | The first page carries the summary figures and charts for the month and the following pages carry every ride | Pass |
+| ST-06b | An administrator selects a range between two dates and exports the ride report | The report covers every ride from the first day to the last, both days included in full | Pass |
 | ST-07 | A returning user reopens the application | The welcome screen is shown and the session is restored to the correct role | Pass |
 | ST-08 | The device is rotated during booking | Entered values are retained | Pass |
 | ST-09 | The application is used with the device in dark theme | Every screen renders legibly | Pass |
@@ -1292,7 +1293,7 @@ All thirty-eight functional requirements were implemented, as were the fifteen n
 
 | Report | Period options | Contents |
 |:---|:---|:---|
-| Ride activity | Any month with rides, any year with rides, or the whole record | Summary block giving total rides, completions, cancellations, open rides, gross fares, average completed fare, passengers served, and drivers with at least one ride; followed by one line per ride giving both parties, all lifecycle timestamps, route, passenger count, luggage, status, and fares |
+| Ride activity | Any month with rides, any year with rides, the whole record, or a range between two chosen dates | Summary block giving total rides, completions, cancellations, open rides, gross fares, average completed fare, passengers served, and drivers with at least one ride; followed by one line per ride giving both parties, all lifecycle timestamps, route, passenger count, luggage, status, and fares |
 | Driver performance | As above | One line per driver with at least one ride in the period, giving contact and vehicle details, verification status, rides accepted, completed, and cancelled, gross and average fares, and rating, ordered by rides accepted; followed by a list of drivers with no rides in the period |
 | Concerns | As above | Counts by status, a breakdown by category, and one line per concern giving the reporter, category, description, status, administrator note, and the dates filed and resolved |
 
@@ -1305,6 +1306,10 @@ Each report is produced in two formats. The comma-separated-value file opens wit
 | Ride activity | Rides per day across the month, or per month across a year; rides by hour of the day; the most-booked destinations; and rides by day of the week |
 | Driver performance | Rides accepted per driver; gross fares per driver; the share of each driver's accepted rides that were completed; and the registered fleet by approval state |
 | Concerns | Concerns by category; concerns filed per month; how long resolved concerns took to close; and the roles of those who raised them |
+
+The months and years offered to the administrator are built from the rides that exist, so no empty period appears in the list. A range between two dates chosen from a calendar covers whatever those two do not, with both days included in full: a range ending at midnight would omit everything that happened on its last day, which is not what is meant by a report running up to a given date.
+
+Charts follow the length of the period rather than its kind. A month, or a range up to nine weeks, is drawn with one bar per day; anything longer is collapsed to one bar per month, since a year of daily bars is unreadable at this page size. Where a period crosses into a new year, the month labels carry the year, so that two Januaries are not shown as the same bar.
 
 The pages are Letter landscape. Landscape was chosen because the ride table carries nine columns, and fitting those onto portrait would mean either a font too small to read or dropping the columns that make the table worth printing.
 
@@ -1810,7 +1815,7 @@ evaluated at $\alpha = 0.05$.
 
 **Part 3 — For Drivers.** Registering; accepting the Driver Agreement; submitting licence and tricycle details; what happens while verification is pending; going online and offline; reading a request card; accepting before the countdown expires; advancing a ride through its stages; viewing earnings and history; reporting a concern.
 
-**Part 4 — For Administrators.** Signing in as an administrator; verifying and rejecting driver applications; loading the official fare table for the first time; searching and filtering the fare table; correcting an entry and clearing its review flag; adding and deactivating entries; editing the minimum fares and flat rates; reviewing and resolving concerns; reading the live monitor; selecting a report period; exporting and sharing a report in either format.
+**Part 4 — For Administrators.** Signing in as an administrator; verifying and rejecting driver applications; loading the official fare table for the first time; searching and filtering the fare table; correcting an entry and clearing its review flag; adding and deactivating entries; editing the minimum fares and flat rates; reviewing and resolving concerns; reading the live monitor; selecting a report period, including a range between two dates; exporting and sharing a report in either format.
 
 **Part 5 — Troubleshooting.** The application says it cannot reach the database; a booking will not submit; no drivers appear to be online; a fare looks wrong; a photograph will not upload; how to report a problem.
 

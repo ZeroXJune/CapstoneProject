@@ -114,7 +114,7 @@ object PdfReportWriter {
         PdfChart.columnChart(
             canvas,
             cell(MARGIN, top1, MARGIN + wide, band, yLabels = true),
-            title = if (period is ReportPeriod.Month) "Rides per day" else "Rides per month",
+            title = if (period.bucketsByDay) "Rides per day" else "Rides per month",
             subtitle = "when the demand fell",
             values = perDay.map { it.second },
             labels = perDay.map { it.first },
@@ -592,14 +592,23 @@ object PdfReportWriter {
         )
     }
 
+    /**
+     * Concerns per month, oldest first. Keyed by year and month rather than
+     * month alone: over a year boundary two Januaries would otherwise fall in
+     * the same bucket and label.
+     */
     private fun concernsPerMonth(complaints: List<Complaint>): List<Pair<String, Int>> {
-        val counts = linkedMapOf<Int, Int>()
+        val counts = sortedMapOf<Int, Int>()
         complaints.forEach { c ->
             val ms = c.createdAt.toLongOrNull() ?: return@forEach
-            val month = Calendar.getInstance().apply { timeInMillis = ms }.get(Calendar.MONTH)
-            counts[month] = (counts[month] ?: 0) + 1
+            val cal = Calendar.getInstance().apply { timeInMillis = ms }
+            val key = cal.get(Calendar.YEAR) * 12 + cal.get(Calendar.MONTH)
+            counts[key] = (counts[key] ?: 0) + 1
         }
-        return counts.entries.sortedBy { it.key }
-            .map { ReportPeriod.MONTH_NAMES[it.key].take(3) to it.value }
+        val spansYears = counts.keys.map { it / 12 }.distinct().size > 1
+        return counts.map { (key, n) ->
+            val name = ReportPeriod.MONTH_NAMES[key % 12].take(3)
+            (if (spansYears) "$name ${"%02d".format((key / 12) % 100)}" else name) to n
+        }
     }
 }
