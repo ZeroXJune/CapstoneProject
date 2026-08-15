@@ -1,6 +1,5 @@
 package com.tpc.trikride.ui.screens
 
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -24,28 +23,31 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.tpc.trikride.R
 import com.tpc.trikride.models.UserType
 import com.tpc.trikride.ui.components.PrimaryButton
 import com.tpc.trikride.ui.components.SectionCard
 import com.tpc.trikride.ui.components.TrikTextField
-import com.tpc.trikride.ui.theme.EmeraldGreen
-import com.tpc.trikride.ui.theme.ForestGreen
 import com.tpc.trikride.utils.AuthPrefs
 import com.tpc.trikride.utils.PasswordRules
 import com.tpc.trikride.viewmodels.AuthViewModel
 import com.tpc.trikride.viewmodels.ConsentViewModel
 
 private enum class AppScreen { LOGIN, REGISTER, ACCOUNT_SELECTION }
+
+/** Fills the window with the theme background for the frame before routing. */
+@Composable
+private fun StartupSurface() {
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(MaterialTheme.colorScheme.background)
+    )
+}
 
 private data class RegistrationData(
     val fullName: String,
@@ -78,11 +80,14 @@ fun MainAppScreen(
 
     // Start-up has two waits — restoring the session, then reading what the
     // account has agreed to — but they are one wait as far as anyone looking at
-    // the screen is concerned. Showing a different image for each made the app
-    // appear to load twice.
+    // the screen is concerned.
     val settlingConsent = uid != null && type != null && consent.isChecking
     if (state.isBootstrapping || settlingConsent) {
-        if (state.hasExistingSession) WelcomeBackScreen() else SplashScreen()
+        // Someone signed in gets the welcome artwork while that happens. With no
+        // session there is nothing to wait for — the check is a synchronous read
+        // — so a plain surface passes in a frame instead of holding a branded
+        // screen in front of someone who just wants to get on with it.
+        if (uid != null || state.hasExistingSession) WelcomeBackScreen() else StartupSurface()
         return
     }
 
@@ -175,60 +180,6 @@ fun MainAppScreen(
                 }
             },
             onBack = { authViewModel.clearError(); screen = AppScreen.REGISTER }
-        )
-    }
-}
-
-@Composable
-private fun SplashScreen() {
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(Brush.verticalGradient(listOf(ForestGreen, EmeraldGreen))),
-        contentAlignment = Alignment.Center
-    ) {
-        Column(
-            horizontalAlignment = Alignment.CenterHorizontally,
-            modifier = Modifier.padding(24.dp)
-        ) {
-            Box(
-                modifier = Modifier
-                    .size(150.dp)
-                    .clip(CircleShape)
-                    .background(Color.White),
-                contentAlignment = Alignment.Center
-            ) {
-                Image(
-                    painter = painterResource(id = R.drawable.trikride_logo),
-                    contentDescription = "TrikRide logo",
-                    modifier = Modifier.size(104.dp)
-                )
-            }
-            Spacer(modifier = Modifier.height(24.dp))
-            Text(
-                text = "TrikRide",
-                style = MaterialTheme.typography.displaySmall,
-                fontWeight = FontWeight.Bold,
-                color = Color.White
-            )
-            Spacer(modifier = Modifier.height(8.dp))
-            Text(
-                text = "Smart Tricycle Ride Scheduling and\nDriver Onboarding System",
-                style = MaterialTheme.typography.bodyMedium,
-                color = Color.White.copy(alpha = 0.9f),
-                textAlign = TextAlign.Center
-            )
-            Spacer(modifier = Modifier.height(28.dp))
-            CircularProgressIndicator(color = Color.White, strokeWidth = 3.dp)
-        }
-
-        Text(
-            text = "Talibon Polytechnic College",
-            style = MaterialTheme.typography.labelLarge,
-            color = Color.White.copy(alpha = 0.85f),
-            modifier = Modifier
-                .align(Alignment.BottomCenter)
-                .padding(bottom = 40.dp)
         )
     }
 }

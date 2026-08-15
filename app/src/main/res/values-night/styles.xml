@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- The window background is what Android paints between tapping the icon
+         and Compose drawing its first frame. Without this the light colour from
+         values/styles.xml flashes white on a dark-themed device. -->
+    <style name="Theme.TrikRide" parent="android:Theme.Material.NoActionBar">
+        <item name="android:colorPrimary">@color/primary</item>
+        <item name="android:colorAccent">@color/tertiary</item>
+        <item name="android:windowBackground">@color/background_dark</item>
+    </style>
+</resources>

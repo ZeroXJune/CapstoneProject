@@ -180,8 +180,9 @@ required the tick.
 
 **Session.** Firebase keeps the user signed in across restarts. `AuthViewModel`
 constructs with `hasExistingSession` set synchronously from `repo.currentUserId`, so the
-first frame can already choose between the welcome-back screen and the splash instead of
-flashing the wrong one. `bootstrap()` then loads the role, guarded by a twelve-second
+first frame can already tell whether to show the welcome artwork instead of flashing the
+wrong thing. Signed-out start-up shows no loading screen at all: there is nothing to wait
+for, so it routes straight to onboarding or sign-in. `bootstrap()` then loads the role, guarded by a twelve-second
 timeout: an unreachable database used to leave the app on a spinner forever.
 
 **Reports.** `ReportBuilder` buckets rides by month or year from epoch-millisecond

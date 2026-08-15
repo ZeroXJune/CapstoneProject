@@ -5,7 +5,6 @@ import androidx.lifecycle.viewModelScope
 import com.tpc.trikride.models.UserType
 import com.tpc.trikride.repositories.AuthRepository
 import kotlinx.coroutines.TimeoutCancellationException
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.update
@@ -47,7 +46,8 @@ class AuthViewModel(
         viewModelScope.launch {
             val uid = repo.currentUserId
             if (uid == null) {
-                delay(1200) // brief branded splash for logged-out users
+                // Nothing to restore. Go straight to onboarding or sign-in
+                // rather than hold a loading screen for its own sake.
                 _state.update { it.copy(isBootstrapping = false) }
                 return@launch
             }
