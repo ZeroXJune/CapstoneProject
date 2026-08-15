@@ -132,19 +132,49 @@ price a ride but only an administrator can change.
 While you are still testing, you may want the looser test-mode rules Firebase offers.
 Do not leave them on once real accounts exist.
 
-## Step 5: Maps (nothing to do)
+## Step 5: Maps
 
-Maps are drawn from OpenStreetMap through osmdroid. There is no API key to obtain, no
-billing account to attach, and nothing to configure — it works on a fresh clone.
+The app has two map renderers and picks one at build time.
 
-`MAPS_API_KEY` remains in `.env.example` and in the manifest so that switching to Google
-Maps later is a matter of supplying a key, but leaving it blank is correct and costs you
-nothing. Google's Android SDK does render at no charge, provided no Map ID is used, but
-the key behind it stops working if the billing account is ever suspended.
+**Leave `MAPS_API_KEY` blank** and it draws OpenStreetMap tiles through osmdroid. No key,
+no billing account, nothing to configure — it works on a fresh clone and cannot be taken
+down by an expired trial.
 
-Location comes from the device's own GPS through Google Play Services, which is also free.
-The app asks for the location permission the first time a driver goes online, and never
-requests background location.
+**Set `MAPS_API_KEY`** and it uses Google Maps instead, which has better street data for
+Talibon. To get a key:
+
+1. Open [console.cloud.google.com](https://console.cloud.google.com) and select your
+   existing TrikRide project. Your Firebase project is already a Cloud project — do not
+   create a second one, or the billing you enabled will not apply.
+2. APIs & Services → Library → **Maps SDK for Android** → Enable. Only that one. Directions,
+   Places and Routes are the billed services; leave them off.
+3. APIs & Services → Credentials → Create credentials → API key.
+4. Restrict it before closing the dialog. *Application restrictions* → **Android apps**,
+   then add package `com.tpc.trikride` with a SHA-1. *API restrictions* → **Restrict key**
+   → Maps SDK for Android only. An unrestricted key that leaks can be billed to you.
+5. You need two SHA-1s, one per signing key:
+   ```bash
+   gradlew signingReport                                        # debug
+   keytool -list -v -keystore trikride-release.jks -alias trikride   # release
+   ```
+   Add both. Debug builds break without the first, distributed builds without the second.
+6. Put it in `.env` as `MAPS_API_KEY=AIza...`. The build injects it into the manifest and
+   into `BuildConfig`, and `.env` is gitignored so it never reaches GitHub.
+
+**On cost.** Displaying a map through the Android SDK carries no charge as long as no Map
+ID or cloud-based styling is used, and the app uses neither. Route calculation is what
+costs money, and the app does not compute routes. Set a budget alert anyway under Billing
+→ Budgets & alerts — not because you expect a bill, but because it is how you find out if
+something misbehaves.
+
+**On the trial.** A Google Cloud free trial suspends the project when it ends unless you
+upgrade. A suspended project means a dead key and blank maps. If that happens, clear
+`MAPS_API_KEY` in `.env` and rebuild: the app falls back to OpenStreetMap and keeps
+working. That fallback is the reason both renderers are kept.
+
+Location comes from the device's GPS through Google Play Services, which is free either
+way. The app requests the location permission the first time a driver goes online and
+never asks for background location.
 
 ## Step 6: Build and Run
 

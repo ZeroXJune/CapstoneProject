@@ -34,7 +34,9 @@ fun secret(key: String, default: String = ""): String =
         ?: localProperties.getProperty(key)?.takeIf { it.isNotBlank() }
         ?: default
 
-val mapsApiKey: String = secret("MAPS_API_KEY", "MISSING_MAPS_API_KEY")
+// Blank rather than a sentinel: the app tests this to pick a map renderer, and
+// a placeholder string would read as a real key.
+val mapsApiKey: String = secret("MAPS_API_KEY", "")
 val supportHotline: String = secret("SUPPORT_HOTLINE", "0966-749-7561")
 val supportEmail: String = secret("SUPPORT_EMAIL", "trikride@tpc.edu.ph")
 
@@ -69,6 +71,9 @@ android {
         }
 
         manifestPlaceholders["MAPS_API_KEY"] = mapsApiKey
+        // The app reads this to decide which renderer to use, so a blank key
+        // has to be distinguishable from a real one at runtime.
+        buildConfigField("String", "MAPS_API_KEY", "\"$mapsApiKey\"")
         buildConfigField("String", "SUPPORT_HOTLINE", "\"$supportHotline\"")
         buildConfigField("String", "SUPPORT_EMAIL", "\"$supportEmail\"")
     }
@@ -157,9 +162,11 @@ dependencies {
     implementation("com.google.firebase:firebase-messaging-ktx")
     implementation("com.google.firebase:firebase-analytics-ktx")
 
-    // Maps. OpenStreetMap tiles through osmdroid: no API key, no billing
-    // account, no card. Google's SDK is free to display but will not issue a
-    // key without billing enabled, which this project deliberately avoids.
+    // Two renderers. Google Maps is used when MAPS_API_KEY is set; osmdroid
+    // draws OpenStreetMap tiles when it is not, so the app still shows a map on
+    // a fresh clone, and clearing the key is a working fallback if the billing
+    // account behind it ever lapses.
+    implementation("com.google.android.gms:play-services-maps:18.2.0")
     implementation("org.osmdroid:osmdroid-android:6.1.20")
 
     // Device location. Free; nothing here touches a billed API.

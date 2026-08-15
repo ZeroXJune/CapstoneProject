@@ -42,8 +42,8 @@ rides, drivers, and concerns.
 privacy text, an in-app notification centre with unread counts, skeleton loading,
 pull-to-refresh, and a concern form for passengers and drivers.
 
-**Maps and live tracking.** Real OpenStreetMap maps on the booking and tracking screens
-through osmdroid — no key, no billing, nothing that expires. Drivers publish their
+**Maps and live tracking.** Real maps on the booking and tracking screens, from Google
+Maps when `MAPS_API_KEY` is set and OpenStreetMap through osmdroid when it is not. Drivers publish their
 position while online with the app open, and passengers watch it move. Pickup can be
 pinned anywhere on the map and is reverse-geocoded to a readable label. Destinations stay
 on the fare table, since the ordinance fixes the price per named stop. Fare stops can

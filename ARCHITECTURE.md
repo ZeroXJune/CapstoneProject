@@ -142,12 +142,21 @@ head count. It reads the posted rate, raises it to the ordinance minimum if lowe
 multiplies. The priced fare travels on the `RideRequest`, so the driver sees the same
 number the passenger agreed to rather than recomputing it.
 
-**Maps.** `TrikMap.kt` is the only file that knows what renders a map. It draws
-OpenStreetMap tiles through osmdroid, which needs no API key and no billing account, so
-there is nothing that can lapse and take the maps down. Google's Android SDK renders free
-of charge as well, provided no Map ID is used, but its key depends on a live billing
-account — a poor dependency for something handed to a drivers' association. Swapping
-renderers means changing that one file.
+**Maps.** `TrikMap` and `PickerMap` are renderer-agnostic entry points. They dispatch to
+`GoogleMapView.kt` when `BuildConfig.MAPS_API_KEY` is non-blank and to the osmdroid path in
+`TrikMap.kt` when it is not. Every call site sees the same signatures either way.
+
+Both are kept on purpose. Google has better street data for Talibon, but its key depends on
+a live billing account, and a free trial that lapses takes the maps with it. Clearing
+`MAPS_API_KEY` falls back to OpenStreetMap, which needs no account and cannot expire — a
+one-line recovery rather than a broken app in the hands of a drivers' association.
+
+Neither path uses a Map ID or cloud-based styling: a Map ID makes every map load a billed
+Dynamic Maps call, while client-styled maps render at no charge.
+
+Google's `MapView` is an old-style view that needs onCreate, onResume, onPause and onDestroy
+forwarded by hand; `rememberMapViewWithLifecycle` does that from the composition's lifecycle,
+and skipping it leaks the map renderer.
 
 Two things in `configureOsmdroid` are not optional. The tile cache goes in app-private
 storage, or osmdroid asks for a storage permission it does not need. And the user agent is

@@ -116,8 +116,10 @@ docs/
 
 ## Maps and live tracking
 
-Booking and ride tracking both show a real map, drawn from OpenStreetMap through osmdroid.
-No API key, no billing account, nothing that can expire.
+Booking and ride tracking both show a real map. Set `MAPS_API_KEY` in `.env` and it uses
+Google Maps; leave it blank and it draws OpenStreetMap through osmdroid, which needs no key
+and no billing account. Both are kept because a Google key dies with its billing account,
+and clearing one line to fall back beats a blank screen.
 
 A driver publishes their position while they are online and the app is open — no
 background service and no background-location permission, so nothing is tracked when they

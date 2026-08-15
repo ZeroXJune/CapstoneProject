@@ -157,7 +157,8 @@ fun TrikMap(
 /**
  * A centre-pinned map for choosing a point. The map moves under a fixed pin,
  * which is easier on a small screen than dragging a marker, and [onMoved]
- * reports wherever the pin ends up.
+ * reports wherever the pin ends up. The pin itself is drawn over whichever
+ * renderer is active, so both look the same.
  */
 @Composable
 fun PickerMap(
@@ -167,83 +168,106 @@ fun PickerMap(
     pinColor: Color,
     onMoved: (Location) -> Unit
 ) {
-    val context = LocalContext.current
-    remember { configureOsmdroid(context); true }
-    val argb = pinColor.toArgb()
-    // The overlay below is built once in factory{}, so it would otherwise hold
-    // the first onMoved forever.
-    val currentOnMoved by rememberUpdatedState(onMoved)
-
+    val argbPin = pinColor.toArgb()
     Box(
         modifier = modifier
             .fillMaxWidth()
             .height(height)
             .clip(RoundedCornerShape(18.dp))
     ) {
-        AndroidView(
-            modifier = Modifier.fillMaxWidth().height(height),
-            factory = { ctx ->
-                MapView(ctx).apply {
-                    setTileSource(TileSourceFactory.MAPNIK)
-                    setMultiTouchControls(true)
-                    zoomController.setVisibility(
-                        org.osmdroid.views.CustomZoomButtonsController.Visibility.NEVER
-                    )
-                    controller.setZoom(17.0)
-                    controller.setCenter(centre.toGeoPoint())
-
-                    // Report the centre once the user stops moving the map.
-                    overlays.add(object : Overlay() {
-                        override fun onTouchEvent(
-                            event: android.view.MotionEvent?,
-                            view: MapView?
-                        ): Boolean {
-                            if (event?.action == android.view.MotionEvent.ACTION_UP && view != null) {
-                                val c = view.mapCenter
-                                currentOnMoved(
-                                    Location(
-                                        latitude = c.latitude,
-                                        longitude = c.longitude,
-                                        timestamp = System.currentTimeMillis().toString()
-                                    )
-                                )
-                            }
-                            return false
-                        }
-                    })
-                }
-            },
-            update = { map ->
-                // Only recentre when the incoming point is somewhere else, so
-                // that reporting the centre back does not fight the user's pan.
-                val c = map.mapCenter
-                val moved = kotlin.math.abs(c.latitude - centre.latitude) > 1e-5 ||
-                    kotlin.math.abs(c.longitude - centre.longitude) > 1e-5
-                if (moved) map.controller.animateTo(centre.toGeoPoint())
-            },
-            onRelease = { it.onDetach() }
-        )
-
-        // The fixed pin sits at the centre of the viewport.
-        androidx.compose.foundation.Canvas(
-            modifier = Modifier.fillMaxWidth().height(height)
-        ) {
-            val cx = size.width / 2f
-            val cy = size.height / 2f
-            drawCircle(Color.Black.copy(alpha = 0.18f), radius = 7f, center =
-                androidx.compose.ui.geometry.Offset(cx, cy + 16f))
-            drawLine(
-                color = Color(argb),
-                start = androidx.compose.ui.geometry.Offset(cx, cy + 14f),
-                end = androidx.compose.ui.geometry.Offset(cx, cy - 12f),
-                strokeWidth = 5f
+        if (hasGoogleMapsKey) {
+            GooglePickerMap(
+                centre = centre,
+                modifier = Modifier,
+                height = height,
+                onMoved = onMoved
             )
-            drawCircle(Color.White, radius = 15f,
-                center = androidx.compose.ui.geometry.Offset(cx, cy - 20f))
-            drawCircle(Color(argb), radius = 11f,
-                center = androidx.compose.ui.geometry.Offset(cx, cy - 20f))
+        } else {
+            OsmPickerMap(centre, Modifier, height, onMoved)
         }
+        CentrePin(height = height, argb = argbPin)
     }
+}
+
+/** The fixed pin drawn at the centre of the viewport, over either renderer. */
+@Composable
+private fun CentrePin(height: Dp, argb: Int) {
+    androidx.compose.foundation.Canvas(
+        modifier = Modifier.fillMaxWidth().height(height)
+    ) {
+        val cx = size.width / 2f
+        val cy = size.height / 2f
+        drawCircle(Color.Black.copy(alpha = 0.18f), radius = 7f,
+            center = androidx.compose.ui.geometry.Offset(cx, cy + 16f))
+        drawLine(
+            color = Color(argb),
+            start = androidx.compose.ui.geometry.Offset(cx, cy + 14f),
+            end = androidx.compose.ui.geometry.Offset(cx, cy - 12f),
+            strokeWidth = 5f
+        )
+        drawCircle(Color.White, radius = 15f,
+            center = androidx.compose.ui.geometry.Offset(cx, cy - 20f))
+        drawCircle(Color(argb), radius = 11f,
+            center = androidx.compose.ui.geometry.Offset(cx, cy - 20f))
+    }
+}
+
+@Composable
+private fun OsmPickerMap(
+    centre: Location,
+    modifier: Modifier,
+    height: Dp,
+    onMoved: (Location) -> Unit
+) {
+    val context = LocalContext.current
+    remember { configureOsmdroid(context); true }
+    // The overlay below is built once in factory{}, so it would otherwise hold
+    // the first onMoved forever.
+    val currentOnMoved by rememberUpdatedState(onMoved)
+
+    AndroidView(
+        modifier = modifier.fillMaxWidth().height(height),
+        factory = { ctx ->
+            MapView(ctx).apply {
+                setTileSource(TileSourceFactory.MAPNIK)
+                setMultiTouchControls(true)
+                zoomController.setVisibility(
+                    org.osmdroid.views.CustomZoomButtonsController.Visibility.NEVER
+                )
+                controller.setZoom(17.0)
+                controller.setCenter(centre.toGeoPoint())
+
+                // Report the centre once the user stops moving the map.
+                overlays.add(object : Overlay() {
+                    override fun onTouchEvent(
+                        event: android.view.MotionEvent?,
+                        view: MapView?
+                    ): Boolean {
+                        if (event?.action == android.view.MotionEvent.ACTION_UP && view != null) {
+                            val c = view.mapCenter
+                            currentOnMoved(
+                                Location(
+                                    latitude = c.latitude,
+                                    longitude = c.longitude,
+                                    timestamp = System.currentTimeMillis().toString()
+                                )
+                            )
+                        }
+                        return false
+                    }
+                })
+            }
+        },
+        update = { map ->
+            // Only recentre when the incoming point is somewhere else, so that
+            // reporting the centre back does not fight the user's pan.
+            val c = map.mapCenter
+            val moved = kotlin.math.abs(c.latitude - centre.latitude) > 1e-5 ||
+                kotlin.math.abs(c.longitude - centre.longitude) > 1e-5
+            if (moved) map.controller.animateTo(centre.toGeoPoint())
+        },
+        onRelease = { it.onDetach() }
+    )
 }
 
 @Composable

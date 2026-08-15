@@ -675,6 +675,7 @@ The minimum SDK of API level 24 was chosen deliberately. Android 7.0 was release
 |:---|:---|
 | Operating system | Android 7.0 (API level 24) or later |
 | Connectivity | Mobile data or Wi-Fi; the application does not operate offline |
+| Optional | A Google Maps API key. Without one the system renders OpenStreetMap instead; no function is lost |
 | Storage | Approximately 30 MB for installation |
 | Permissions | Internet; camera, for capturing a profile photograph; notification posting on Android 13 and later. Choosing an existing photograph requires no permission, and neither does saving an exported report. |
 | Account | A valid email address for registration |
@@ -689,7 +690,8 @@ The minimum SDK of API level 24 was chosen deliberately. Android 7.0 was release
 | Firebase Authentication | via Firebase BOM | Email and password sign-in and session management |
 | Firebase Realtime Database | via Firebase BOM | Live data storage and synchronization |
 | Firebase Cloud Messaging | via Firebase BOM | Notification delivery |
-| osmdroid | 6.1.20 | OpenStreetMap map rendering |
+| Google Play Services Maps | 18.2.0 | Google Maps rendering, used when a key is configured |
+| osmdroid | 6.1.20 | OpenStreetMap rendering, used when no key is configured |
 | Google Play Services Location | 21.3.0 | Device position from the fused location provider |
 | Kotlin Coroutines | bundled with Kotlin 2.1.0 | Asynchronous work and reactive data streams |
 | AndroidX Lifecycle ViewModel Compose | current stable | ViewModel integration with Compose |
@@ -1269,7 +1271,7 @@ Training is organized by role and kept short, on the reasoning that a system req
 | Profile | Profile editing, photograph capture and selection, theme preference, terms and privacy notice, sign-out | FR-06 |
 | Passenger booking | Pickup selection, searchable destination picker across 240 stops plus two flat rates, rate column selection, passenger count and luggage, itemized fare display, request submission and cancellation | FR-09 to FR-14 |
 | Matching | Broadcast of requests to available verified drivers, five-minute expiry, first-acceptance matching with withdrawal from other devices | FR-15 to FR-17 |
-| Mapping and location | Interactive OpenStreetMap views on the booking and tracking screens; live publication of a driver's position while online; the passenger's view of that position; pinning a pickup point on the map with a reverse-geocoded label; optional coordinates on fare stops | FR-09, FR-18 |
+| Mapping and location | Interactive maps on the booking and tracking screens, rendered by Google Maps or OpenStreetMap according to configuration; live publication of a driver's position while online; the passenger's view of that position; pinning a pickup point on the map with a reverse-geocoded label; optional coordinates on fare stops | FR-09, FR-18 |
 | Ride lifecycle | Shared status timeline through arriving, arrived, in progress, and completed; completion summary and rating; ride history for both parties | FR-18 to FR-20, FR-25 |
 | Driver onboarding | Credential submission, administrative verification with approval and rejection, gating of unverified drivers, notification of the decision | FR-21, FR-22, FR-27, FR-28 |
 | Driver operations | Availability toggle, request list with countdown, earnings total | FR-23, FR-24, FR-26 |
