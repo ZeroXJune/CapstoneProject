@@ -30,7 +30,9 @@ to approve them. Until then they cannot accept anyone. Once approved they go onl
 see requests with a countdown, accept, and move the ride through its stages.
 
 **Administrators** verify drivers, keep the fare table correct, answer concerns, watch
-activity live, and export a month or a year of it as a spreadsheet.
+activity live, and export a month or a year of it. Each report comes out as a printable
+PDF — headline figures and charts on the first page, every record behind it — or as a
+spreadsheet for anyone who wants to sort and total it themselves.
 
 ## Agreements
 
@@ -107,7 +109,7 @@ app/src/main/java/com/tpc/trikride/
   ui/screens/     Compose screens for passenger, driver, and admin
   ui/components/  shared components
   ui/theme/       colours, typography, light and dark themes
-  utils/          FareEngine, FareSeed, ReportBuilder, ReportExporter, PasswordRules
+  utils/          FareEngine, FareSeed, ReportBuilder, PdfReportWriter, PasswordRules
 docs/
   capstone_manuscript.md              the written documentation, in Markdown
   TrikRide_Capstone_Documentation.docx  the same, built for submission

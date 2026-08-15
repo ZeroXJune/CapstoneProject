@@ -36,7 +36,8 @@ anyone, and the decision arrives as a notification.
 field. A live monitor of drivers, verification states, and rides. The fare table with
 search, zone filters, a review queue, per-entry editing, activation, addition, deletion,
 and a dialog for the minimums and flat rates. Monthly, yearly, and all-time exports for
-rides, drivers, and concerns.
+rides, drivers, and concerns — as a printable PDF whose first page carries the headline
+figures and four charts, or as a spreadsheet.
 
 **Everywhere.** Profile editing with a photo from camera or gallery, dark mode, terms and
 privacy text, an in-app notification centre with unread counts, skeleton loading,

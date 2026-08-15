@@ -342,6 +342,204 @@ object ReportBuilder {
         return sb.toString()
     }
 
-    fun fileName(kind: String, period: ReportPeriod): String =
-        "trikride-$kind-${period.slug}.csv".lowercase(Locale.US)
+    // --- Aggregations for the charts in the PDF reports ---------------------
+
+    /** Rides per calendar day across the period, oldest first. */
+    fun ridesPerDay(rides: List<Ride>, period: ReportPeriod): List<Pair<String, Int>> {
+        val inPeriod = ridesIn(rides, period)
+        if (inPeriod.isEmpty()) return emptyList()
+
+        val counts = sortedMapOf<String, Int>()
+        val labels = mutableMapOf<String, String>()
+        inPeriod.forEach { ride ->
+            val ms = millis(ride.requestedAt) ?: return@forEach
+            val cal = Calendar.getInstance().apply { timeInMillis = ms }
+            val key = "%04d-%02d-%02d".format(
+                cal.get(Calendar.YEAR), cal.get(Calendar.MONTH) + 1, cal.get(Calendar.DAY_OF_MONTH)
+            )
+            counts[key] = (counts[key] ?: 0) + 1
+            // A month of days is labelled by day number; anything wider by month.
+            labels[key] = if (period is ReportPeriod.Month) {
+                cal.get(Calendar.DAY_OF_MONTH).toString()
+            } else {
+                ReportPeriod.MONTH_NAMES[cal.get(Calendar.MONTH)].take(3)
+            }
+        }
+
+        // Across a year or all time, collapse to one bar per month.
+        if (period !is ReportPeriod.Month) {
+            val byMonth = linkedMapOf<String, Int>()
+            counts.forEach { (key, n) ->
+                val month = key.substring(0, 7)
+                byMonth[month] = (byMonth[month] ?: 0) + n
+            }
+            return byMonth.map { (month, n) ->
+                val index = month.substring(5).toInt() - 1
+                ReportPeriod.MONTH_NAMES[index].take(3) to n
+            }
+        }
+        return counts.map { (key, n) -> (labels[key] ?: "") to n }
+    }
+
+    /** Rides started in each hour of the day, 0 through 23. */
+    fun ridesByHour(rides: List<Ride>, period: ReportPeriod): List<Int> {
+        val hours = IntArray(24)
+        ridesIn(rides, period).forEach { ride ->
+            millis(ride.requestedAt)?.let { ms ->
+                val cal = Calendar.getInstance().apply { timeInMillis = ms }
+                hours[cal.get(Calendar.HOUR_OF_DAY)]++
+            }
+        }
+        return hours.toList()
+    }
+
+    /** Rides per weekday, Monday through Sunday. */
+    fun ridesByWeekday(rides: List<Ride>, period: ReportPeriod): List<Pair<String, Int>> {
+        val order = listOf(
+            Calendar.MONDAY to "Mon", Calendar.TUESDAY to "Tue", Calendar.WEDNESDAY to "Wed",
+            Calendar.THURSDAY to "Thu", Calendar.FRIDAY to "Fri", Calendar.SATURDAY to "Sat",
+            Calendar.SUNDAY to "Sun"
+        )
+        val counts = mutableMapOf<Int, Int>()
+        ridesIn(rides, period).forEach { ride ->
+            millis(ride.requestedAt)?.let { ms ->
+                val day = Calendar.getInstance().apply { timeInMillis = ms }.get(Calendar.DAY_OF_WEEK)
+                counts[day] = (counts[day] ?: 0) + 1
+            }
+        }
+        return order.map { (day, label) -> label to (counts[day] ?: 0) }
+    }
+
+    /** The destinations booked most often, busiest first. */
+    fun topDestinations(rides: List<Ride>, period: ReportPeriod, limit: Int = 8): List<Pair<String, Int>> =
+        ridesIn(rides, period)
+            .map { it.dropoffLocation.address }
+            .filter { it.isNotBlank() }
+            .groupingBy { it }
+            .eachCount()
+            .entries
+            .sortedByDescending { it.value }
+            .take(limit)
+            .map { it.key to it.value }
+
+    /** Rides accepted per driver, busiest first. */
+    fun ridesPerDriver(
+        rides: List<Ride>,
+        usersById: Map<String, User>,
+        period: ReportPeriod,
+        limit: Int = 10
+    ): List<Pair<String, Int>> =
+        ridesIn(rides, period)
+            .filter { it.driverId.isNotBlank() }
+            .groupingBy { it.driverId }
+            .eachCount()
+            .entries
+            .sortedByDescending { it.value }
+            .take(limit)
+            .map { name(usersById[it.key]) to it.value }
+
+    /** Gross fares earned per driver, in whole pesos, highest first. */
+    fun grossPerDriver(
+        rides: List<Ride>,
+        usersById: Map<String, User>,
+        period: ReportPeriod,
+        limit: Int = 8
+    ): List<Pair<String, Int>> =
+        ridesIn(rides, period)
+            .filter { it.driverId.isNotBlank() && it.status == RideStatus.COMPLETED }
+            .groupBy { it.driverId }
+            .mapValues { (_, list) ->
+                list.sumOf { if (it.actualFare > 0) it.actualFare else it.estimatedFare }.toInt()
+            }
+            .entries
+            .sortedByDescending { it.value }
+            .take(limit)
+            .map { name(usersById[it.key]) to it.value }
+
+    /**
+     * Share of each driver's accepted rides that they finished, as a percentage.
+     *
+     * Drivers below a handful of rides are left out: one cancellation out of two
+     * rides reads as 50% and says nothing about the driver.
+     */
+    fun completionRatePerDriver(
+        rides: List<Ride>,
+        usersById: Map<String, User>,
+        period: ReportPeriod,
+        minimumRides: Int = 3,
+        limit: Int = 8
+    ): List<Pair<String, Int>> =
+        ridesIn(rides, period)
+            .filter { it.driverId.isNotBlank() }
+            .groupBy { it.driverId }
+            .filterValues { it.size >= minimumRides }
+            .mapValues { (_, list) ->
+                (list.count { it.status == RideStatus.COMPLETED } * 100.0 / list.size).toInt()
+            }
+            .entries
+            .sortedByDescending { it.value }
+            .take(limit)
+            .map { name(usersById[it.key]) to it.value }
+
+    /**
+     * The registered fleet by verification state. A snapshot rather than a
+     * period figure — a driver's approval is where it stands today, not
+     * something that happened inside the reporting month.
+     */
+    fun driversByVerification(drivers: List<Driver>): List<Pair<String, Int>> {
+        val counts = linkedMapOf("Approved" to 0, "Pending" to 0, "Rejected" to 0, "Expired" to 0)
+        drivers.forEach { driver ->
+            val key = driver.verificationStatus.name.lowercase().replaceFirstChar { it.uppercase() }
+            counts[key] = (counts[key] ?: 0) + 1
+        }
+        return counts.toList()
+    }
+
+    /** Concerns filed per category, most common first. */
+    fun concernsByCategory(complaints: List<Complaint>, period: ReportPeriod): List<Pair<String, Int>> =
+        complaintsIn(complaints, period)
+            .groupingBy { it.category }
+            .eachCount()
+            .entries
+            .sortedByDescending { it.value }
+            .map { it.key to it.value }
+
+    /** Concerns filed by the role of whoever raised them. */
+    fun concernsByReporter(complaints: List<Complaint>, period: ReportPeriod): List<Pair<String, Int>> {
+        val counts = linkedMapOf("Passenger" to 0, "Driver" to 0)
+        complaintsIn(complaints, period).forEach { c ->
+            val key = c.reporterType.name.lowercase().replaceFirstChar { it.uppercase() }
+            counts[key] = (counts[key] ?: 0) + 1
+        }
+        return counts.toList()
+    }
+
+    /**
+     * How long resolved concerns took, bucketed. Concerns still open are left
+     * out rather than dropped into a final bucket: they have no duration yet,
+     * and their count is already on the summary tiles.
+     */
+    fun resolutionTimeBuckets(complaints: List<Complaint>, period: ReportPeriod): List<Pair<String, Int>> {
+        val buckets = linkedMapOf(
+            "Same day" to 0, "1 day" to 0, "2-3 days" to 0, "4-7 days" to 0, "Over a week" to 0
+        )
+        complaintsIn(complaints, period).forEach { c ->
+            if (c.status != ComplaintStatus.RESOLVED) return@forEach
+            val filed = millis(c.createdAt) ?: return@forEach
+            val closed = millis(c.resolvedAt) ?: return@forEach
+            val days = ((closed - filed) / 86_400_000L).toInt()
+            val key = when {
+                days < 1 -> "Same day"
+                days < 2 -> "1 day"
+                days <= 3 -> "2-3 days"
+                days <= 7 -> "4-7 days"
+                else -> "Over a week"
+            }
+            buckets[key] = (buckets[key] ?: 0) + 1
+        }
+        return buckets.map { it.key to it.value }
+    }
+
+    fun fileName(kind: String, period: ReportPeriod, extension: String = "csv"): String =
+        "trikride-$kind-${period.slug}.$extension".lowercase(Locale.US)
 }

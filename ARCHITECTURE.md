@@ -65,7 +65,7 @@ ui/screens/
   PassengerHomeScreen  home, history, support, profile
   DriverHomeScreen     dashboard, requests, history, profile
   AdminDashboardScreen verify, concerns, monitor, fares, profile
-  AdminReportsScreen   period selection, summary, CSV export
+  AdminReportsScreen   period selection, summary, PDF and spreadsheet export
   NotificationsScreen  notification centre
   SettingsScreen       shared profile screen for all three roles
   ConsentScreen        the gate between sign-in and the dashboard
@@ -80,7 +80,9 @@ ui/components/
 utils/
   FareEngine.kt     prices a ride from the table
   FareSeed.kt       the 240 transcribed FeTODAT stops
-  ReportBuilder.kt  CSV generation and period bucketing
+  ReportBuilder.kt  period bucketing, CSV generation, chart aggregations
+  PdfChart.kt       stat tiles, column charts and bar charts on a Canvas
+  PdfReportWriter.kt the three printable reports
   ReportExporter.kt writes through the file picker, or shares
   PasswordRules.kt  password policy, evaluated live as the user types
   ProfilePhoto.kt   shrinks and base64-encodes an avatar for the database
@@ -190,6 +192,25 @@ strings. A timestamp that will not parse is excluded from every period rather th
 silently landing in the current one. `ReportExporter` writes through
 `ActivityResultContracts.CreateDocument`, so no storage permission is needed, or shares
 through a `FileProvider` URI.
+
+Each report exports two ways. The spreadsheet is `ReportBuilder`'s CSV. The PDF is drawn
+by `PdfReportWriter` on Android's own `PdfDocument`, which means no library and no cost:
+Letter landscape, a summary page of stat tiles and four charts, then the detail table
+paginated behind it with its header repeated. Landscape because the ride table has nine
+columns and portrait would mean either an unreadable font or dropping columns.
+
+`PdfChart` draws the marks. Every chart is a single series in one hue — a bar chart of
+unordered categories has nothing for a second colour to mean, and colouring each bar by
+its own size only re-encodes the length already there. That also sidesteps the
+colour-blindness problem of several hues side by side. Bars carry their value as a direct
+label, since paper has no tooltip. Bar thickness scales with the slot: four categories
+across half a landscape page would otherwise draw as stray ticks, while a month of days
+still lands on the base width.
+
+Rendering runs on `Dispatchers.IO` with the buttons disabled behind a flag. A busy month
+takes long enough to draw that doing it on the main thread would freeze the screen. Only
+the share chooser goes back to the main thread, because starting an activity requires
+it.
 
 ## Security
 

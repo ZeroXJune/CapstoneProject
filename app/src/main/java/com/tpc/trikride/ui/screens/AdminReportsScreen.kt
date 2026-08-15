@@ -17,7 +17,9 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Description
 import androidx.compose.material.icons.filled.Download
+import androidx.compose.material.icons.filled.PictureAsPdf
 import androidx.compose.material.icons.filled.Share
+import androidx.compose.material3.Button
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuBox
@@ -32,6 +34,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -45,8 +48,12 @@ import com.tpc.trikride.models.User
 import com.tpc.trikride.ui.components.SectionCard
 import com.tpc.trikride.ui.components.SimplePlaceholder
 import com.tpc.trikride.utils.ReportBuilder
+import com.tpc.trikride.utils.PdfReportWriter
 import com.tpc.trikride.utils.ReportExporter
 import com.tpc.trikride.utils.ReportPeriod
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 /** Which of the three reports the admin is exporting. */
 private enum class ReportKind(val slug: String, val title: String, val blurb: String) {
@@ -70,22 +77,44 @@ fun AdminReportsContent(
     usersById: Map<String, User>
 ) {
     val context = LocalContext.current
+    val scope = rememberCoroutineScope()
     val periods = remember(rides) { ReportBuilder.availablePeriods(rides) }
     var period by remember(periods) { mutableStateOf(periods.first()) }
     var status by remember { mutableStateOf<String?>(null) }
+    // A year of rides is a long table to draw, so the export runs off the main
+    // thread and the buttons stay disabled until it finishes.
+    var busy by remember { mutableStateOf(false) }
 
-    // Held between choosing "Save" and the file picker coming back.
+    // Held between choosing a format and the file picker coming back.
     var pendingCsv by remember { mutableStateOf("") }
+    var pendingPdf by remember { mutableStateOf<((java.io.OutputStream) -> Unit)?>(null) }
 
-    val saveLauncher = rememberLauncherForActivityResult(
+    val saveCsvLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.CreateDocument("text/csv")
     ) { uri ->
         status = when {
             uri == null -> null
-            ReportExporter.writeTo(context, uri, pendingCsv) -> "Report saved."
+            ReportExporter.writeTo(context, uri, pendingCsv) -> "Spreadsheet saved."
             else -> "Could not write the file. Try Share instead."
         }
         pendingCsv = ""
+    }
+
+    val savePdfLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.CreateDocument("application/pdf")
+    ) { uri ->
+        val render = pendingPdf
+        pendingPdf = null
+        if (uri == null || render == null) return@rememberLauncherForActivityResult
+        busy = true
+        status = "Building the PDF…"
+        scope.launch {
+            val written = withContext(Dispatchers.IO) {
+                ReportExporter.writeTo(context, uri, render)
+            }
+            status = if (written) "PDF saved." else "Could not write the file. Try Share instead."
+            busy = false
+        }
     }
 
     val summary = remember(rides, complaints, period) {
@@ -96,6 +125,17 @@ fun AdminReportsContent(
         ReportKind.RIDES -> ReportBuilder.ridesCsv(rides, complaints, usersById, period)
         ReportKind.DRIVERS -> ReportBuilder.driversCsv(rides, drivers, usersById, period)
         ReportKind.CONCERNS -> ReportBuilder.complaintsCsv(complaints, period)
+    }
+
+    fun pdfFor(kind: ReportKind): (java.io.OutputStream) -> Unit = { out ->
+        when (kind) {
+            ReportKind.RIDES ->
+                PdfReportWriter.writeRideReport(out, rides, complaints, usersById, period)
+            ReportKind.DRIVERS ->
+                PdfReportWriter.writeDriverReport(out, rides, drivers, usersById, period)
+            ReportKind.CONCERNS ->
+                PdfReportWriter.writeConcernReport(out, complaints, period)
+        }
     }
 
     LazyColumn(
@@ -111,7 +151,8 @@ fun AdminReportsContent(
                     fontWeight = FontWeight.Bold
                 )
                 Text(
-                    "Export a month or a year of activity as a spreadsheet.",
+                    "Export a month or a year of activity as a printable PDF or a " +
+                        "spreadsheet.",
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -189,14 +230,80 @@ fun AdminReportsContent(
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Text(
+                        "The PDF is the one to print or hand over: headline figures and " +
+                            "charts first, then every record behind them. The spreadsheet " +
+                            "is the same data for sorting and totalling in Excel.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
                     Spacer(modifier = Modifier.height(12.dp))
+                    // Both formats, both ways out. Saving as PDF is the filled
+                    // button because printing or handing over a copy is what
+                    // this screen is usually opened for.
+                    Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                        Button(
+                            onClick = {
+                                pendingPdf = pdfFor(kind)
+                                status = null
+                                savePdfLauncher.launch(
+                                    ReportBuilder.fileName(kind.slug, period, "pdf")
+                                )
+                            },
+                            enabled = !busy,
+                            shape = RoundedCornerShape(14.dp),
+                            modifier = Modifier.weight(1f)
+                        ) {
+                            Icon(
+                                Icons.Filled.PictureAsPdf,
+                                contentDescription = null,
+                                modifier = Modifier.size(18.dp)
+                            )
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text("Save PDF")
+                        }
+                        OutlinedButton(
+                            onClick = {
+                                val render = pdfFor(kind)
+                                val name = ReportBuilder.fileName(kind.slug, period, "pdf")
+                                val subject = "TrikRide ${kind.title} — ${period.label}"
+                                busy = true
+                                status = "Building the PDF…"
+                                scope.launch {
+                                    val file = withContext(Dispatchers.IO) {
+                                        ReportExporter.renderToCache(context, name, render)
+                                    }
+                                    // The chooser has to be started from the main
+                                    // thread, so only the drawing goes to IO.
+                                    val sent = file != null &&
+                                        ReportExporter.share(context, file, "application/pdf", subject)
+                                    status = if (sent) null else "Could not prepare the file to send."
+                                    busy = false
+                                }
+                            },
+                            enabled = !busy,
+                            shape = RoundedCornerShape(14.dp),
+                            modifier = Modifier.weight(1f)
+                        ) {
+                            Icon(
+                                Icons.Filled.Share,
+                                contentDescription = null,
+                                modifier = Modifier.size(18.dp)
+                            )
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text("Send PDF")
+                        }
+                    }
+                    Spacer(modifier = Modifier.height(8.dp))
                     Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                         OutlinedButton(
                             onClick = {
                                 pendingCsv = csvFor(kind)
                                 status = null
-                                saveLauncher.launch(ReportBuilder.fileName(kind.slug, period))
+                                saveCsvLauncher.launch(ReportBuilder.fileName(kind.slug, period))
                             },
+                            enabled = !busy,
                             shape = RoundedCornerShape(14.dp),
                             modifier = Modifier.weight(1f)
                         ) {
@@ -206,7 +313,7 @@ fun AdminReportsContent(
                                 modifier = Modifier.size(18.dp)
                             )
                             Spacer(modifier = Modifier.width(6.dp))
-                            Text("Save")
+                            Text("Save sheet")
                         }
                         OutlinedButton(
                             onClick = {
@@ -218,16 +325,17 @@ fun AdminReportsContent(
                                 )
                                 status = if (sent) null else "No app available to send the file."
                             },
+                            enabled = !busy,
                             shape = RoundedCornerShape(14.dp),
                             modifier = Modifier.weight(1f)
                         ) {
                             Icon(
-                                Icons.Filled.Share,
+                                Icons.Filled.Description,
                                 contentDescription = null,
                                 modifier = Modifier.size(18.dp)
                             )
                             Spacer(modifier = Modifier.width(6.dp))
-                            Text("Share")
+                            Text("Send sheet")
                         }
                     }
                 }
