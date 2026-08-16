@@ -68,6 +68,32 @@ class AdminViewModel(
         }
     }
 
+    /**
+     * Licence photographs the administrator has opened, keyed by driver.
+     *
+     * Fetched one at a time when a card is expanded rather than loaded with the
+     * driver list. There is no reason to pull a dozen identity documents across
+     * the network so that one of them can be looked at, and every one not
+     * fetched is one not sitting in memory.
+     */
+    private val _licenceImages = MutableStateFlow<Map<String, String?>>(emptyMap())
+    val licenceImages: StateFlow<Map<String, String?>> = _licenceImages
+
+    fun openLicenceImage(driverId: String) {
+        if (_licenceImages.value.containsKey(driverId)) return
+        viewModelScope.launch {
+            // The key going in ahead of the value is what stops a second tap
+            // from starting a second fetch.
+            _licenceImages.value = _licenceImages.value + (driverId to null)
+            val image = runCatching { repo.licenceImage(driverId)?.image }.getOrNull()
+            _licenceImages.value = _licenceImages.value + (driverId to image)
+        }
+    }
+
+    fun closeLicenceImage(driverId: String) {
+        _licenceImages.value = _licenceImages.value - driverId
+    }
+
     fun approveDriver(driverId: String) {
         viewModelScope.launch {
             try {
@@ -82,8 +108,22 @@ class AdminViewModel(
         viewModelScope.launch {
             try {
                 repo.rejectDriver(driverId)
+                // The image is gone from the database; drop the copy held here
+                // too rather than leaving a deleted document on screen.
+                closeLicenceImage(driverId)
             } catch (e: Exception) {
                 _error.value = e.message ?: "Failed to reject driver"
+            }
+        }
+    }
+
+    /** Withdraws approval without destroying the licence photograph. */
+    fun revokeApproval(driverId: String) {
+        viewModelScope.launch {
+            try {
+                repo.revokeApproval(driverId)
+            } catch (e: Exception) {
+                _error.value = e.message ?: "Failed to revoke approval"
             }
         }
     }

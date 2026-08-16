@@ -85,12 +85,81 @@ class DriverViewModel(
         }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), 0.0)
 
+    /** True while a licence photograph is being compressed and written. */
+    private val _uploadingLicence = MutableStateFlow(false)
+    val uploadingLicence: StateFlow<Boolean> = _uploadingLicence
+
+    /** Confirmation shown after the licence photograph is sent or withdrawn. */
+    private val _licenceMessage = MutableStateFlow<String?>(null)
+    val licenceMessage: StateFlow<String?> = _licenceMessage
+
+    /**
+     * The driver's own licence photograph, once something asks for it.
+     *
+     * Fetched on demand rather than streamed. It is a couple of hundred
+     * kilobytes and it changes about once, so holding a listener open on it for
+     * the life of the session would be paying a subscription for a constant.
+     */
+    private val _licenceImage = MutableStateFlow<String?>(null)
+    val licenceImage: StateFlow<String?> = _licenceImage
+
+    fun loadLicenceImage() {
+        val id = driverId.value ?: return
+        if (_licenceImage.value != null) return
+        viewModelScope.launch {
+            _licenceImage.value = runCatching { driverRepository.licenceImage(id)?.image }
+                .getOrNull()
+        }
+    }
+
     fun bind(userId: String) {
         driverId.value = userId
         viewModelScope.launch {
             kotlinx.coroutines.delay(600)
             _loadingHistory.value = false
         }
+    }
+
+    /**
+     * Sends the licence photograph.
+     *
+     * [consentedAt] is stamped by the screen when the driver ticks the consent,
+     * not here, so what is recorded is when they agreed rather than when the
+     * write happened to complete.
+     */
+    fun submitLicenceImage(context: android.content.Context, imageUri: android.net.Uri, consentedAt: String) {
+        val id = driverId.value ?: return
+        viewModelScope.launch {
+            _uploadingLicence.value = true
+            _licenceMessage.value = null
+            try {
+                driverRepository.saveLicenceImage(context, id, imageUri, consentedAt)
+                _licenceImage.value = null
+                loadLicenceImage()
+                _licenceMessage.value = "Licence photo sent for review."
+            } catch (e: Exception) {
+                _errorMessage.value = e.message ?: "Could not send that photo."
+            } finally {
+                _uploadingLicence.value = false
+            }
+        }
+    }
+
+    fun removeLicenceImage() {
+        val id = driverId.value ?: return
+        viewModelScope.launch {
+            try {
+                driverRepository.deleteLicenceImage(id)
+                _licenceImage.value = null
+                _licenceMessage.value = "Licence photo removed."
+            } catch (e: Exception) {
+                _errorMessage.value = e.message ?: "Could not remove that photo."
+            }
+        }
+    }
+
+    fun clearLicenceMessage() {
+        _licenceMessage.value = null
     }
 
     /** Streams are live already; this clears stale errors and the skeleton. */

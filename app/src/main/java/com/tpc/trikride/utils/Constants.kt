@@ -15,7 +15,7 @@ object Constants {
      * against this string, so publishing a revised set is a matter of changing
      * it here: every user is then asked to accept again on their next launch.
      */
-    const val LEGAL_VERSION = "2026-07-28"
+    const val LEGAL_VERSION = "2026-08-16"
 
     /**
      * Common pickup/dropoff points around Talibon Polytechnic College.

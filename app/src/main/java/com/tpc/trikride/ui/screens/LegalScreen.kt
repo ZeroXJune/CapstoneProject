@@ -193,7 +193,7 @@ By using TrikRide, all users agree to help maintain a safe, respectful, and welc
 
 private val DRIVER_AGREEMENT_TEXT = """
 TrikRide Driver Agreement
-Effective Date: July 28, 2026
+Effective Date: August 16, 2026
 
 This Driver Agreement establishes the responsibilities and expectations for all drivers using the TrikRide platform.
 
@@ -202,7 +202,13 @@ To become a TrikRide driver, you must:
 •  Be at least 18 years old.
 •  Possess a valid driver's license appropriate for the vehicle operated.
 •  Operate a legally registered tricycle or authorized vehicle.
+•  Submit a legible photograph of that license for verification, and keep a current one on file.
 •  Complete the registration and verification process required by TrikRide.
+
+Your License Photograph
+The photograph you submit is checked by an administrator against the license details you entered, and again when the license expires. Only you and an administrator can view it; it is never shown to passengers. If your application is refused it is deleted immediately. If you are approved it is kept while your account is active and deleted with the account; that remains so if your approval is later withdrawn, since the reason for withdrawing it may itself need to be evidenced. You may remove it yourself at any time, though you cannot carry passengers without one on file. Section 9 of the Privacy Policy sets this out in full.
+
+TrikRide checks that a document was presented and that it matches what you entered. It does not and cannot confirm with the Land Transportation Office that a license is current or has not been suspended. Driving on a valid license remains your responsibility, and submitting a false or altered document ends your access to the platform.
 
 Driver Responsibilities
 Drivers agree to:
@@ -245,10 +251,12 @@ By registering as a TrikRide driver, you confirm that you have read, understood,
 
 private val PRIVACY_TEXT = """
 TrikRide Privacy Policy
-Effective Date: July 28, 2026
+Effective Date: August 16, 2026
 
 1. Information We Collect
 We collect the information you provide during registration (name, email, phone number, date of birth, and — for drivers — license and tricycle details), an optional profile photo, and information generated while using the app (ride requests, pickup/destination, ride history, and any concerns you report).
+
+Drivers are also asked for a photograph of their driver's license. Under the Data Privacy Act of 2012 (Republic Act No. 10173) a license is sensitive personal information, so it is treated separately from everything else in this policy and is covered by section 9 below. You are asked to agree to it specifically at the moment you send it, not merely by accepting this policy.
 
 2. How We Use Information
 Your information is used to create your account, match passengers with drivers, price rides, support driver verification, and improve the service.
@@ -270,4 +278,17 @@ The service is intended for members of the college community and is not directed
 
 8. Contact
 For privacy questions, contact the TrikRide support hotline listed in the app.
+
+9. Driver's License Photographs
+This section applies only to drivers, and only to the photograph of the license itself.
+
+Purpose. The photograph is used for one thing: to confirm that the person applying to carry passengers holds the license they say they hold, and to check it again when that license expires. It is not used for anything else.
+
+Who can see it. You, and a TrikRide administrator. It is never shown to passengers, never attached to a ride, and never included in any exported report.
+
+How long we keep it. If your application is refused, the photograph is deleted at the moment of that decision. If you are approved, it is kept while your account is active, because it is needed again at renewal and if a concern about a ride is ever disputed. Withdrawing an approval already given is not the same as refusing an application and does not delete the photograph, for that same reason. It is deleted with your account.
+
+Your control. You may remove the photograph yourself at any time from your driver profile. Removing it means you cannot be approved to carry passengers until you provide another one.
+
+How it is stored. Separately from your account record, so that ordinary use of the app never reads it, and reduced in size before it is stored. Communications are encrypted in transit.
 """.trimIndent()

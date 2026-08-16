@@ -107,7 +107,7 @@ Students, faculty, and staff of Talibon Polytechnic College depend on tricycles 
 
 This study developed **TrikRide**, an Android application that connects passengers and tricycle drivers serving Talibon Polytechnic College, and that puts a verification step in front of drivers before they are allowed to accept passengers.
 
-The system serves three kinds of users. A passenger creates an account, chooses a destination from the fare schedule published by the Federation of Tricycle Operators and Drivers Association of Talibon, sees the exact fare before committing, and follows the ride from acceptance through to completion. A driver registers, submits a licence and tricycle details, and can accept requests only once an administrator has approved those documents. An administrator verifies drivers, maintains the fare table, reviews concerns raised by either side, watches activity as it happens, and exports records for any month, year, or range of dates as printable documents or spreadsheets.
+The system serves three kinds of users. A passenger creates an account, chooses a destination from the fare schedule published by the Federation of Tricycle Operators and Drivers Association of Talibon, sees the exact fare before committing, and follows the ride from acceptance through to completion. A driver registers, submits licence and tricycle details together with a photograph of the licence, and can accept requests only once an administrator has approved those documents. An administrator verifies drivers, maintains the fare table, reviews concerns raised by either side, watches activity as it happens, and exports records for any month, year, or range of dates as printable documents or spreadsheets.
 
 Fares are not estimated. The application prices every ride from the 240 destinations on the posted FeTODAT schedule, which distinguishes the regular rate from the discounted rate for senior citizens, persons with disabilities, and students, and which sets a minimum fare of fifteen pesos for regular passengers and twelve pesos for discounted passengers. Because the rate table is held in the database rather than in code, the administrator corrects a price without a new release of the application.
 
@@ -355,8 +355,9 @@ This study covers the development of a Smart Tricycle Ride and Driver Onboarding
 10. Push notifications are delivered within the application. Delivery of notifications to a device that is not running the application requires a server-side component that is outside the scope of this study.
 11. Sign-in is by email address and password. Federated sign-in through third-party identity providers is not included.
 12. The accuracy of the fare table depends on the accuracy of the published FeTODAT schedule as transcribed. Rows that could not be read with confidence from the posted sheet are flagged within the administrative interface for verification, and rows without a usable rate are disabled so that they cannot price a ride.
-13. Implementation of the system beyond the study is subject to the cooperation and coordination of the local tricycle drivers' association in Talibon, Bohol.
-14. Adoption depends on the willingness of drivers and passengers to use the system.
+13. Driver verification is documentary. An administrator confirms that a photograph of a licence was submitted and that it matches the details the driver entered, but the system cannot confirm with the Land Transportation Office that the licence is current or has not been suspended, because no public interface exists for that check.
+14. Implementation of the system beyond the study is subject to the cooperation and coordination of the local tricycle drivers' association in Talibon, Bohol.
+15. Adoption depends on the willingness of drivers and passengers to use the system.
 
 ## 1.6 Significance of the Study
 
@@ -782,11 +783,15 @@ Profile photographs are instead reduced and stored in the Realtime Database. Whe
 
 The encoded photograph is written to a `profilePhotos` node keyed by user identifier, rather than into the user record itself. This separation matters in practice: the administrative screens read every user record continuously to populate their lists, and an image embedded in each record would be transferred on every one of those reads. Held separately, a photograph is transferred only when it is actually displayed.
 
-At 24 kilobytes per photograph, one thousand users would consume roughly 24 megabytes of the 1 gigabyte free allowance. Driver credentials are recorded as typed values reviewed by an administrator rather than as uploaded document images, for the same reason.
+At 24 kilobytes per photograph, one thousand users would consume roughly 24 megabytes of the 1 gigabyte free allowance.
+
+The same technique carries the one document the system does collect: a photograph of the driver's licence. Its budget is different, because its purpose is different. An avatar has only to resemble the person at 96 density-independent pixels; a licence must be legible enough for an administrator to read the number, the name, and the expiry date and compare them with what the driver typed. The long edge is therefore scaled to 1280 pixels rather than 256, the aspect ratio is preserved rather than cropped square — cropping would cut the ends of the licence number — and the budget rises to approximately 200 kilobytes. Thirty registered drivers consume around six megabytes, which is immaterial against the free allowance.
+
+Licence photographs are written to a `driverDocuments` node rather than to the driver record, for the reason given above and for a second one addressed in Section 3.8: they are the only data in the system that are not readable by every authenticated account.
 
 ### Data Organization
 
-The database is organized as seven top-level nodes, documented in Table 8 and Figure 11.
+The database is organized as eight top-level nodes, documented in Table 8 and Figure 11.
 
 ## 3.6 Network Architecture
 
@@ -834,6 +839,18 @@ Data flows in one direction. A user event goes from View to ViewModel to Reposit
 
 **Data minimization.** The system collects name, email address, mobile number, date of birth, and an optional photograph for all users, plus licence and tricycle details for drivers. It collects nothing beyond what the service requires to operate.
 
+**Sensitive personal information.** One item the system holds falls into a stricter category than the rest. Section 3(l) of the Data Privacy Act of 2012 (Republic Act No. 10173) classifies government-issued identifiers, and licences specifically, as *sensitive personal information*. The photograph a driver submits for verification is therefore treated differently from everything else the system stores, in four respects.
+
+*Access.* The `driverDocuments` node is the only node in the database not readable by every authenticated account. Its security rule admits the driver it belongs to and administrators, and no one else. Passengers cannot reach it, it is never attached to a ride, and it appears in no exported report. An administrator's interface keeps each photograph collapsed until it is deliberately opened, so that a verification queue does not display a column of identity documents to whoever is standing nearby.
+
+*Consent.* Agreement is obtained at the moment of upload rather than inferred from the Terms accepted at registration, and the dialogue that obtains it states in plain terms what the image is for, who can open it, and when it is destroyed. The moment of agreement is recorded with the document. A general consent given days earlier to a document few people read is not, in the view taken here, a meaningful basis for holding someone's identity document.
+
+*Retention.* The retention rule is enforced in code and not left to a written policy. Refusing an application deletes the photograph in the same operation that records the refusal, since a refused applicant's licence serves no purpose the system has. An approved driver's photograph is retained while the account is active, because it is required again when the licence expires and if a concern about a ride is later disputed, and it is deleted with the account. Withdrawing an approval already granted is implemented as a separate operation from refusing an application, and deliberately does not delete the photograph: approval is usually withdrawn because a licence has lapsed or because a concern is under examination, and in either case destroying the document would remove the evidence the decision may later have to be justified against. A driver may withdraw the photograph themselves at any time.
+
+*Proportionality.* No other document is requested. The system does not collect insurance certificates, inspection certificates, or secondary identification, all of which an earlier draft of the data model anticipated. Verification of the right to drive requires the licence, and requiring more would collect personal information the service has no use for.
+
+**A limit of verification.** The system confirms that a document was presented and that it corresponds to the details the driver entered. It cannot confirm that a licence is current or that it has not been suspended, because the Land Transportation Office publishes no interface against which a licence may be checked. The verification implemented here is documentary, and Section 1.5 records this.
+
 **Session handling.** Sessions persist across application restarts, which is a convenience feature, but signing out clears the session immediately and returns the user to the sign-in screen.
 
 **Recorded consent.** The Terms and Conditions, Privacy Policy, Safety and Community Guidelines, and Driver Agreement are carried inside the application and are readable at any time from the profile screen. No account reaches a dashboard until it has accepted the documents that apply to it, with each one ticked separately after being made available to read in full; the only alternative offered is to sign out. The version accepted and the moment of acceptance are stored on the account, so that consent can be evidenced rather than assumed, an account created before consent was tracked is asked at its next launch, and a revision to the documents asks every user again.
@@ -873,6 +890,8 @@ Requirements were derived from three sources: the problems documented in the nee
 | FR-06 | The system shall allow a user to edit their profile and set a photograph from the camera or the gallery. | All | 6 |
 | FR-07 | The system shall allow a user to request a password reset by email. | All | 2 |
 | FR-08 | The system shall present a first-time user with an introductory carousel, shown once. | All | 6 |
+| FR-08a | The system shall allow a driver to submit a photograph of their driver's licence, obtaining a specific consent to hold it at the moment of submission, and shall allow the driver to withdraw it. | Driver | 2 |
+| FR-08b | The system shall present that photograph to an administrator during verification, restrict it to the driver and administrators, and delete it when an application is refused. | Administrator | 2 |
 | FR-09 | The system shall allow a passenger to select a pickup point from a defined list. | Passenger | 1 |
 | FR-10 | The system shall allow a passenger to select a destination by searching the fare table by stop name or zone. | Passenger | 1 |
 | FR-11 | The system shall allow a passenger to select the regular or the discounted rate column. | Passenger | 1 |
@@ -921,6 +940,7 @@ Requirements were derived from three sources: the problems documented in the nee
 | NFR-08 | Reliability | The application shall not lose interface state when the device is rotated. |
 | NFR-09 | Security | Authorization shall be enforced by server-side rules, not solely by the interface. |
 | NFR-10 | Security | Confidential configuration shall be excluded from version control. |
+| NFR-10a | Security | Sensitive personal information as defined by Republic Act No. 10173 shall be readable only by the person it concerns and by an administrator, and shall be destroyed when the purpose for holding it ends. |
 | NFR-11 | Maintainability | Fare rates shall be changeable without releasing a new version of the application. |
 | NFR-12 | Portability | The application shall run on Android 7.0 and later. |
 | NFR-13 | Compatibility | Exported spreadsheets shall open without conversion in Microsoft Excel, Google Sheets, and LibreOffice Calc. |
@@ -1004,7 +1024,7 @@ Decomposing the single process of the context diagram gives six processes and se
 
 ### Entity Relationship Diagram
 
-Although the Realtime Database is not relational, the entities it holds and the relationships between them can be expressed in the same terms, which is what the following diagram does. Relationships that would be foreign keys in a relational database are stored as identifier fields. A user's profile photograph is held in a separate `profilePhotos` node keyed by the same identifier, for the reason given in Section 3.5.
+Although the Realtime Database is not relational, the entities it holds and the relationships between them can be expressed in the same terms, which is what the following diagram does. Relationships that would be foreign keys in a relational database are stored as identifier fields. A user's profile photograph is held in a separate `profilePhotos` node keyed by the same identifier, and a driver's licence photograph in a separate `driverDocuments` node, for the reasons given in Sections 3.5 and 3.8.
 
 ![Figure 6. Entity Relationship Diagram](figures/fig06_erd.png){width=5.89in}
 
@@ -1037,7 +1057,7 @@ The database is a JSON tree with seven top-level nodes.
 | Node | Key | Contents | Written by |
 |:---|:---|:---|:---|
 | `users` | user identifier | Email, mobile number, given and family name, date of birth, role, accepted document versions and the time of acceptance, timestamps | The account holder |
-| `drivers` | user identifier | Licence number and expiry, tricycle number, verification status, availability, rating, ride count, documents | The driver; verification status by an administrator |
+| `drivers` | user identifier | Licence number and expiry, tricycle number, verification status, availability, rating, ride count, and a flag recording whether a licence photograph is on file | The driver; verification status by an administrator |
 | `rideRequests` | request identifier | Passenger identifier, pickup, destination, passenger count, luggage, priced fare, fare stop, rate column, requested and expiry timestamps | The passenger; deleted on acceptance or expiry |
 | `rides` | ride identifier | Passenger and driver identifiers, pickup, destination, status, fares, fare stop, rate column, lifecycle timestamps, passenger count, luggage, notes | The system on acceptance; status by the driver |
 | `config/fare` | fixed | Minimum regular fare, minimum discounted fare, flat rates, per-passenger flag, source citation, seed timestamp | An administrator |
@@ -1045,6 +1065,7 @@ The database is a JSON tree with seven top-level nodes.
 | `complaints` | complaint identifier | Reporter identifier, name and role, category, description, status, administrator note, timestamps | The reporter; status and note by an administrator |
 | `notifications` | user identifier, then notification identifier | Title, message, type, read flag, timestamp | The system |
 | `profilePhotos` | user identifier | Base64 JPEG thumbnail and the time it was set | The account holder |
+| `driverDocuments` | user identifier | Base64 JPEG of the driver's licence, the time it was sent, and the time consent was given | The driver; deleted by an administrator on refusal |
 
 ![Figure 11. Realtime Database Schema](figures/fig11_database_schema.png){width=4.83in}
 
@@ -1175,6 +1196,7 @@ System testing exercised complete workflows end to end.
 | ST-03 | The same driver is subsequently approved and accepts a ride | The ride proceeds to completion | Pass |
 | ST-04 | A ride request receives no acceptance | The request expires after five minutes and the passenger is returned to booking | Pass |
 | ST-05 | A ride is carried through to completion and rated | The ride appears in both parties' history with the correct fare | Pass |
+| ST-05a | A driver submits a licence photograph and an administrator refuses the application | The photograph is presented for review, and no longer exists in the database once the refusal is recorded | Pass |
 | ST-06 | An administrator exports a monthly ride report as a spreadsheet | The file contains every ride in that month and opens in a spreadsheet application | Pass |
 | ST-06a | An administrator exports the same report as a document | The first page carries the summary figures and charts for the month and the following pages carry every ride | Pass |
 | ST-06b | An administrator selects a range between two dates and exports the ride report | The report covers every ride from the first day to the last, both days included in full | Pass |
@@ -1209,12 +1231,18 @@ Performance was assessed against the targets in Table 3. Request propagation was
 | SEC-06 | Inspect the repository for confidential values | No API key, service configuration, or credential is present in version control | Pass |
 | SEC-07 | Sign out and attempt to return to a role interface | The user is returned to the sign-in screen | Pass |
 | SEC-08 | Inspect network traffic during use | All traffic is encrypted; no plain-text transmission is observed | Pass |
+| SEC-09 | Attempt to read another driver's licence photograph while signed in as a passenger | The read is refused by the database rules | Pass |
+| SEC-10 | Attempt to read a driver's licence photograph while signed in as a different driver | The read is refused | Pass |
+| SEC-11 | Refuse a driver application and then query the document node directly | The photograph has been deleted and the read returns nothing | Pass |
+| SEC-12 | Withdraw approval from an approved driver and query the document node | The photograph is retained, since withdrawal is not refusal | Pass |
 
 ## 4.6 Prototype Description
 
 The delivered system is a single Android application that presents one of three interfaces according to the role of the signed-in account.
 
 **On first launch**, a new user is shown an introductory carousel of five screens explaining what the application does. The carousel appears once. A returning user with a stored session sees a welcome screen while the session is restored, and is taken directly to their interface without signing in again.
+
+**A driver who has not yet sent a licence photograph** is asked for one on their dashboard, above everything else on it, since without it they cannot be approved and nothing else on that screen is of use to them. The request moves to the profile screen once a photograph is on file. It is asked for after registration rather than during it, so that a poor connection or a refused camera permission cannot strand someone part-way through creating an account; the verification gate is unaffected, because approval is required either way.
 
 **Before any interface opens**, the application confirms that the account has accepted the current Terms and Conditions, Privacy Policy, and Safety and Community Guidelines, and, for a driver account, the Driver Agreement. Anything outstanding is presented on a consent screen where each document can be opened and read in full and must be ticked individually; the button that continues is disabled until all of them are, and the only other option is to sign out.
 
@@ -1283,6 +1311,7 @@ Training is organized by role and kept short, on the reasoning that a system req
 | Fare administration | Single-operation import of the published schedule, search, zone filtering, review queue, per-entry editing, activation and deactivation, addition and deletion, global minimums and flat rates | FR-29 to FR-32 |
 | Concerns | Categorized concern submission by passengers and drivers, administrative review with status and note, notification of resolution | FR-33, FR-34 |
 | Notifications | In-application notification centre with unread count, individual and bulk marking as read | FR-35 |
+| Driver verification | Licence photograph submission with consent recorded at the point of upload, administrator review of the photograph against the entered details, approval, refusal with immediate deletion of the photograph, and withdrawal by the driver | FR-08a, FR-08b, NFR-10a |
 | Monitoring and reporting | Live counts and recent activity, period selection, summary statistics, three report types, document and spreadsheet export through the file picker and sharing | FR-36 to FR-39 |
 
 All thirty-eight functional requirements were implemented, as were the fifteen non-functional requirements.
@@ -1489,6 +1518,8 @@ Li, Y., Zhang, H., & Wang, S. (2024). Optimizing first- and last-mile ridesharin
 Narayanan, S., & Antoniou, C. (2021). A systematic literature review of ride-sharing platforms, user factors and barriers. *European Transport Research Review, 13*(61). https://doi.org/10.1186/s12544-021-00522-1
 
 Rapp, D., Bräunl, T., & Collett, T. (2023). On-demand ride sharing: Scheduling of an autonomous bus fleet for last-mile travel. *Robotics and Autonomous Systems, 170*, 104559. https://doi.org/10.1016/j.robot.2023.104559
+
+Republic of the Philippines. (2012). *Republic Act No. 10173: An act protecting individual personal information in information and communications systems in the government and the private sector, creating for this purpose a National Privacy Commission, and for other purposes* (Data Privacy Act of 2012). Official Gazette. https://www.officialgazette.gov.ph/2012/08/15/republic-act-no-10173/
 
 Rogers, E. M. (2003). *Diffusion of innovations* (5th ed.). Free Press.
 
@@ -1815,7 +1846,7 @@ evaluated at $\alpha = 0.05$.
 
 **Part 3 — For Drivers.** Registering; accepting the Driver Agreement; submitting licence and tricycle details; what happens while verification is pending; going online and offline; reading a request card; accepting before the countdown expires; advancing a ride through its stages; viewing earnings and history; reporting a concern.
 
-**Part 4 — For Administrators.** Signing in as an administrator; verifying and rejecting driver applications; loading the official fare table for the first time; searching and filtering the fare table; correcting an entry and clearing its review flag; adding and deactivating entries; editing the minimum fares and flat rates; reviewing and resolving concerns; reading the live monitor; selecting a report period, including a range between two dates; exporting and sharing a report in either format.
+**Part 4 — For Administrators.** Signing in as an administrator; verifying and rejecting driver applications, including review of the submitted licence photograph; loading the official fare table for the first time; searching and filtering the fare table; correcting an entry and clearing its review flag; adding and deactivating entries; editing the minimum fares and flat rates; reviewing and resolving concerns; reading the live monitor; selecting a report period, including a range between two dates; exporting and sharing a report in either format.
 
 **Part 5 — Troubleshooting.** The application says it cannot reach the database; a booking will not submit; no drivers appear to be online; a fare looks wrong; a photograph will not upload; how to report a problem.
 
@@ -1832,7 +1863,7 @@ The complete source code of the system is maintained in a Git repository and is 
 | `app/src/main/java/com/tpc/trikride/ui/screens/` | Composable screens for all three roles |
 | `app/src/main/java/com/tpc/trikride/ui/components/` | Shared interface components |
 | `app/src/main/java/com/tpc/trikride/ui/theme/` | Colour palette, typography, and light and dark themes |
-| `app/src/main/java/com/tpc/trikride/utils/` | `FareEngine`, `FareSeed`, `ReportBuilder`, `PdfChart`, `PdfReportWriter`, `ReportExporter`, `PasswordRules`, `ProfilePhoto`, and constants |
+| `app/src/main/java/com/tpc/trikride/utils/` | `FareEngine`, `FareSeed`, `ReportBuilder`, `PdfChart`, `PdfReportWriter`, `ReportExporter`, `PasswordRules`, `ProfilePhoto`, `LicenceImage`, and constants |
 | `app/src/main/res/` | Resources, launcher icons, and onboarding artwork |
 | `docs/` | This documentation and the generated figures |
 
@@ -1878,6 +1909,7 @@ The structure of the Realtime Database is documented in Table 8 and illustrated 
 | `complaints/{id}` | The reporter and administrators | The reporter to create; administrators for status and note |
 | `notifications/{uid}` | The named user | The system to create; the named user to mark as read |
 | `profilePhotos/{uid}` | All authenticated users | The account holder only |
+| `driverDocuments/{uid}` | The driver and administrators only | The driver, and administrators in order to delete on refusal |
 
 ## Appendix M — Test Cases
 

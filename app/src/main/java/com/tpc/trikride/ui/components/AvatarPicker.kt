@@ -49,7 +49,7 @@ import com.tpc.trikride.utils.ProfilePhoto
 import java.io.File
 
 /** Creates a temp file in the cache and returns a FileProvider uri for it. */
-private fun newCameraUri(context: Context): Uri {
+internal fun newCameraUri(context: Context): Uri {
     val dir = File(context.cacheDir, "images").apply { mkdirs() }
     val file = File.createTempFile("capture_", ".jpg", dir)
     return FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", file)

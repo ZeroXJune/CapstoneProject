@@ -86,6 +86,12 @@ server in between, so anything the rules allow is allowed, whatever the interfac
         }
       }
     },
+    "driverDocuments": {
+      "$uid": {
+        ".read": "auth != null && ($uid === auth.uid || root.child('users').child(auth.uid).child('userType').val() === 'ADMIN')",
+        ".write": "auth != null && ($uid === auth.uid || root.child('users').child(auth.uid).child('userType').val() === 'ADMIN')"
+      }
+    },
     "rideRequests": {
       ".read": "auth != null",
       "$requestId": {
@@ -124,10 +130,19 @@ server in between, so anything the rules allow is allowed, whatever the interfac
 }
 ```
 
-Two notes on these. `drivers/$uid/verificationStatus` carries its own write rule so a
+Three notes on these. `drivers/$uid/verificationStatus` carries its own write rule so a
 driver can edit their own record without being able to approve themselves. `config`
 covers both `config/fare` and `config/fareStops`, which every signed-in user reads to
 price a ride but only an administrator can change.
+
+`driverDocuments` is the one rule here that is not readable by every signed-in user, and
+it is deliberately the odd one out. It holds photographs of drivers' licences, which are
+sensitive personal information under the Data Privacy Act of 2012, so it is scoped to the
+driver it belongs to and to administrators. Administrators need the write permission as
+well as the read: refusing an application deletes the photograph, and that delete is
+performed under the administrator's credentials. Publish this rule before letting any
+driver upload — the default rules would leave identity documents readable by every
+account on the project.
 
 While you are still testing, you may want the looser test-mode rules Firebase offers.
 Do not leave them on once real accounts exist.
@@ -253,6 +268,15 @@ The app shrinks the image to 256 pixels square and writes it into
 than a Storage one. Check that the `profilePhotos` rule from Step 4 is published. If the
 message says the image could not be processed, the file was not a readable image or it
 would not compress below 24 KB even at the lowest quality.
+
+### Licence photo will not send, or an administrator cannot open it
+
+Same shape of problem, different node: check that the `driverDocuments` rule from Step 4
+is published. A licence is scaled to 1280 pixels on its long edge and allowed about
+200 KB, which is far more than an avatar, because the administrator has to read the number
+and the expiry date off it. "That image could not be prepared" means the file was not a
+readable image, or it would not come under 200 KB even at the lowest quality — rare for a
+photograph, common for a screenshot of a scan.
 
 ### Gradle sync issues generally
 

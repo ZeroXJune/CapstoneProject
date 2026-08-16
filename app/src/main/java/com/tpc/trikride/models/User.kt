@@ -39,7 +39,14 @@ data class Driver(
     val rating: Double = 0.0,
     val totalRides: Int = 0,
     val verifiedAt: String = "",
-    val documents: List<Document> = emptyList()
+    /**
+     * Whether a licence photograph is on file. The image itself lives under
+     * `driverDocuments/{uid}`, not here — the admin screens read every driver
+     * record constantly and must not pull a few hundred kilobytes of licence
+     * with each one. This flag is what those screens need: enough to show
+     * whether there is anything to review.
+     */
+    val hasLicenceImage: Boolean = false
 )
 
 data class Passenger(
@@ -56,20 +63,20 @@ enum class VerificationStatus {
     EXPIRED
 }
 
-data class Document(
-    val id: String = "",
-    val type: DocumentType = DocumentType.LICENSE,
-    val url: String = "",
+/**
+ * A photograph of a driver's licence, held for verification.
+ *
+ * Sensitive personal information under the Data Privacy Act of 2012, which is
+ * why it is stored apart from everything else, read by nobody but the owner and
+ * an administrator, and deleted when the application is refused. [consentedAt]
+ * records that the driver was told what the image is for before sending it.
+ */
+data class DriverDocument(
+    val image: String = "",
     val uploadedAt: String = "",
-    val expiryDate: String = ""
+    val consentedAt: String = "",
+    val reviewedAt: String = ""
 )
-
-enum class DocumentType {
-    LICENSE,
-    IDENTIFICATION,
-    INSURANCE,
-    INSPECTION_CERTIFICATE
-}
 
 data class SavedLocation(
     val id: String = "",

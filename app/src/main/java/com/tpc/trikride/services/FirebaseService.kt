@@ -493,9 +493,35 @@ class FirebaseService {
         database.getReference("config").child("fareStops").updateChildren(updates).await()
     }
 
-    // Document Upload
-    suspend fun uploadDocument(driverId: String, document: Document) {
-        database.getReference("drivers").child(driverId).child("documents").push()
-            .setValue(document)
+    // Driver documents
+    //
+    // The licence photograph lives in its own top-level node, away from the
+    // driver record, so that listing drivers does not pull every image with it.
+    // The `hasLicenceImage` flag on the driver is written alongside, because
+    // that is what the admin list needs in order to say whether there is
+    // anything to look at.
+
+    suspend fun saveLicenceImage(driverId: String, document: DriverDocument) {
+        database.getReference("driverDocuments").child(driverId).child("licence")
+            .setValue(document).await()
+        database.getReference("drivers").child(driverId).child("hasLicenceImage")
+            .setValue(true).await()
+    }
+
+    suspend fun getLicenceImage(driverId: String): DriverDocument? =
+        database.getReference("driverDocuments").child(driverId).child("licence")
+            .get().await().getValue(DriverDocument::class.java)
+
+    /**
+     * Removes a driver's licence photograph.
+     *
+     * Called when an application is refused and when an account is deleted. The
+     * flag is cleared in the same breath, or the admin list would keep offering
+     * a document that is no longer there.
+     */
+    suspend fun deleteLicenceImage(driverId: String) {
+        database.getReference("driverDocuments").child(driverId).removeValue().await()
+        database.getReference("drivers").child(driverId).child("hasLicenceImage")
+            .setValue(false).await()
     }
 }

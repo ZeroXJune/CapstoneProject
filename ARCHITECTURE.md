@@ -75,6 +75,7 @@ ui/components/
   CommonComponents.kt  PrimaryButton, SecondaryButton, SectionCard, SkeletonBox,
                        SkeletonCard, RefreshableBox, SimplePlaceholder, TrikTextField
   AvatarPicker.kt      circular avatar with a camera/gallery chooser
+  LicenceUpload.kt     licence submission, with its own consent step
   TrikMap.kt           OpenStreetMap view and the centre-pin location picker
 
 utils/
@@ -86,6 +87,7 @@ utils/
   ReportExporter.kt writes through the file picker, or shares
   PasswordRules.kt  password policy, evaluated live as the user types
   ProfilePhoto.kt   shrinks and base64-encodes an avatar for the database
+  LicenceImage.kt   the same, at a size an administrator can actually read
   LocationProvider.kt  device position from the fused provider, as a Flow
   ReverseGeocoder.kt   turns a pinned point into a readable label
   AuthPrefs.kt      remembered email, onboarding-seen flag
@@ -107,12 +109,36 @@ config/fareStops/{stopId}      the 240-entry rate table
 complaints/{id}                concerns raised by passengers and drivers
 notifications/{uid}/{id}       per-user notification feed
 profilePhotos/{uid}            base64 avatar, a few kilobytes
+driverDocuments/{uid}/licence  base64 photograph of the driver's licence
 ```
 
 Fare stops sit in their own node rather than inside `config/fare` so that correcting one
 price is a small write instead of a rewrite of all 240. Profile photos are separated from
 `users` for the same kind of reason: the admin screens read every user record constantly,
 and an avatar embedded in each one would be pulled down every time.
+
+**Licence photographs.** `driverDocuments/{uid}/licence` is the one node not readable by
+every signed-in account. A licence is sensitive personal information under the Data
+Privacy Act of 2012, so the rules scope it to its owner and to administrators, and the
+driver record carries only a `hasLicenceImage` flag — enough for the admin list to say
+whether there is anything to review, without dragging a few hundred kilobytes of identity
+document into every list read.
+
+`LicenceImage` is `ProfilePhoto` with different targets: 1280 pixels on the long edge and
+about 200 KB, aspect ratio kept. An avatar only has to look like the person; a licence has
+to be legible enough to check the number and expiry against what the driver typed, and
+squaring it off would cut the ends of the number.
+
+Retention is enforced in code rather than left to a policy document.
+`AdminRepository.rejectDriver` deletes the photograph in the same call that records the
+refusal, because a rejected applicant's identity document serves no purpose the system
+has. An approved driver's is kept — it is needed again at licence expiry and if a concern
+is ever disputed — and the driver can withdraw it themselves.
+
+Consent is asked at the point of upload, not inherited from the Terms accepted at sign-up,
+and `consentedAt` is stamped when the driver ticks the box rather than when the write
+lands. `Constants.LEGAL_VERSION` was bumped when this shipped, so every existing account
+is asked to accept the revised documents on its next launch.
 
 **No Cloud Storage.** Firebase now requires the paid Blaze plan before a Storage bucket
 can be provisioned, and this project runs on Spark with no card. `ProfilePhoto` squares

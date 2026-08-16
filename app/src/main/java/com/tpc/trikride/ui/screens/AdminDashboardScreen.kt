@@ -3,6 +3,7 @@ package com.tpc.trikride.ui.screens
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -19,6 +20,7 @@ import androidx.compose.material.icons.filled.Insights
 import androidx.compose.material.icons.filled.Payments
 import androidx.compose.material.icons.filled.ReportProblem
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.Badge
 import androidx.compose.material.icons.filled.WarningAmber
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.VerifiedUser
@@ -27,6 +29,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
@@ -45,6 +48,7 @@ import com.tpc.trikride.models.VerificationStatus
 import com.tpc.trikride.ui.components.PrimaryButton
 import com.tpc.trikride.ui.components.SectionCard
 import com.tpc.trikride.utils.FareSeed
+import com.tpc.trikride.utils.LicenceImage
 import com.tpc.trikride.ui.theme.ErrorColor
 import com.tpc.trikride.ui.theme.SuccessColor
 import com.tpc.trikride.ui.theme.WarningColor
@@ -66,6 +70,7 @@ fun AdminDashboardScreen(
     val fareSaved by viewModel.fareSaved.collectAsState()
     val importing by viewModel.importing.collectAsState()
     val complaints by viewModel.complaints.collectAsState()
+    val licenceImages by viewModel.licenceImages.collectAsState()
 
     var tab by remember { mutableStateOf(AdminTab.VERIFY) }
     val usersById = remember(users) { users.associateBy { it.id } }
@@ -87,8 +92,12 @@ fun AdminDashboardScreen(
                 AdminTab.VERIFY -> VerificationContent(
                     drivers = drivers,
                     usersById = usersById,
+                    licenceImages = licenceImages,
+                    onOpenLicence = viewModel::openLicenceImage,
+                    onCloseLicence = viewModel::closeLicenceImage,
                     onApprove = viewModel::approveDriver,
-                    onReject = viewModel::rejectDriver
+                    onReject = viewModel::rejectDriver,
+                    onRevoke = viewModel::revokeApproval
                 )
                 AdminTab.CONCERNS -> ConcernsContent(
                     complaints = complaints,
@@ -328,8 +337,12 @@ private fun ComplaintStatusChip(status: ComplaintStatus) {
 private fun VerificationContent(
     drivers: List<Driver>,
     usersById: Map<String, User>,
+    licenceImages: Map<String, String?>,
+    onOpenLicence: (String) -> Unit,
+    onCloseLicence: (String) -> Unit,
     onApprove: (String) -> Unit,
-    onReject: (String) -> Unit
+    onReject: (String) -> Unit,
+    onRevoke: (String) -> Unit
 ) {
     val pending = drivers.filter { it.verificationStatus == VerificationStatus.PENDING }
     val others = drivers.filter { it.verificationStatus != VerificationStatus.PENDING }
@@ -363,6 +376,10 @@ private fun VerificationContent(
                 DriverCard(
                     driver = driver,
                     user = usersById[driver.userId],
+                    licence = licenceImages[driver.userId],
+                    licenceOpen = licenceImages.containsKey(driver.userId),
+                    onOpenLicence = { onOpenLicence(driver.userId) },
+                    onCloseLicence = { onCloseLicence(driver.userId) },
                     actions = {
                         Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                             OutlinedButton(
@@ -398,10 +415,14 @@ private fun VerificationContent(
                 DriverCard(
                     driver = driver,
                     user = usersById[driver.userId],
+                    licence = licenceImages[driver.userId],
+                    licenceOpen = licenceImages.containsKey(driver.userId),
+                    onOpenLicence = { onOpenLicence(driver.userId) },
+                    onCloseLicence = { onCloseLicence(driver.userId) },
                     actions = {
                         if (driver.verificationStatus == VerificationStatus.APPROVED) {
                             OutlinedButton(
-                                onClick = { onReject(driver.userId) },
+                                onClick = { onRevoke(driver.userId) },
                                 shape = RoundedCornerShape(14.dp),
                                 colors = ButtonDefaults.outlinedButtonColors(contentColor = ErrorColor),
                                 modifier = Modifier.fillMaxWidth()
@@ -422,7 +443,15 @@ private fun VerificationContent(
 }
 
 @Composable
-private fun DriverCard(driver: Driver, user: User?, actions: @Composable () -> Unit) {
+private fun DriverCard(
+    driver: Driver,
+    user: User?,
+    licence: String?,
+    licenceOpen: Boolean,
+    onOpenLicence: () -> Unit,
+    onCloseLicence: () -> Unit,
+    actions: @Composable () -> Unit
+) {
     SectionCard {
         Column {
             Row(verticalAlignment = Alignment.CenterVertically) {
@@ -455,8 +484,98 @@ private fun DriverCard(driver: Driver, user: User?, actions: @Composable () -> U
             InfoLine("License Expiry", driver.licenseExpiry.ifBlank { "—" })
             InfoLine("Tricycle No.", driver.tricycleNumber.ifBlank { "—" })
             Spacer(modifier = Modifier.height(12.dp))
+            LicenceReview(
+                hasImage = driver.hasLicenceImage,
+                image = licence,
+                isOpen = licenceOpen,
+                onOpen = onOpenLicence,
+                onClose = onCloseLicence
+            )
+            Spacer(modifier = Modifier.height(12.dp))
             actions()
         }
+    }
+}
+
+/**
+ * The licence photograph, shown only once the administrator asks for it.
+ *
+ * Collapsed by default. These are identity documents, and putting a dozen of
+ * them on screen at once — over the shoulder of whoever is sitting nearby —
+ * is not something a verification queue needs to do. Opening one is a
+ * deliberate act, and it is also what triggers the fetch.
+ */
+@Composable
+private fun LicenceReview(
+    hasImage: Boolean,
+    image: String?,
+    isOpen: Boolean,
+    onOpen: () -> Unit,
+    onClose: () -> Unit
+) {
+    if (!hasImage) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Icon(
+                Icons.Filled.WarningAmber,
+                contentDescription = null,
+                tint = WarningColor,
+                modifier = Modifier.size(16.dp)
+            )
+            Spacer(modifier = Modifier.width(8.dp))
+            Text(
+                "No licence photo submitted yet.",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
+        return
+    }
+
+    if (!isOpen) {
+        OutlinedButton(
+            onClick = onOpen,
+            shape = RoundedCornerShape(14.dp),
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Icon(Icons.Filled.Badge, contentDescription = null, modifier = Modifier.size(18.dp))
+            Spacer(modifier = Modifier.width(8.dp))
+            Text("View licence photo")
+        }
+        return
+    }
+
+    val bitmap = remember(image) { LicenceImage.decode(image) }
+    Column {
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(200.dp)
+                .clip(RoundedCornerShape(12.dp))
+                .background(MaterialTheme.colorScheme.surface),
+            contentAlignment = Alignment.Center
+        ) {
+            when {
+                bitmap != null -> Image(
+                    bitmap = bitmap,
+                    contentDescription = "Licence photo",
+                    contentScale = ContentScale.Fit,
+                    modifier = Modifier.fillMaxSize()
+                )
+                image == null -> CircularProgressIndicator(modifier = Modifier.size(24.dp))
+                else -> Text(
+                    "That photo could not be opened.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+        }
+        Spacer(modifier = Modifier.height(6.dp))
+        Text(
+            "Check the number, name and expiry against the details above.",
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+        TextButton(onClick = onClose) { Text("Hide photo") }
     }
 }
 

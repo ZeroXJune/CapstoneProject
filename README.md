@@ -25,14 +25,32 @@ the exact fare before agreeing to it, and watch the ride from acceptance to arri
 Senior citizens, persons with disabilities, and students get the discounted rate column
 from the same schedule.
 
-**Drivers** register, submit a licence and tricycle number, and wait for an administrator
-to approve them. Until then they cannot accept anyone. Once approved they go online,
+**Drivers** register, submit a licence number, a tricycle number and a photograph of the
+licence itself, and wait for an administrator to approve them. Until then they cannot accept anyone. Once approved they go online,
 see requests with a countdown, accept, and move the ride through its stages.
 
 **Administrators** verify drivers, keep the fare table correct, answer concerns, watch
 activity live, and export a month, a year, or any range of dates. Each report comes out as a printable
 PDF — headline figures and charts on the first page, every record behind it — or as a
 spreadsheet for anyone who wants to sort and total it themselves.
+
+## Driver licences
+
+A driver photographs their licence from their own profile, after registration rather than
+during it, so a bad connection or a refused camera permission cannot strand someone
+part-way through creating an account. Nobody carries a passenger before an administrator
+has seen that photograph and approved them.
+
+A licence is sensitive personal information under the Data Privacy Act of 2012, so it is
+handled as such. Consent is asked at the moment of upload and says plainly what the image
+is for, who can open it, and when it is destroyed. It is stored apart from the driver
+record and readable only by its owner and an administrator. A refused application has its
+photograph deleted as part of the refusal, not at some later tidy-up. Drivers can withdraw
+theirs at any time.
+
+What this does not do is confirm the licence is valid. The LTO has no public interface to
+check one against, so an administrator can see that a document was presented and that it
+matches the details typed in, and no more than that.
 
 ## Agreements
 

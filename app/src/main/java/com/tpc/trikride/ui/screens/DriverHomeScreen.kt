@@ -36,6 +36,7 @@ import com.tpc.trikride.models.Ride
 import com.tpc.trikride.models.RideRequest
 import com.tpc.trikride.models.RideStatus
 import com.tpc.trikride.models.VerificationStatus
+import com.tpc.trikride.ui.components.LicenceUploadCard
 import com.tpc.trikride.ui.components.PrimaryButton
 import com.tpc.trikride.ui.components.RefreshableBox
 import com.tpc.trikride.ui.components.SectionCard
@@ -71,6 +72,9 @@ fun DriverHomeScreen(
     val isRegistering by viewModel.isRegistering.collectAsState()
     val error by viewModel.errorMessage.collectAsState()
     val earnings by viewModel.earnings.collectAsState()
+    val licenceImage by viewModel.licenceImage.collectAsState()
+    val uploadingLicence by viewModel.uploadingLicence.collectAsState()
+    val licenceMessage by viewModel.licenceMessage.collectAsState()
 
     // Publish position only while online, and only while this screen exists.
     // Going offline or leaving the app stops it; there is no background service.
@@ -102,8 +106,27 @@ fun DriverHomeScreen(
         return
     }
 
+    LaunchedEffect(profile.hasLicenceImage) {
+        if (profile.hasLicenceImage) viewModel.loadLicenceImage()
+    }
+
     val notifications by supportViewModel.notifications.collectAsState()
     val unreadCount = notifications.count { !it.read }
+
+    val licenceCard: @Composable () -> Unit = {
+        LicenceUploadCard(
+            status = profile.verificationStatus,
+            hasImage = profile.hasLicenceImage,
+            imageData = licenceImage,
+            isUploading = uploadingLicence,
+            message = licenceMessage,
+            onSubmit = { uri, consentedAt ->
+                viewModel.submitLicenceImage(context, uri, consentedAt)
+            },
+            onRemove = viewModel::removeLicenceImage,
+            onDismissMessage = viewModel::clearLicenceMessage
+        )
+    }
 
     var tab by remember { mutableStateOf(DriverTab.DASHBOARD) }
     var showNotifications by remember { mutableStateOf(false) }
@@ -134,7 +157,11 @@ fun DriverHomeScreen(
                             unreadCount = unreadCount,
                             onToggleOnline = viewModel::setAvailability,
                             onOpenNotifications = { showNotifications = true },
-                            onRefresh = viewModel::refresh
+                            onRefresh = viewModel::refresh,
+                            // Only while there is nothing on file. Once it is
+                            // sent, the card lives in Profile and the dashboard
+                            // goes back to being about driving.
+                            licenceCard = if (profile.hasLicenceImage) null else licenceCard
                         )
                     }
                 }
@@ -149,7 +176,11 @@ fun DriverHomeScreen(
                     userType = com.tpc.trikride.models.UserType.DRIVER,
                     subtitle = "Tricycle #${profile.tricycleNumber}",
                     onSignOut = onSignOut,
-                    extraContent = { DriverCredentialsCard(driver = profile) }
+                    extraContent = {
+                        DriverCredentialsCard(driver = profile)
+                        Spacer(modifier = Modifier.height(12.dp))
+                        licenceCard()
+                    }
                 )
             }
         }
@@ -204,7 +235,8 @@ private fun DriverDashboard(
     unreadCount: Int,
     onToggleOnline: (Boolean) -> Unit,
     onOpenNotifications: () -> Unit,
-    onRefresh: () -> Unit
+    onRefresh: () -> Unit,
+    licenceCard: (@Composable () -> Unit)? = null
 ) {
   RefreshableBox(isRefreshing = false, onRefresh = onRefresh) {
     Column(
@@ -224,6 +256,14 @@ private fun DriverDashboard(
             }
         }
         Spacer(modifier = Modifier.height(16.dp))
+
+        // Above everything else while it is outstanding: without it the driver
+        // cannot be approved, and without approval nothing else on this screen
+        // does anything for them.
+        licenceCard?.let {
+            it()
+            Spacer(modifier = Modifier.height(16.dp))
+        }
 
         // Profile + rating + online switch
         SectionCard {
