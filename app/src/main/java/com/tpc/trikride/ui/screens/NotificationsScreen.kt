@@ -9,7 +9,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.AccountCircle
-import androidx.compose.material.icons.filled.DirectionsBike
+import androidx.compose.material.	Icons.AutoMirrored.Filled.DirectionsBike
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.ReportProblem
 import androidx.compose.material3.Icon
@@ -128,7 +128,7 @@ private fun NotificationRow(item: AppNotification, onClick: () -> Unit) {
             ) {
                 Icon(
                     imageVector = when (item.type) {
-                        NotificationType.RIDE -> Icons.Filled.DirectionsBike
+                        NotificationType.RIDE -> 	Icons.AutoMirrored.Filled.DirectionsBike
                         NotificationType.COMPLAINT -> Icons.Filled.ReportProblem
                         NotificationType.ACCOUNT -> Icons.Filled.AccountCircle
                         NotificationType.GENERAL -> Icons.Filled.Notifications
