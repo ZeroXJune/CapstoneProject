@@ -16,7 +16,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.CheckCircle
-import androidx.compose.material.	Icons.AutoMirrored.Filled.Chat
+import androidx.compose.material.icons.filled.Chat
 import androidx.compose.material.icons.filled.DirectionsBike
 import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.Home
@@ -958,7 +958,7 @@ private fun LocationField(
             shape = RoundedCornerShape(14.dp),
             modifier = Modifier
                 .fillMaxWidth()
-                nchor()
+                .menuAnchor()
         )
         ExposedDropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
             Constants.CAMPUS_LOCATIONS.forEach { location ->
@@ -1042,7 +1042,7 @@ private fun RideTrackingContent(ride: Ride, driverLocation: Location?) {
                     }
                 }
                 IconButton(onClick = { }) {
-                    Icon(	Icons.AutoMirrored.Filled.Chat, contentDescription = "Message",
+                    Icon(Icons.Filled.Chat, contentDescription = "Message",
                         tint = MaterialTheme.colorScheme.primary)
                 }
                 IconButton(onClick = { }) {
@@ -1284,7 +1284,7 @@ private fun SupportContent(userId: String, viewModel: SupportViewModel) {
                             shape = RoundedCornerShape(14.dp),
                             modifier = Modifier
                                 .fillMaxWidth()
-                                	.menuAnchor(MenuAnchorType.PrimaryNotEditable)nchor()
+                                .menuAnchor()
                         )
                         ExposedDropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
                             COMPLAINT_CATEGORIES.forEach { option ->

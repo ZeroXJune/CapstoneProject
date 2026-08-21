@@ -35,7 +35,6 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberDateRangePickerState
-import androidx.compose.material3.MenuAnchorType
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -404,7 +403,7 @@ private fun PeriodDropdown(
             shape = RoundedCornerShape(14.dp),
             modifier = Modifier
                 .fillMaxWidth()
-                	.menuAnchor(MenuAnchorType.PrimaryNotEditable)
+                .menuAnchor()
         )
         ExposedDropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
             periods.forEach { option ->
