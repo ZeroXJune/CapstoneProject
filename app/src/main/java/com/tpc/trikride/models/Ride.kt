@@ -86,13 +86,3 @@ enum class OfferStatus {
     EXPIRED
 }
 
-data class RideReview(
-    val id: String = "",
-    val rideId: String = "",
-    val reviewerId: String = "",
-    val revieweeId: String = "",
-    val rating: Int = 5, // 1-5 stars
-    val comment: String = "",
-    val categories: Map<String, Int> = emptyMap(), // e.g., "cleanliness" -> 4
-    val createdAt: String = ""
-)

@@ -110,6 +110,7 @@ complaints/{id}                concerns raised by passengers and drivers
 notifications/{uid}/{id}       per-user notification feed
 profilePhotos/{uid}            base64 avatar, a few kilobytes
 driverDocuments/{uid}/licence  base64 photograph of the driver's licence
+driverRatings/{uid}/{raterId}  one star rating per passenger, per driver
 ```
 
 Fare stops sit in their own node rather than inside `config/fare` so that correcting one
@@ -197,6 +198,23 @@ cancellation, and `DriverViewModel` cancels the job when availability goes false
 no foreground service and no background-location permission. That is a deliberate limit —
 background tracking costs battery the driver needs for their shift, and it is not a
 reasonable thing to run on someone who has gone off duty.
+
+**Ratings.** A passenger rates a completed ride, and the star lands in
+`driverRatings/{driver}/{rater}` — under the rater's own key, which is the only shape a
+security rule can restrict to the person writing it. The driver record is writable by the
+driver alone, so a passenger cannot be the one to move the average there.
+
+The driver's own app closes the loop: it collects `driverRatings/{self}`, averages it, and
+writes `rating` and `ratingCount` back onto its own record, which is what the admin
+screens and the exported reports read. That means a rating reaches the admin's view when
+the driver next opens the app rather than the instant it is given. The alternative is
+letting passengers write to driver records, and a few hours of lag is the better trade.
+A server-side function would remove the lag, and is out of scope for the same reason
+push-to-a-sleeping-phone is.
+
+`totalRides` has no such problem — the driver is the one completing the ride, so their own
+device increments it, under a transaction so two devices finishing at once cannot lose a
+count.
 
 **Consent.** `MainAppScreen` will not route to a dashboard until `ConsentViewModel`
 confirms the account has accepted the current documents. `users/{uid}` carries

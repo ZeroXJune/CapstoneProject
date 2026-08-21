@@ -94,6 +94,7 @@ fun PassengerHomeScreen(
     val fareConfig by viewModel.fareConfig.collectAsState()
     val fareStops by viewModel.fareStops.collectAsState()
     val driverLocation by viewModel.driverLocation.collectAsState()
+    val ratedRides by viewModel.ratedRides.collectAsState()
 
     val notifications by supportViewModel.notifications.collectAsState()
     val unreadCount = notifications.count { !it.read }
@@ -133,6 +134,8 @@ fun PassengerHomeScreen(
                     when {
                         completedRide != null -> RideCompleteContent(
                             ride = completedRide!!,
+                            alreadyRated = completedRide!!.id in ratedRides,
+                            onRate = { stars -> viewModel.rateRide(completedRide!!, stars) },
                             onBackHome = { completedRide = null; lastActive = null }
                         )
                         active != null -> RideTrackingContent(active, driverLocation)
@@ -1145,7 +1148,12 @@ private fun TimelineRow(label: String, done: Boolean) {
 }
 
 @Composable
-private fun RideCompleteContent(ride: Ride, onBackHome: () -> Unit) {
+private fun RideCompleteContent(
+    ride: Ride,
+    alreadyRated: Boolean,
+    onRate: (Int) -> Unit,
+    onBackHome: () -> Unit
+) {
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -1194,13 +1202,19 @@ private fun RideCompleteContent(ride: Ride, onBackHome: () -> Unit) {
         }
         Spacer(modifier = Modifier.height(20.dp))
 
-        Text("Rate your driver", style = MaterialTheme.typography.titleMedium,
-            fontWeight = FontWeight.Bold)
+        Text(
+            if (alreadyRated) "Thanks for rating" else "Rate your driver",
+            style = MaterialTheme.typography.titleMedium,
+            fontWeight = FontWeight.Bold
+        )
         Spacer(modifier = Modifier.height(8.dp))
         var rating by remember { mutableStateOf(0) }
         Row {
             (1..5).forEach { i ->
-                IconButton(onClick = { rating = i }) {
+                IconButton(
+                    onClick = { rating = i },
+                    enabled = !alreadyRated
+                ) {
                     Icon(
                         Icons.Filled.Star,
                         contentDescription = "Star $i",
@@ -1209,6 +1223,15 @@ private fun RideCompleteContent(ride: Ride, onBackHome: () -> Unit) {
                     )
                 }
             }
+        }
+        // Sending is a separate, deliberate act. Rating on the first tap would
+        // record a three when someone was on their way to five.
+        if (!alreadyRated) {
+            Spacer(modifier = Modifier.height(4.dp))
+            TextButton(
+                onClick = { if (rating > 0) onRate(rating) },
+                enabled = rating > 0
+            ) { Text("Send rating") }
         }
         Spacer(modifier = Modifier.height(20.dp))
         PrimaryButton(text = "Back to Home", onClick = onBackHome)

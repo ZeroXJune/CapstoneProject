@@ -145,6 +145,26 @@ class PassengerViewModel(
         }
     }
 
+    /**
+     * Rides this passenger has already rated, so the completion screen can stop
+     * offering. Kept in memory only — the screen is shown once, immediately
+     * after the ride, and a rating that has been written is not editable.
+     */
+    private val _ratedRides = MutableStateFlow<Set<String>>(emptySet())
+    val ratedRides: StateFlow<Set<String>> = _ratedRides
+
+    fun rateRide(ride: Ride, stars: Int) {
+        if (ride.id in _ratedRides.value) return
+        viewModelScope.launch {
+            try {
+                rideRepository.rateRide(ride, stars)
+                _ratedRides.value = _ratedRides.value + ride.id
+            } catch (e: Exception) {
+                _errorMessage.value = e.message ?: "Could not send your rating"
+            }
+        }
+    }
+
     fun dismissError() {
         _errorMessage.value = null
     }

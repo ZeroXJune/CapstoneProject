@@ -85,6 +85,25 @@ class DriverViewModel(
         }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), 0.0)
 
+    /**
+     * The driver's own ratings, and the average cached back onto their record.
+     *
+     * A passenger may write a rating but not the driver's record, so the fold
+     * happens here, on the device that owns it. The consequence is that the
+     * figure the admin screens read refreshes when the driver next opens the
+     * app rather than the instant a passenger taps a star, which for a shift-
+     * based app converges within the day.
+     */
+    val myRatings: StateFlow<List<Int>> = driverId
+        .filterNotNull()
+        .flatMapLatest { driverRepository.ratings(it) }
+        .catch { _errorMessage.value = it.message }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
+
+    val myRating: StateFlow<Double> = myRatings
+        .map { stars -> if (stars.isEmpty()) 0.0 else stars.sum().toDouble() / stars.size }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), 0.0)
+
     /** True while a licence photograph is being compressed and written. */
     private val _uploadingLicence = MutableStateFlow(false)
     val uploadingLicence: StateFlow<Boolean> = _uploadingLicence
@@ -117,6 +136,18 @@ class DriverViewModel(
         viewModelScope.launch {
             kotlinx.coroutines.delay(600)
             _loadingHistory.value = false
+        }
+        viewModelScope.launch {
+            // Only writes when the cached figure is actually behind, so this
+            // does not put a write on the wire every time the screen resumes.
+            myRatings.collect { stars ->
+                if (stars.isEmpty()) return@collect
+                val average = stars.sum().toDouble() / stars.size
+                val current = driverProfile.value ?: return@collect
+                if (current.ratingCount != stars.size || current.rating != average) {
+                    runCatching { driverRepository.publishRating(userId, average, stars.size) }
+                }
+            }
         }
     }
 
@@ -258,6 +289,7 @@ class DriverViewModel(
                 )
                 if (next == com.tpc.trikride.models.RideStatus.COMPLETED) {
                     driverRepository.setAvailability(id, true)
+                    driverRepository.recordCompletedRide(id)
                 }
             } catch (e: Exception) {
                 _errorMessage.value = e.message ?: "Failed to update ride"

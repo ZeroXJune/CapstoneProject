@@ -37,6 +37,8 @@ data class Driver(
     val isAvailable: Boolean = false,
     val currentLocation: Location? = null,
     val rating: Double = 0.0,
+    /** How many ratings [rating] averages. Not the ride count — most rides go unrated. */
+    val ratingCount: Int = 0,
     val totalRides: Int = 0,
     val verifiedAt: String = "",
     /**

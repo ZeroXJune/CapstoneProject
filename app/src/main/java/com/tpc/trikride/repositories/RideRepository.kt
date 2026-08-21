@@ -106,6 +106,18 @@ class RideRepository(
         firebase.updateRideStatus(rideId, status)
     }
 
+    /**
+     * Records a passenger's rating of the driver who carried them.
+     *
+     * Written under the rater's own key, which is what lets the security rules
+     * restrict it to them. The driver's visible average is not touched here —
+     * the driver record is theirs to write, not a passenger's.
+     */
+    suspend fun rateRide(ride: Ride, stars: Int) {
+        if (ride.driverId.isBlank() || ride.passengerId.isBlank()) return
+        firebase.submitRating(ride.driverId, ride.passengerId, stars.coerceIn(1, 5))
+    }
+
     /** The natural next status in the ride lifecycle, or null if the ride is finished. */
     fun nextStatus(current: RideStatus): RideStatus? = when (current) {
         RideStatus.ACCEPTED -> RideStatus.DRIVER_ARRIVING

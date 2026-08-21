@@ -4,6 +4,8 @@ import com.google.android.gms.tasks.Task
 import com.google.firebase.database.DataSnapshot
 import com.google.firebase.database.DatabaseError
 import com.google.firebase.database.FirebaseDatabase
+import com.google.firebase.database.MutableData
+import com.google.firebase.database.Transaction
 import com.google.firebase.database.ValueEventListener
 import com.tpc.trikride.models.*
 import kotlinx.coroutines.channels.awaitClose
@@ -322,17 +324,24 @@ class FirebaseService {
         awaitClose { ref.removeEventListener(listener) }
     }
 
-    // Review Operations
-    suspend fun submitReview(review: RideReview) {
-        database.getReference("reviews").child(review.id).setValue(review)
+    // Ratings
+    //
+    // A rating is written by the passenger to `driverRatings/{driver}/{rater}`,
+    // one value per passenger per driver, because that is a path the security
+    // rules can scope to the person writing it. The driver record itself is
+    // writable only by the driver, so a passenger cannot be the one to update
+    // the average there — see `publishRating`.
+
+    suspend fun submitRating(driverId: String, raterId: String, stars: Int) {
+        database.getReference("driverRatings").child(driverId).child(raterId)
+            .setValue(stars).await()
     }
 
-    fun getReviewsFlow(userId: String): Flow<List<RideReview>> = callbackFlow {
+    /** Every rating a driver has been given. */
+    fun getRatingsFlow(driverId: String): Flow<List<Int>> = callbackFlow {
         val listener = object : ValueEventListener {
             override fun onDataChange(snapshot: DataSnapshot) {
-                val reviews = snapshot.children.mapNotNull { it.getValue(RideReview::class.java) }
-                    .filter { it.revieweeId == userId }
-                trySend(reviews)
+                trySend(snapshot.children.mapNotNull { it.getValue(Int::class.java) })
             }
 
             override fun onCancelled(error: DatabaseError) {
@@ -340,11 +349,47 @@ class FirebaseService {
             }
         }
 
-        val ref = database.getReference("reviews")
+        val ref = database.getReference("driverRatings").child(driverId)
         ref.addValueEventListener(listener)
-
         awaitClose { ref.removeEventListener(listener) }
     }
+
+    /**
+     * Caches a driver's average onto their own record.
+     *
+     * Called from the driver's device, because only they may write there. The
+     * admin screens and the exported reports read the cached figure rather than
+     * averaging every rating in the database on every list refresh.
+     */
+    suspend fun publishRating(driverId: String, average: Double, count: Int) {
+        database.getReference("drivers").child(driverId).updateChildren(
+            mapOf("rating" to average, "ratingCount" to count)
+        ).await()
+    }
+
+    /** Counts one more finished ride against the driver, for their totals. */
+    suspend fun recordCompletedRide(driverId: String): Unit =
+        suspendCancellableCoroutine { cont ->
+            database.getReference("drivers").child(driverId)
+                .runTransaction(object : Transaction.Handler {
+                    override fun doTransaction(current: MutableData): Transaction.Result {
+                        val total = current.child("totalRides").getValue(Int::class.java) ?: 0
+                        current.child("totalRides").value = total + 1
+                        return Transaction.success(current)
+                    }
+
+                    override fun onComplete(
+                        error: DatabaseError?,
+                        committed: Boolean,
+                        snapshot: DataSnapshot?
+                    ) {
+                        if (cont.isActive) {
+                            if (error != null) cont.resumeWithException(error.toException())
+                            else cont.resume(Unit)
+                        }
+                    }
+                })
+        }
 
     // Complaints
     suspend fun submitComplaint(complaint: Complaint) {

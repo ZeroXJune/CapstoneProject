@@ -791,7 +791,7 @@ Licence photographs are written to a `driverDocuments` node rather than to the d
 
 ### Data Organization
 
-The database is organized as eight top-level nodes, documented in Table 8 and Figure 11.
+The database is organized as nine top-level nodes, documented in Table 8 and Figure 11.
 
 ## 3.6 Network Architecture
 
@@ -848,6 +848,10 @@ Data flows in one direction. A user event goes from View to ViewModel to Reposit
 *Retention.* The retention rule is enforced in code and not left to a written policy. Refusing an application deletes the photograph in the same operation that records the refusal, since a refused applicant's licence serves no purpose the system has. An approved driver's photograph is retained while the account is active, because it is required again when the licence expires and if a concern about a ride is later disputed, and it is deleted with the account. Withdrawing an approval already granted is implemented as a separate operation from refusing an application, and deliberately does not delete the photograph: approval is usually withdrawn because a licence has lapsed or because a concern is under examination, and in either case destroying the document would remove the evidence the decision may later have to be justified against. A driver may withdraw the photograph themselves at any time.
 
 *Proportionality.* No other document is requested. The system does not collect insurance certificates, inspection certificates, or secondary identification, all of which an earlier draft of the data model anticipated. Verification of the right to drive requires the licence, and requiring more would collect personal information the service has no use for.
+
+**Ratings without a trusted server.** A passenger must be able to rate the driver who carried them, and must not be able to edit that driver's record. With no application server between the client and the database, both halves have to be expressed as rules. Each rating is therefore written to `driverRatings/{driver}/{rater}` — keyed by the person giving it, which is the only shape a rule can restrict to that person — and validated to a value between one and five. The driver's own device reads those ratings, averages them, and writes the figure onto its own record, which the administrative screens and the exported reports then read.
+
+The consequence, recorded here rather than hidden, is that a newly given rating reaches an administrator's view when the driver next opens the application rather than at the moment it is given. Removing that lag would require either a server-side function, which is outside the scope of this study for the same reason push notification delivery is, or permitting passengers to write to driver records, which would be a materially worse arrangement than a few hours of delay.
 
 **A limit of verification.** The system confirms that a document was presented and that it corresponds to the details the driver entered. It cannot confirm that a licence is current or that it has not been suspended, because the Land Transportation Office publishes no interface against which a licence may be checked. The verification implemented here is documentary, and Section 1.5 records this.
 
@@ -1066,6 +1070,7 @@ The database is a JSON tree with seven top-level nodes.
 | `notifications` | user identifier, then notification identifier | Title, message, type, read flag, timestamp | The system |
 | `profilePhotos` | user identifier | Base64 JPEG thumbnail and the time it was set | The account holder |
 | `driverDocuments` | user identifier | Base64 JPEG of the driver's licence, the time it was sent, and the time consent was given | The driver; deleted by an administrator on refusal |
+| `driverRatings` | driver identifier, then rater identifier | One star rating, from one to five | The passenger who gave it |
 
 ![Figure 11. Realtime Database Schema](figures/fig11_database_schema.png){width=4.83in}
 
@@ -1314,7 +1319,7 @@ Training is organized by role and kept short, on the reasoning that a system req
 | Driver verification | Licence photograph submission with consent recorded at the point of upload, administrator review of the photograph against the entered details, approval, refusal with immediate deletion of the photograph, and withdrawal by the driver | FR-08a, FR-08b, NFR-10a |
 | Monitoring and reporting | Live counts and recent activity, period selection, summary statistics, three report types, document and spreadsheet export through the file picker and sharing | FR-36 to FR-39 |
 
-All thirty-eight functional requirements were implemented, as were the fifteen non-functional requirements.
+All forty-three functional requirements were implemented, as were the seventeen non-functional requirements.
 
 ### Reports Generated
 
@@ -1430,7 +1435,7 @@ This study set out to develop and evaluate a Smart Tricycle Ride and Driver Onbo
 
 *[The frequency and percentage distribution of needs assessment responses is to be inserted here following data collection.]*
 
-**On the features the system should include.** The requirements analysis produced thirty-eight functional requirements and fifteen non-functional requirements, all of which were implemented. The features fall into four groups: ride scheduling and booking; driver onboarding and verification; fare computation from the published FeTODAT schedule; and notification, monitoring, and reporting. One requirement emerged from the study environment rather than from the reviewed literature: because fares in Talibon are fixed per destination by municipal ordinance rather than computed from distance, the system prices rides by lookup against the published schedule, honours the statutory minimum fares of ₱15.00 and ₱12.00, and provides a separate rate column for senior citizens, persons with disabilities, and students.
+**On the features the system should include.** The requirements analysis produced forty-three functional requirements and seventeen non-functional requirements, all of which were implemented. The features fall into four groups: ride scheduling and booking; driver onboarding and verification; fare computation from the published FeTODAT schedule; and notification, monitoring, and reporting. One requirement emerged from the study environment rather than from the reviewed literature: because fares in Talibon are fixed per destination by municipal ordinance rather than computed from distance, the system prices rides by lookup against the published schedule, honours the statutory minimum fares of ₱15.00 and ₱12.00, and provides a separate rate column for senior citizens, persons with disabilities, and students.
 
 **On the effectiveness of the system.**
 
@@ -1910,6 +1915,7 @@ The structure of the Realtime Database is documented in Table 8 and illustrated 
 | `notifications/{uid}` | The named user | The system to create; the named user to mark as read |
 | `profilePhotos/{uid}` | All authenticated users | The account holder only |
 | `driverDocuments/{uid}` | The driver and administrators only | The driver, and administrators in order to delete on refusal |
+| `driverRatings/{uid}` | All authenticated users | Each rating only by the passenger who gave it, and only as a value from one to five |
 
 ## Appendix M — Test Cases
 

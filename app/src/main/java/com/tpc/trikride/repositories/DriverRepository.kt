@@ -49,6 +49,16 @@ class DriverRepository(
         firebase.updateDriverLocation(driverId, location)
     }
 
+    /** Counts a finished ride against the driver's totals. */
+    suspend fun recordCompletedRide(driverId: String) = firebase.recordCompletedRide(driverId)
+
+    /** Every star rating this driver has been given. */
+    fun ratings(driverId: String): Flow<List<Int>> = firebase.getRatingsFlow(driverId)
+
+    /** Caches the average onto the driver's own record for others to read. */
+    suspend fun publishRating(driverId: String, average: Double, count: Int) =
+        firebase.publishRating(driverId, average, count)
+
     /**
      * Stores the driver's licence photograph.
      *

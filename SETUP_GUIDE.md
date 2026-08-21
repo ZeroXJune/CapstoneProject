@@ -86,6 +86,15 @@ server in between, so anything the rules allow is allowed, whatever the interfac
         }
       }
     },
+    "driverRatings": {
+      "$driverId": {
+        ".read": "auth != null",
+        "$raterId": {
+          ".write": "auth != null && $raterId === auth.uid",
+          ".validate": "newData.isNumber() && newData.val() >= 1 && newData.val() <= 5"
+        }
+      }
+    },
     "driverDocuments": {
       "$uid": {
         ".read": "auth != null && ($uid === auth.uid || root.child('users').child(auth.uid).child('userType').val() === 'ADMIN')",
@@ -130,10 +139,20 @@ server in between, so anything the rules allow is allowed, whatever the interfac
 }
 ```
 
-Three notes on these. `drivers/$uid/verificationStatus` carries its own write rule so a
+Four notes on these. `drivers/$uid/verificationStatus` carries its own write rule so a
 driver can edit their own record without being able to approve themselves. `config`
 covers both `config/fare` and `config/fareStops`, which every signed-in user reads to
 price a ride but only an administrator can change.
+
+`driverRatings` exists because a passenger has to be able to record a rating without
+being able to write to the driver's record, which is the driver's own. Each rating sits
+under the key of the person giving it, so the rule can restrict it to them, and the
+`.validate` clause keeps the value between one and five. The driver's app reads its own
+ratings and writes the average back onto its own record, which is where the admin screens
+and the exported reports read it from. The effect is that a rating reaches the admin's
+view when the driver next opens the app rather than the moment it is given — the
+alternative would be letting passengers write to driver records, and that is a worse
+trade than a few hours of lag.
 
 `driverDocuments` is the one rule here that is not readable by every signed-in user, and
 it is deliberately the odd one out. It holds photographs of drivers' licences, which are
