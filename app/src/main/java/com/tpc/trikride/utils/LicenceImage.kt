@@ -74,10 +74,15 @@ object LicenceImage {
      * before shrinking it is how an app runs out of memory.
      */
     private fun decodeScaled(context: Context, uri: Uri): Bitmap? {
+        // decodeStream returns null whenever inJustDecodeBounds is set — that is
+        // its contract, not a failure — so whether the image could be read has
+        // to be judged from the size it wrote into the options. Testing the
+        // return value here instead rejects every image ever chosen.
         val bounds = BitmapFactory.Options().apply { inJustDecodeBounds = true }
         context.contentResolver.openInputStream(uri)?.use {
             BitmapFactory.decodeStream(it, null, bounds)
-        } ?: return null
+        }
+        if (bounds.outWidth <= 0 || bounds.outHeight <= 0) return null
 
         var sample = 1
         while (maxOf(bounds.outWidth, bounds.outHeight) / sample > TARGET_LONG_EDGE * 2) {
