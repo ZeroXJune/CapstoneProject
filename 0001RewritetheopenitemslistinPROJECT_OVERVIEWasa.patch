@@ -1,0 +1,135 @@
+From 619c8b7d74789774667fbb6c34cb78284b54fa92 Mon Sep 17 00:00:00 2001
+From: Claude <noreply@anthropic.com>
+Date: Fri, 21 Aug 2026 13:37:05 +0000
+Subject: [PATCH 1/2] Rewrite the open-items list in PROJECT_OVERVIEW as an
+ ordered punch list
+
+Groups what is left by what blocks what: five steps to make the app
+installable, two before real people use it, then the evaluation and
+everything in the manuscript waiting on it.
+
+Also brings the finished list up to date with the licence photo work.
+
+Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01A1yMabEEN9wVLJcuoCQ2Ki
+---
+ PROJECT_OVERVIEW.md | 84 +++++++++++++++++++++++++++++++++++----------
+ 1 file changed, 66 insertions(+), 18 deletions(-)
+
+diff --git a/PROJECT_OVERVIEW.md b/PROJECT_OVERVIEW.md
+index 1f28c08..ca17894 100644
+--- a/PROJECT_OVERVIEW.md
++++ b/PROJECT_OVERVIEW.md
+@@ -29,8 +29,11 @@ completed, driven by the driver and reflected on the passenger's screen without
+ refreshing. A completion summary with a rating. History on both sides.
+ 
+ **Driver onboarding.** Licence number, expiry, and tricycle number submitted at
+-registration. An administrator approves or rejects. An unapproved driver cannot accept
+-anyone, and the decision arrives as a notification.
++registration, then a photograph of the licence from the driver's own profile, with a
++consent step naming what the image is for and when it is destroyed. An administrator opens
++the photograph, checks it against the typed details, and approves or rejects; a refusal
++deletes the image with it. An unapproved driver cannot accept anyone, and the decision
++arrives as a notification.
+ 
+ **Admin.** Verification queue with a badge. Concerns with a badge, a status, and a note
+ field. A live monitor of drivers, verification states, and rides. The fare table with
+@@ -69,7 +72,9 @@ are all free and none of them asks for a card. Cloud Storage is the one Firebase
+ that needs the paid Blaze plan, so it is not used: profile photos are squared off at 256
+ pixels, compressed to a few kilobytes, and written to `profilePhotos/{uid}` in the
+ database. They are kept out of the user record on purpose, so the admin screens can list
+-every user without dragging every avatar across the network.
++every user without dragging every avatar across the network. Licence photographs use the
++same trick at a legible size in `driverDocuments/{uid}`, and are the one node the rules
++keep from ordinary users.
+ 
+ ## What is not built, and why
+ 
+@@ -83,26 +88,69 @@ Functions, deferred.
+ 
+ ## What still needs a person, not a commit
+ 
+-**The fare data.** Forty-six of the 240 entries are flagged. Open Fares, tap the "Needs
+-review" chip, and work through them against the physical posted sheet. Four of them price
+-the discount above the regular rate, which is backwards and should be fixed before anyone
+-real uses the app. Three entries are switched off because no rate could be read; they
+-need a number or removal. One of those, San Roque "Dina/Gabril", looks like a duplicate of
+-"Gabriel & Dina", which is already in the table at ₱36/₱40.
+-
+-**`.env`.** Copy `.env.example` and fill it in. The build reads it.
++Nothing on this list is code. It is either something somebody has to do or data that does
++not exist yet. The order matters: steps 1 to 5 make the app installable, 6 and 7 have to
++happen before it reaches anyone real, and everything after that is waiting on the
++evaluation, which cannot start until the first seven are done.
++
++### Before it can be deployed at all
++
++1. **Compile and smoke-test it.** `./gradlew assembleDebug`, then click through every
++   screen on a real phone. Recent work was written without a build to check it against.
++2. **Generate the keystore.** Back it up in two places and put the four `RELEASE_*` values
++   in `.env`. Nothing can be distributed until this exists, and nothing can be updated if
++   it is lost.
++3. **Fill `.env`.** Copy `.env.example`. The build reads it.
++4. **Publish the security rules,** including `driverDocuments`. Without that one, licence
++   uploads are refused.
++5. **Load the fare table.** Sign in as an administrator and use Fares → Load official
++   rates. The app cannot price a ride until this is done once.
++
++Steps 1 to 5 are an afternoon. Full instructions are in the Deployment section of
++SETUP_GUIDE.md.
++
++### Before real people use it
++
++6. **Correct the flagged fares.** Forty-six of the 240 entries are flagged. Open Fares,
++   tap the "Needs review" chip, and work through them against the physical posted sheet.
++   Four price the discount above the regular rate, which is backwards. Three are switched
++   off because no rate could be read and need a number or removal; one of those, San Roque
++   "Dina/Gabril", looks like a duplicate of "Gabriel & Dina", already in the table at
++   ₱36/₱40.
++7. **Get the two permission letters signed** — one to the College President, one to the
++   FeTODAT President. Appendix B needs them as signed copies, and the evaluation cannot
++   begin without them, so this is worth starting first even though it is listed second.
++
++### The evaluation, which is the long pole
++
++No survey data has been collected. The chain is: letters signed, respondents recruited,
++app distributed, respondents use it, responses collected and tabulated. Everything below
++is waiting on the end of that chain, and nothing in it should be invented.
++
++| Where | What is missing |
++|:---|:---|
++| Table 19 | Population figures, the sample size from Slovin's formula, respondents who took part |
++| Tables 20–22, § 4.9 | Passenger results, driver results, summary across the ISO/IEC 25010 characteristics |
++| Chapter 5 | Summary, conclusions, recommendations |
++| § 4.5 | User acceptance completion rates, performance measurements, the defect log |
++| Appendix G | Item-level responses, one row per respondent |
++| Appendix H | Slovin's computation, weighted means, the independent-samples t-test |
++| § 5.1 | Frequency and percentage distribution of the needs assessment responses |
++
++Three more appendices need nothing but capturing while the evaluation is running:
++**Appendix I**, screenshots covering every module; **Appendix O**, printed sample reports,
++one of each in both formats; and **Appendix P**, photographs of the data gathering, with
++the consent of those pictured.
++
++Then rebuild the .docx and it is submittable.
++
++### Worth doing, not blocking
+ 
+ **Stop coordinates.** None of the 240 fare stops has a position yet. They book and price
+ fine without one; they just do not appear on the map. Filling in the dozen or so common
+ destinations as you verify their fares would cover a demo.
+ 
+-**The keystore.** Generate it, back it up in two places, and put the four
+-`RELEASE_*` values in `.env`. Nothing can be distributed until this exists, and nothing
+-can be updated if it is lost.
+-
+-**Evaluation.** No survey data has been collected. The manuscript's section 4.9 and
+-Chapter 5 carry the tables and the interpretation scale, with the numbers left blank and
+-marked as such. Nothing there is invented and nothing should be.
++**The onboarding artwork.** See the rough edges at the end of this file.
+ 
+ ## Documentation
+ 
+-- 
+2.43.0
+

@@ -1,0 +1,42 @@
+From 7e131f2f0cabb0e247eccca9a255bf4bf10b0d99 Mon Sep 17 00:00:00 2001
+From: Claude <noreply@anthropic.com>
+Date: Fri, 21 Aug 2026 13:40:56 +0000
+Subject: [PATCH 2/2] Import dp in the two map components
+
+Both had the Dp type but not the extension property, so 18.dp would not
+resolve.
+
+Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01A1yMabEEN9wVLJcuoCQ2Ki
+---
+ .../main/java/com/tpc/trikride/ui/components/GoogleMapView.kt    | 1 +
+ app/src/main/java/com/tpc/trikride/ui/components/TrikMap.kt      | 1 +
+ 2 files changed, 2 insertions(+)
+
+diff --git a/app/src/main/java/com/tpc/trikride/ui/components/GoogleMapView.kt b/app/src/main/java/com/tpc/trikride/ui/components/GoogleMapView.kt
+index 5790caa..5b76e9f 100644
+--- a/app/src/main/java/com/tpc/trikride/ui/components/GoogleMapView.kt
++++ b/app/src/main/java/com/tpc/trikride/ui/components/GoogleMapView.kt
+@@ -14,6 +14,7 @@ import androidx.compose.ui.graphics.Color
+ import androidx.compose.ui.graphics.toArgb
+ import androidx.compose.ui.platform.LocalLifecycleOwner
+ import androidx.compose.ui.unit.Dp
++import androidx.compose.ui.unit.dp
+ import androidx.compose.ui.viewinterop.AndroidView
+ import androidx.lifecycle.Lifecycle
+ import androidx.lifecycle.LifecycleEventObserver
+diff --git a/app/src/main/java/com/tpc/trikride/ui/components/TrikMap.kt b/app/src/main/java/com/tpc/trikride/ui/components/TrikMap.kt
+index b43ec96..a7bf1a7 100644
+--- a/app/src/main/java/com/tpc/trikride/ui/components/TrikMap.kt
++++ b/app/src/main/java/com/tpc/trikride/ui/components/TrikMap.kt
+@@ -18,6 +18,7 @@ import androidx.compose.ui.graphics.Color
+ import androidx.compose.ui.graphics.toArgb
+ import androidx.compose.ui.platform.LocalContext
+ import androidx.compose.ui.unit.Dp
++import androidx.compose.ui.unit.dp
+ import androidx.compose.ui.viewinterop.AndroidView
+ import androidx.core.content.edit
+ import com.tpc.trikride.models.Location
+-- 
+2.43.0
+
