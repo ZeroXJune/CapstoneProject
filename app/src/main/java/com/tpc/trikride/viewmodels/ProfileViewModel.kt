@@ -1,7 +1,5 @@
 package com.tpc.trikride.viewmodels
 
-import android.content.Context
-import android.net.Uri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.tpc.trikride.models.User
@@ -71,12 +69,12 @@ class ProfileViewModel(
         }
     }
 
-    fun uploadPhoto(context: Context, uri: Uri) {
+    fun uploadPhoto(image: android.graphics.Bitmap) {
         val uid = boundId ?: return
         viewModelScope.launch {
             _state.update { it.copy(isUploadingPhoto = true, error = null, message = null) }
             try {
-                val encoded = repo.saveProfilePhoto(context, uid, uri)
+                val encoded = repo.saveProfilePhoto(uid, image)
                 _state.update {
                     it.copy(isUploadingPhoto = false, photo = encoded, message = "Photo updated")
                 }

@@ -40,12 +40,15 @@ import androidx.compose.foundation.Image
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import androidx.core.content.FileProvider
 import com.tpc.trikride.utils.ProfilePhoto
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import java.io.File
 
 /** Creates a temp file in the cache and returns a FileProvider uri for it. */
@@ -61,13 +64,17 @@ internal fun newCameraUri(context: Context): Uri {
  * [photoData] is the base64 JPEG held in the database, since profile photos do
  * not go to Cloud Storage on this project. Falls back to the user's [initials]
  * when they have not set one.
+ *
+ * A chosen image goes to [AvatarCropper] before it goes anywhere else, so what
+ * is stored is the part of the photograph the user chose rather than whatever
+ * happened to be in the middle of the frame.
  */
 @Composable
 fun AvatarPicker(
     photoData: String?,
     initials: String,
     isUploading: Boolean,
-    onImagePicked: (Uri) -> Unit,
+    onPhotoChosen: (android.graphics.Bitmap) -> Unit,
     modifier: Modifier = Modifier,
     size: Dp = 96.dp
 ) {
@@ -77,15 +84,29 @@ fun AvatarPicker(
     // Decoding is cheap at this size, but not free, so tie it to the data.
     val photo = remember(photoData) { ProfilePhoto.decode(photoData) }
 
+    // The image chosen but not yet positioned. Decoding it is disk work, so it
+    // happens off the main thread and the cropper waits for it.
+    var toCrop by remember { mutableStateOf<Uri?>(null) }
+    var cropSource by remember { mutableStateOf<android.graphics.Bitmap?>(null) }
+
+    LaunchedEffect(toCrop) {
+        val uri = toCrop
+        cropSource = if (uri == null) null
+        else withContext(Dispatchers.IO) { ProfilePhoto.loadForCrop(context, uri) }
+        // An image that will not decode clears the request rather than leaving
+        // an empty dialog waiting for a bitmap that is never coming.
+        if (uri != null && cropSource == null) toCrop = null
+    }
+
     val galleryLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.PickVisualMedia()
-    ) { uri -> uri?.let(onImagePicked) }
+    ) { uri -> if (uri != null) toCrop = uri }
 
     val cameraLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.TakePicture()
     ) { success ->
         val uri = pendingCameraUri
-        if (success && uri != null) onImagePicked(uri)
+        if (success && uri != null) toCrop = uri
         pendingCameraUri = null
     }
 
@@ -201,6 +222,17 @@ fun AvatarPicker(
             confirmButton = {},
             dismissButton = {
                 TextButton(onClick = { showChooser = false }) { Text("Cancel") }
+            }
+        )
+    }
+
+    cropSource?.let { bitmap ->
+        AvatarCropper(
+            source = bitmap,
+            onCancel = { toCrop = null },
+            onConfirm = { cropped ->
+                toCrop = null
+                onPhotoChosen(cropped)
             }
         )
     }

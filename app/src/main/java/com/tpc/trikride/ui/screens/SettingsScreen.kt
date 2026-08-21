@@ -26,7 +26,6 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
@@ -58,8 +57,7 @@ fun SettingsScreen(
 ) {
     LaunchedEffect(userId) { viewModel.bind(userId) }
     val state by viewModel.state.collectAsState()
-    val context = LocalContext.current
-    val pickPhoto: (android.net.Uri) -> Unit = { uri -> viewModel.uploadPhoto(context, uri) }
+    val pickPhoto: (android.graphics.Bitmap) -> Unit = { image -> viewModel.uploadPhoto(image) }
 
     var editing by remember { mutableStateOf(false) }
     var showDoc by remember { mutableStateOf<LegalDoc?>(null) }
@@ -105,7 +103,7 @@ fun SettingsScreen(
                         photoData = state.photo,
                         initials = initials(state.user?.firstName),
                         isUploading = state.isUploadingPhoto,
-                        onImagePicked = pickPhoto,
+                        onPhotoChosen = pickPhoto,
                         size = 56.dp
                     )
                     Spacer(modifier = Modifier.width(14.dp))
@@ -219,7 +217,7 @@ private fun EditProfileContent(
     isSaving: Boolean,
     isUploadingPhoto: Boolean,
     photoData: String,
-    onPickPhoto: (android.net.Uri) -> Unit,
+    onPickPhoto: (android.graphics.Bitmap) -> Unit,
     onSave: (String, String) -> Unit,
     onBack: () -> Unit
 ) {
@@ -246,7 +244,7 @@ private fun EditProfileContent(
             photoData = photoData,
             initials = initials(name),
             isUploading = isUploadingPhoto,
-            onImagePicked = onPickPhoto,
+            onPhotoChosen = onPickPhoto,
             size = 96.dp,
             modifier = Modifier.align(Alignment.CenterHorizontally)
         )

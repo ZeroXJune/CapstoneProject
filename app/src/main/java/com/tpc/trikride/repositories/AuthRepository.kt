@@ -1,7 +1,5 @@
 package com.tpc.trikride.repositories
 
-import android.content.Context
-import android.net.Uri
 import com.google.android.gms.tasks.Task
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.FirebaseDatabase
@@ -75,8 +73,8 @@ class AuthRepository(
      * tier. Photos live under their own node so that reading a list of users
      * does not pull every avatar with it. Returns the encoded photo.
      */
-    suspend fun saveProfilePhoto(context: Context, uid: String, imageUri: Uri): String {
-        val encoded = withContext(Dispatchers.IO) { ProfilePhoto.encode(context, imageUri) }
+    suspend fun saveProfilePhoto(uid: String, image: android.graphics.Bitmap): String {
+        val encoded = withContext(Dispatchers.IO) { ProfilePhoto.encodeBitmap(image) }
             ?: error("That image could not be processed. Try a different photo.")
         database.getReference("profilePhotos").child(uid).setValue(
             mapOf(

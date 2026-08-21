@@ -34,15 +34,24 @@ object ProfilePhoto {
     private const val MAX_ENCODED_BYTES = 24_000
 
     /**
-     * Reads the image at [uri], squares and shrinks it, and returns it as a
-     * base64 JPEG. Returns null if the image cannot be read or cannot be
-     * compressed small enough.
+     * Reads the image at [uri] at a size suitable for the crop screen.
+     *
+     * A thousand pixels is far more than the 256 that will be stored, so the
+     * crop is chosen against a faithful preview while still costing a few
+     * megabytes rather than the forty a full camera frame would.
      */
-    fun encode(context: Context, uri: Uri): String? {
-        val source = decodeScaled(context, uri) ?: return null
-        val square = cropToSquare(source)
+    fun loadForCrop(context: Context, uri: Uri): Bitmap? = decodeScaled(context, uri)
+
+    /**
+     * Squares, shrinks and compresses an already-chosen region.
+     *
+     * The caller owns [bitmap] and it is not recycled here — it is usually
+     * still on screen behind the confirmation.
+     */
+    fun encodeBitmap(bitmap: Bitmap): String? {
+        val square = cropToSquare(bitmap)
         val scaled = Bitmap.createScaledBitmap(square, TARGET_PX, TARGET_PX, true)
-        if (square !== source) source.recycle()
+        if (square !== bitmap && square !== scaled) square.recycle()
 
         for (quality in QUALITY_STEPS) {
             val bytes = ByteArrayOutputStream().use { out ->
@@ -51,11 +60,11 @@ object ProfilePhoto {
             }
             val encoded = Base64.encodeToString(bytes, Base64.NO_WRAP)
             if (encoded.length <= MAX_ENCODED_BYTES) {
-                scaled.recycle()
+                if (scaled !== bitmap) scaled.recycle()
                 return encoded
             }
         }
-        scaled.recycle()
+        if (scaled !== bitmap) scaled.recycle()
         return null
     }
 
