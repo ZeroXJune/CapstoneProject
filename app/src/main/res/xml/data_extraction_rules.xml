@@ -1,7 +1,32 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Android 12+ backup/transfer rules. Defaults are fine for now;
-     add <exclude> entries here if sensitive local files are ever stored. -->
+<!--
+    Android 12+ backup and transfer rules.
+
+    Nothing this app stores locally may leave the device. Firebase Auth keeps
+    the signed-in session in shared preferences, and with the default rules
+    Android backs that up and restores it on reinstall — so a user who removed
+    the app came back still signed in, and a session could follow a cloud
+    restore onto a different phone entirely.
+
+    Cloud backup and device transfer are listed separately on purpose:
+    android:allowBackup="false" turns off the cloud path, but on some
+    manufacturers' devices it does not stop a device-to-device transfer.
+
+    Nothing is lost by this. The only local state is the remembered email and
+    the flag saying the onboarding carousel has been seen; everything else
+    lives in Firebase and comes back on sign-in.
+-->
 <data-extraction-rules>
-    <cloud-backup />
-    <device-transfer />
+    <cloud-backup>
+        <exclude domain="root" />
+        <exclude domain="file" />
+        <exclude domain="database" />
+        <exclude domain="sharedpref" />
+    </cloud-backup>
+    <device-transfer>
+        <exclude domain="root" />
+        <exclude domain="file" />
+        <exclude domain="database" />
+        <exclude domain="sharedpref" />
+    </device-transfer>
 </data-extraction-rules>

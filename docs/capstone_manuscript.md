@@ -855,7 +855,7 @@ The consequence, recorded here rather than hidden, is that a newly given rating 
 
 **A limit of verification.** The system confirms that a document was presented and that it corresponds to the details the driver entered. It cannot confirm that a licence is current or that it has not been suspended, because the Land Transportation Office publishes no interface against which a licence may be checked. The verification implemented here is documentary, and Section 1.5 records this.
 
-**Session handling.** Sessions persist across application restarts, which is a convenience feature, but signing out clears the session immediately and returns the user to the sign-in screen.
+**Session handling.** Sessions persist across application restarts, which is a convenience feature, but signing out clears the session immediately and returns the user to the sign-in screen. A session does not, however, survive the installation. The authentication library keeps it in the application's shared preferences, and Android's default backup behaviour copies those to the user's cloud storage and restores them on reinstallation, with the effect that a user who removed the application returned to it already signed in, and that a restore onto a replacement handset could carry the session with it. Backup and device-to-device transfer are therefore both disabled for this application. The two are configured separately because disabling cloud backup does not, on the devices of every manufacturer, disable transfer. No user data is lost by this: the only information held locally is a remembered email address and a flag recording that the introductory carousel has been seen.
 
 **Recorded consent.** The Terms and Conditions, Privacy Policy, Safety and Community Guidelines, and Driver Agreement are carried inside the application and are readable at any time from the profile screen. No account reaches a dashboard until it has accepted the documents that apply to it, with each one ticked separately after being made available to read in full; the only alternative offered is to sign out. The version accepted and the moment of acceptance are stored on the account, so that consent can be evidenced rather than assumed, an account created before consent was tracked is asked at its next launch, and a revision to the documents asks every user again.
 
@@ -1240,6 +1240,7 @@ Performance was assessed against the targets in Table 3. Request propagation was
 | SEC-10 | Attempt to read a driver's licence photograph while signed in as a different driver | The read is refused | Pass |
 | SEC-11 | Refuse a driver application and then query the document node directly | The photograph has been deleted and the read returns nothing | Pass |
 | SEC-12 | Withdraw approval from an approved driver and query the document node | The photograph is retained, since withdrawal is not refusal | Pass |
+| SEC-13 | Uninstall the application, reinstall it, and open it | The user is returned to the sign-in screen rather than to a restored session | Pass |
 
 ## 4.6 Prototype Description
 

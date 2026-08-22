@@ -1,4 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Pre-Android-12 backup rules. Wildcards are not supported in paths,
-     so keep this minimal; Firebase manages its own state server-side. -->
-<full-backup-content />
+<!--
+    Pre-Android-12 backup rules. Ignored while android:allowBackup is false,
+    but kept correct so that turning backup back on cannot silently restore a
+    signed-in session along with it.
+-->
+<full-backup-content>
+    <exclude domain="root" />
+    <exclude domain="file" />
+    <exclude domain="database" />
+    <exclude domain="sharedpref" />
+</full-backup-content>

@@ -231,6 +231,15 @@ wrong thing. Signed-out start-up shows no loading screen at all: there is nothin
 for, so it routes straight to onboarding or sign-in. `bootstrap()` then loads the role, guarded by a twelve-second
 timeout: an unreachable database used to leave the app on a spinner forever.
 
+A session must not outlive the installation. Firebase Auth persists it in shared
+preferences, and Android's default backup rules copy those to the cloud and restore them,
+so uninstalling and reinstalling used to bring a user back already signed in — and a
+cloud restore could carry the session onto a different phone. `allowBackup` is therefore
+false and `data_extraction_rules.xml` excludes everything from both cloud backup and
+device-to-device transfer. Both are needed: `allowBackup` governs only the cloud path,
+and on some manufacturers' devices a D2D transfer proceeds regardless. Nothing is lost —
+the only local state is the remembered email and the onboarding-seen flag.
+
 **Reports.** `ReportBuilder` buckets rides by month or year from epoch-millisecond
 strings. A timestamp that will not parse is excluded from every period rather than
 silently landing in the current one.
