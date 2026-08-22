@@ -92,7 +92,7 @@ utils/
   ReverseGeocoder.kt   turns a pinned point into a readable label
   AuthPrefs.kt      remembered email, onboarding-seen flag
   LocationUtils.kt  haversine distance
-  Constants.kt      pickup points, request TTL, max passengers
+  Constants.kt      request TTL, max passengers, legal document version
 ```
 
 ## Database

@@ -335,7 +335,7 @@ This study covers the development of a Smart Tricycle Ride and Driver Onboarding
 6. Provides driver registration and verification controlled by an administrator, so that unverified drivers cannot accept passengers.
 7. Gives both parties a shared, live view of ride status, and a history of completed rides.
 7a. Displays an interactive map on the booking and tracking screens, and shows the assigned driver's position as it changes while the ride is under way.
-7b. Allows a passenger to set a pickup point either from the defined list or by pinning any point on the map, with the pinned point described in words where the device can resolve an address.
+7b. Allows a passenger to set a pickup point either by searching the table of stops or by pinning any point on the map, with the pinned point described in words where the device can resolve an address.
 8. Allows passengers and drivers to raise concerns, and allows an administrator to review, annotate, and resolve them.
 9. Notifies users in-app of the events that concern them.
 10. Provides an administrative fare table that can be searched, filtered, corrected, and extended without modifying the application's code.
@@ -896,7 +896,7 @@ Requirements were derived from three sources: the problems documented in the nee
 | FR-08 | The system shall present a first-time user with an introductory carousel, shown once. | All | 6 |
 | FR-08a | The system shall allow a driver to submit a photograph of their driver's licence, obtaining a specific consent to hold it at the moment of submission, and shall allow the driver to withdraw it. | Driver | 2 |
 | FR-08b | The system shall present that photograph to an administrator during verification, restrict it to the driver and administrators, and delete it when an application is refused. | Administrator | 2 |
-| FR-09 | The system shall allow a passenger to select a pickup point from a defined list. | Passenger | 1 |
+| FR-09 | The system shall allow a passenger to select a pickup point by searching the same table of stops used for destinations, or by pinning any point on the map. | Passenger | 1 |
 | FR-10 | The system shall allow a passenger to select a destination by searching the fare table by stop name or zone. | Passenger | 1 |
 | FR-11 | The system shall allow a passenger to select the regular or the discounted rate column. | Passenger | 1 |
 | FR-12 | The system shall allow a passenger to specify between one and five passengers and to declare luggage. | Passenger | 1 |

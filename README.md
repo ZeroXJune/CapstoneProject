@@ -146,8 +146,10 @@ background service and no background-location permission, so nothing is tracked 
 are off duty. The passenger sees that position move on the tracking screen once a driver
 accepts.
 
-Pickup can be chosen from the campus list or pinned anywhere on the map, with the point
-reverse-geocoded to a readable label. Destinations stay on the posted fare table, because
+Pickup is searched from the same list of stops as the destination, or pinned anywhere on
+the map with the point reverse-geocoded to a readable label. It used to come from a short
+fixed list of campus points, which only worked for passengers who happened to be starting
+at the campus. Destinations stay on the posted fare table, because
 the fare is fixed per named stop by ordinance and must not depend on where someone drops a
 pin. Stops can carry coordinates so they appear on the map; the admin fills those in over
 time and a stop without them still books normally.

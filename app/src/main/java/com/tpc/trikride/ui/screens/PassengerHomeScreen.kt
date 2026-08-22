@@ -17,7 +17,6 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Chat
-import androidx.compose.material.icons.filled.DirectionsBike
 import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.LocationOn
@@ -390,6 +389,7 @@ private fun BookingContent(
     val selectedLuggage = remember { mutableStateListOf<String>() }
     var notes by remember { mutableStateOf("") }
     var pickingDestination by remember { mutableStateOf(false) }
+    var pickingPickup by remember { mutableStateOf(false) }
     var pinningPickup by remember { mutableStateOf(false) }
 
     // The sheet carries two rates that are not tied to a numbered stop, so they
@@ -458,7 +458,17 @@ private fun BookingContent(
             Spacer(modifier = Modifier.height(16.dp))
         }
 
-        LocationField("Pickup Location", Icons.Filled.MyLocation, pickup) { pickup = it }
+        // Same searchable list as the destination. Pickup used to come from a
+        // short fixed list of campus points, which was wrong for anyone not
+        // starting at the campus.
+        StopField(
+            label = "Pickup Location",
+            value = pickup?.address.orEmpty(),
+            placeholder = "Choose where to be collected",
+            icon = Icons.Filled.MyLocation,
+            enabled = bookable.isNotEmpty(),
+            onClick = { pickingPickup = true }
+        )
         Spacer(modifier = Modifier.height(6.dp))
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -473,28 +483,13 @@ private fun BookingContent(
         }
         Spacer(modifier = Modifier.height(6.dp))
 
-        // 240 stops is too many for a dropdown, so this opens a searchable list.
-        OutlinedTextField(
-            value = destination?.label ?: "",
-            onValueChange = {},
-            readOnly = true,
-            enabled = false,
-            label = { Text("Destination") },
-            placeholder = { Text("Choose a stop") },
-            leadingIcon = { Icon(Icons.Filled.LocationOn, contentDescription = null) },
-            trailingIcon = { Icon(Icons.Filled.Search, contentDescription = null) },
-            shape = RoundedCornerShape(14.dp),
-            colors = OutlinedTextFieldDefaults.colors(
-                disabledTextColor = MaterialTheme.colorScheme.onSurface,
-                disabledBorderColor = MaterialTheme.colorScheme.outline,
-                disabledLabelColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                disabledLeadingIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                disabledTrailingIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                disabledPlaceholderColor = MaterialTheme.colorScheme.onSurfaceVariant
-            ),
-            modifier = Modifier
-                .fillMaxWidth()
-                .clickable(enabled = bookable.isNotEmpty()) { pickingDestination = true }
+        StopField(
+            label = "Destination",
+            value = destination?.label.orEmpty(),
+            placeholder = "Choose a stop",
+            icon = Icons.Filled.LocationOn,
+            enabled = bookable.isNotEmpty(),
+            onClick = { pickingDestination = true }
         )
         Spacer(modifier = Modifier.height(16.dp))
 
@@ -664,11 +659,24 @@ private fun BookingContent(
     }
 
     if (pickingDestination) {
-        DestinationPicker(
+        StopPicker(
+            title = "Where to?",
             stops = bookable,
             fareType = fareType,
+            showFares = true,
             onDismiss = { pickingDestination = false },
             onPick = { destination = it; pickingDestination = false }
+        )
+    }
+
+    if (pickingPickup) {
+        StopPicker(
+            title = "Where from?",
+            stops = bookable,
+            fareType = fareType,
+            showFares = false,
+            onDismiss = { pickingPickup = false },
+            onPick = { pickup = it.location; pickingPickup = false }
         )
     }
 }
@@ -805,9 +813,15 @@ private fun PickupPinner(
  * shown on every row.
  */
 @Composable
-private fun DestinationPicker(
+private fun StopPicker(
+    title: String,
     stops: List<FareStop>,
     fareType: FareType,
+    /**
+     * Fares belong to the destination. Showing one beside a pickup stop would
+     * read as the price of being collected there, which is not a thing.
+     */
+    showFares: Boolean,
     onDismiss: () -> Unit,
     onPick: (FareStop) -> Unit
 ) {
@@ -840,7 +854,7 @@ private fun DestinationPicker(
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Close")
                     }
                     Text(
-                        "Where to?",
+                        title,
                         style = MaterialTheme.typography.titleLarge,
                         fontWeight = FontWeight.Bold
                     )
@@ -911,12 +925,14 @@ private fun DestinationPicker(
                                         color = MaterialTheme.colorScheme.onSurfaceVariant
                                     )
                                 }
-                                Text(
-                                    "₱%.2f".format(FareEngine.rateFor(stop, fareType)),
-                                    style = MaterialTheme.typography.titleMedium,
-                                    fontWeight = FontWeight.Bold,
-                                    color = MaterialTheme.colorScheme.primary
-                                )
+                                if (showFares) {
+                                    Text(
+                                        "₱%.2f".format(FareEngine.rateFor(stop, fareType)),
+                                        style = MaterialTheme.typography.titleMedium,
+                                        fontWeight = FontWeight.Bold,
+                                        color = MaterialTheme.colorScheme.primary
+                                    )
+                                }
                             }
                             HorizontalDivider()
                         }
@@ -941,37 +957,43 @@ private fun FareLine(label: String, value: String) {
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
+/**
+ * A read-only field that opens a full-screen search rather than a dropdown.
+ *
+ * Two hundred and forty stops will not fit in a dropdown, and the pickup and
+ * destination now draw on the same list, so they use the same control.
+ */
 @Composable
-private fun LocationField(
+private fun StopField(
     label: String,
+    value: String,
+    placeholder: String,
     icon: ImageVector,
-    selected: Location?,
-    onSelected: (Location) -> Unit
+    enabled: Boolean,
+    onClick: () -> Unit
 ) {
-    var expanded by remember { mutableStateOf(false) }
-    ExposedDropdownMenuBox(expanded = expanded, onExpandedChange = { expanded = it }) {
-        OutlinedTextField(
-            value = selected?.address ?: "",
-            onValueChange = {},
-            readOnly = true,
-            label = { Text(label) },
-            leadingIcon = { Icon(icon, contentDescription = null) },
-            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
-            shape = RoundedCornerShape(14.dp),
-            modifier = Modifier
-                .fillMaxWidth()
-                .menuAnchor()
-        )
-        ExposedDropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
-            Constants.CAMPUS_LOCATIONS.forEach { location ->
-                DropdownMenuItem(
-                    text = { Text(location.address) },
-                    onClick = { onSelected(location); expanded = false }
-                )
-            }
-        }
-    }
+    OutlinedTextField(
+        value = value,
+        onValueChange = {},
+        readOnly = true,
+        enabled = false,
+        label = { Text(label) },
+        placeholder = { Text(placeholder) },
+        leadingIcon = { Icon(icon, contentDescription = null) },
+        trailingIcon = { Icon(Icons.Filled.Search, contentDescription = null) },
+        shape = RoundedCornerShape(14.dp),
+        colors = OutlinedTextFieldDefaults.colors(
+            disabledTextColor = MaterialTheme.colorScheme.onSurface,
+            disabledBorderColor = MaterialTheme.colorScheme.outline,
+            disabledLabelColor = MaterialTheme.colorScheme.onSurfaceVariant,
+            disabledLeadingIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
+            disabledTrailingIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
+            disabledPlaceholderColor = MaterialTheme.colorScheme.onSurfaceVariant
+        ),
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(enabled = enabled, onClick = onClick)
+    )
 }
 
 @Composable

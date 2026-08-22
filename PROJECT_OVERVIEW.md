@@ -14,11 +14,12 @@ launch. Password reset by email.
 **First run.** A five-slide carousel on first launch, shown once and never again.
 Returning users get the welcome artwork while the session restores.
 
-**Booking.** Pickup from a fixed list of campus points. Destination from a searchable,
-zone-filtered list of the 240 posted FeTODAT stops plus the two flat rates. A rate column
-switch for regular versus senior, PWD, and student. One to five passengers, luggage
-chips, and a free-text note. The fare appears itemised as soon as a destination is
-chosen.
+**Booking.** Pickup and destination both come from the same searchable, zone-filtered
+list of the 240 posted FeTODAT stops plus the two flat rates, and pickup can also be
+pinned anywhere on the map. Prices show against destinations only, since that is what
+the ordinance fixes. A rate column switch for regular versus senior, PWD, and student.
+One to five passengers, luggage chips, and a free-text note. The fare appears itemised as
+soon as a destination is chosen.
 
 **Matching.** The request goes to every online, verified driver with a countdown. The
 first to accept gets it and it disappears from everyone else. Unaccepted requests expire
@@ -101,8 +102,8 @@ evaluation, which cannot start until the first seven are done.
    in `.env`. Nothing can be distributed until this exists, and nothing can be updated if
    it is lost.
 3. **Fill `.env`.** Copy `.env.example`. The build reads it.
-4. **Publish the security rules,** including `driverDocuments`. Without that one, licence
-   uploads are refused.
+4. **Publish the security rules,** including `driverDocuments` and `driverRatings`.
+   Without the first, licence uploads are refused; without the second, ratings are.
 5. **Load the fare table.** Sign in as an administrator and use Fares → Load official
    rates. The app cannot price a ride until this is done once.
 
