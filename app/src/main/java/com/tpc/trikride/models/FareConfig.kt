@@ -67,9 +67,21 @@ enum class FareType {
  * that correcting one price is a small write rather than a rewrite of all 240.
  */
 data class FareConfig(
-    val minimumRegular: Double = 15.0,
-    val minimumDiscounted: Double = 12.0,
-    val poblacionFlat: Double = 15.0,
+    /**
+     * No ride is charged less than this, whatever the posted rate for the
+     * destination says. Twenty-seven rows in the transcribed table sit at ₱20
+     * and are raised to the minimum, which either means the sheet those rows
+     * came from predates the current rate or that they were read wrong; the
+     * admin fare screen shows which quotes had the minimum applied.
+     */
+    val minimumRegular: Double = 25.0,
+    /**
+     * Twenty per cent off, matching the ratio every discounted rate in the
+     * table holds to its regular one. Confirm against the posted sheet before
+     * carrying passengers — it is one edit in the admin fare screen.
+     */
+    val minimumDiscounted: Double = 20.0,
+    val poblacionFlat: Double = 25.0,
     val terminalRoundTrip: Double = 25.0,
     val chargePerPassenger: Boolean = true,
     val source: String = DEFAULT_SOURCE,

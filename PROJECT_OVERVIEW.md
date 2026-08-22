@@ -117,7 +117,9 @@ SETUP_GUIDE.md.
    Four price the discount above the regular rate, which is backwards. Three are switched
    off because no rate could be read and need a number or removal; one of those, San Roque
    "Dina/Gabril", looks like a duplicate of "Gabriel & Dina", already in the table at
-   ₱36/₱40.
+   ₱36/₱40. While you are there, check the twenty-seven rows priced at ₱20: they sit below
+   the ₱25 minimum and are charged at ₱25, so either the sheet they came from is out of
+   date or they were read wrong.
 7. **Get the two permission letters signed** — one to the College President, one to the
    FeTODAT President. Appendix B needs them as signed copies, and the evaluation cannot
    begin without them, so this is worth starting first even though it is listed second.

@@ -67,7 +67,7 @@ bumping `Constants.LEGAL_VERSION` when the documents are revised asks everyone a
 ## Fares
 
 The app does not estimate. It looks up the posted rate for the destination, raises it to
-the ordinance minimum if the posted rate is lower (₱15 regular, ₱12 discounted), and
+the ordinance minimum if the posted rate is lower (₱25 regular, ₱20 discounted), and
 multiplies by the number of passengers.
 
 The rate table lives in the database, not in the code, so a wrong price is fixed in the
