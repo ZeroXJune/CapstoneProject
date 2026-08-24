@@ -466,9 +466,35 @@ class FirebaseService {
     // that is what the admin list needs in order to say whether there is
     // anything to look at.
 
-    suspend fun saveLicenceImage(driverId: String, document: DriverDocument) {
+    /**
+     * Records the licence number and expiry a driver typed at registration.
+     *
+     * These live beside the photograph rather than on the driver record: a
+     * licence number is a government-issued identifier, and `drivers/{uid}` is
+     * readable by every signed-in account because passengers need the
+     * availability and position held there.
+     */
+    suspend fun saveLicenceDetails(driverId: String, number: String, expiry: String) {
         database.getReference("driverDocuments").child(driverId).child("licence")
-            .setValue(document).await()
+            .updateChildren(mapOf("licenceNumber" to number, "licenceExpiry" to expiry))
+            .await()
+    }
+
+    /**
+     * Stores the photograph, leaving the number and expiry as they are.
+     *
+     * updateChildren rather than setValue, or sending a photograph would erase
+     * the details the driver typed when they registered.
+     */
+    suspend fun saveLicenceImage(driverId: String, image: String, uploadedAt: String, consentedAt: String) {
+        database.getReference("driverDocuments").child(driverId).child("licence")
+            .updateChildren(
+                mapOf(
+                    "image" to image,
+                    "uploadedAt" to uploadedAt,
+                    "consentedAt" to consentedAt
+                )
+            ).await()
         database.getReference("drivers").child(driverId).child("hasLicenceImage")
             .setValue(true).await()
     }
@@ -484,8 +510,23 @@ class FirebaseService {
      * flag is cleared in the same breath, or the admin list would keep offering
      * a document that is no longer there.
      */
+    /**
+     * Destroys the photograph and nothing else.
+     *
+     * The number and expiry stay: they are what the driver typed and what an
+     * administrator compared the photograph against, and a refusal that erased
+     * them would leave no record of what was refused. Removing the whole node
+     * here would also take them, which is why the children are named.
+     */
     suspend fun deleteLicenceImage(driverId: String) {
-        database.getReference("driverDocuments").child(driverId).removeValue().await()
+        database.getReference("driverDocuments").child(driverId).child("licence")
+            .updateChildren(
+                mapOf<String, Any?>(
+                    "image" to null,
+                    "uploadedAt" to null,
+                    "consentedAt" to null
+                )
+            ).await()
         database.getReference("drivers").child(driverId).child("hasLicenceImage")
             .setValue(false).await()
     }

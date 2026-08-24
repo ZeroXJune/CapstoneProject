@@ -319,7 +319,7 @@ object ReportBuilder {
         sb.appendLine()
         sb.appendLine(
             row(
-                "Driver", "Email", "Phone", "Tricycle number", "License number",
+                "Driver", "Email", "Phone", "Tricycle number",
                 "Verification", "Rides accepted", "Completed", "Cancelled",
                 "Gross fares (PHP)", "Average fare (PHP)", "Rating"
             )
@@ -338,7 +338,6 @@ object ReportBuilder {
                         user?.email.orEmpty(),
                         user?.phoneNumber.orEmpty(),
                         record?.tricycleNumber.orEmpty(),
-                        record?.licenseNumber.orEmpty(),
                         record?.verificationStatus?.name.orEmpty(),
                         driverRides.size,
                         done.size,

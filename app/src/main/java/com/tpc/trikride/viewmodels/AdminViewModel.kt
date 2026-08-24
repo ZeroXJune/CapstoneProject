@@ -3,6 +3,7 @@ package com.tpc.trikride.viewmodels
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.tpc.trikride.models.Driver
+import com.tpc.trikride.models.DriverDocument
 import com.tpc.trikride.models.FareConfig
 import com.tpc.trikride.models.FareStop
 import com.tpc.trikride.models.Ride
@@ -69,29 +70,30 @@ class AdminViewModel(
     }
 
     /**
-     * Licence photographs the administrator has opened, keyed by driver.
+     * Licences the administrator has opened, keyed by driver.
      *
      * Fetched one at a time when a card is expanded rather than loaded with the
      * driver list. There is no reason to pull a dozen identity documents across
      * the network so that one of them can be looked at, and every one not
-     * fetched is one not sitting in memory.
+     * fetched is one not sitting in memory. The number and expiry come with the
+     * photograph because they live on the same protected node.
      */
-    private val _licenceImages = MutableStateFlow<Map<String, String?>>(emptyMap())
-    val licenceImages: StateFlow<Map<String, String?>> = _licenceImages
+    private val _licences = MutableStateFlow<Map<String, DriverDocument?>>(emptyMap())
+    val licences: StateFlow<Map<String, DriverDocument?>> = _licences
 
-    fun openLicenceImage(driverId: String) {
-        if (_licenceImages.value.containsKey(driverId)) return
+    fun openLicence(driverId: String) {
+        if (_licences.value.containsKey(driverId)) return
         viewModelScope.launch {
             // The key going in ahead of the value is what stops a second tap
             // from starting a second fetch.
-            _licenceImages.value = _licenceImages.value + (driverId to null)
-            val image = runCatching { repo.licenceImage(driverId)?.image }.getOrNull()
-            _licenceImages.value = _licenceImages.value + (driverId to image)
+            _licences.value = _licences.value + (driverId to null)
+            val doc = runCatching { repo.licenceDocument(driverId) }.getOrNull()
+            _licences.value = _licences.value + (driverId to doc)
         }
     }
 
-    fun closeLicenceImage(driverId: String) {
-        _licenceImages.value = _licenceImages.value - driverId
+    fun closeLicence(driverId: String) {
+        _licences.value = _licences.value - driverId
     }
 
     fun approveDriver(driverId: String) {
@@ -110,7 +112,7 @@ class AdminViewModel(
                 repo.rejectDriver(driverId)
                 // The image is gone from the database; drop the copy held here
                 // too rather than leaving a deleted document on screen.
-                closeLicenceImage(driverId)
+                closeLicence(driverId)
             } catch (e: Exception) {
                 _error.value = e.message ?: "Failed to reject driver"
             }

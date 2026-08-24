@@ -31,6 +31,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.tpc.trikride.models.Driver
+import com.tpc.trikride.models.DriverDocument
 import com.tpc.trikride.models.FareType
 import com.tpc.trikride.models.Ride
 import com.tpc.trikride.models.RideRequest
@@ -72,7 +73,7 @@ fun DriverHomeScreen(
     val isRegistering by viewModel.isRegistering.collectAsState()
     val error by viewModel.errorMessage.collectAsState()
     val earnings by viewModel.earnings.collectAsState()
-    val licenceImage by viewModel.licenceImage.collectAsState()
+    val licenceDoc by viewModel.licenceDoc.collectAsState()
     val uploadingLicence by viewModel.uploadingLicence.collectAsState()
     val licenceMessage by viewModel.licenceMessage.collectAsState()
 
@@ -106,9 +107,9 @@ fun DriverHomeScreen(
         return
     }
 
-    LaunchedEffect(profile.hasLicenceImage) {
-        if (profile.hasLicenceImage) viewModel.loadLicenceImage()
-    }
+    // The number and expiry are on this node too, so it is fetched whether or
+    // not a photograph has been sent.
+    LaunchedEffect(Unit) { viewModel.loadLicenceDocument() }
 
     val notifications by supportViewModel.notifications.collectAsState()
     val unreadCount = notifications.count { !it.read }
@@ -117,7 +118,7 @@ fun DriverHomeScreen(
         LicenceUploadCard(
             status = profile.verificationStatus,
             hasImage = profile.hasLicenceImage,
-            imageData = licenceImage,
+            imageData = licenceDoc?.image,
             isUploading = uploadingLicence,
             message = licenceMessage,
             onSubmit = { uri, consentedAt ->
@@ -177,7 +178,7 @@ fun DriverHomeScreen(
                     subtitle = "Tricycle #${profile.tricycleNumber}",
                     onSignOut = onSignOut,
                     extraContent = {
-                        DriverCredentialsCard(driver = profile)
+                        DriverCredentialsCard(driver = profile, licence = licenceDoc)
                         Spacer(modifier = Modifier.height(12.dp))
                         licenceCard()
                     }
@@ -663,7 +664,7 @@ private fun ActiveRideContent(ride: Ride, onAdvance: () -> Unit) {
 }
 
 @Composable
-private fun DriverCredentialsCard(driver: Driver) {
+private fun DriverCredentialsCard(driver: Driver, licence: DriverDocument?) {
     Column {
         Spacer(modifier = Modifier.height(8.dp))
         Text(
@@ -682,9 +683,15 @@ private fun DriverCredentialsCard(driver: Driver) {
                         color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
                 HorizontalDivider(modifier = Modifier.padding(vertical = 10.dp))
-                InfoRow(Icons.Filled.Badge, "License Number", driver.licenseNumber)
+                InfoRow(
+                    Icons.Filled.Badge, "Licence Number",
+                    licence?.licenceNumber?.ifBlank { null } ?: "—"
+                )
                 HorizontalDivider(modifier = Modifier.padding(vertical = 10.dp))
-                InfoRow(Icons.Filled.DateRange, "License Expiry", driver.licenseExpiry)
+                InfoRow(
+                    Icons.Filled.DateRange, "Licence Expiry",
+                    licence?.licenceExpiry?.ifBlank { null } ?: "—"
+                )
                 HorizontalDivider(modifier = Modifier.padding(vertical = 10.dp))
                 InfoRow(Icons.Filled.CreditCard, "Tricycle Number", driver.tricycleNumber)
                 HorizontalDivider(modifier = Modifier.padding(vertical = 10.dp))

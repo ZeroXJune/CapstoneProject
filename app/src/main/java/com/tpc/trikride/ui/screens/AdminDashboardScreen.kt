@@ -39,6 +39,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.tpc.trikride.models.Complaint
 import com.tpc.trikride.models.ComplaintStatus
 import com.tpc.trikride.models.Driver
+import com.tpc.trikride.models.DriverDocument
 import com.tpc.trikride.models.FareConfig
 import com.tpc.trikride.models.FareStop
 import com.tpc.trikride.models.Ride
@@ -70,7 +71,7 @@ fun AdminDashboardScreen(
     val fareSaved by viewModel.fareSaved.collectAsState()
     val importing by viewModel.importing.collectAsState()
     val complaints by viewModel.complaints.collectAsState()
-    val licenceImages by viewModel.licenceImages.collectAsState()
+    val licences by viewModel.licences.collectAsState()
 
     var tab by remember { mutableStateOf(AdminTab.VERIFY) }
     val usersById = remember(users) { users.associateBy { it.id } }
@@ -92,9 +93,9 @@ fun AdminDashboardScreen(
                 AdminTab.VERIFY -> VerificationContent(
                     drivers = drivers,
                     usersById = usersById,
-                    licenceImages = licenceImages,
-                    onOpenLicence = viewModel::openLicenceImage,
-                    onCloseLicence = viewModel::closeLicenceImage,
+                    licences = licences,
+                    onOpenLicence = viewModel::openLicence,
+                    onCloseLicence = viewModel::closeLicence,
                     onApprove = viewModel::approveDriver,
                     onReject = viewModel::rejectDriver,
                     onRevoke = viewModel::revokeApproval
@@ -337,7 +338,7 @@ private fun ComplaintStatusChip(status: ComplaintStatus) {
 private fun VerificationContent(
     drivers: List<Driver>,
     usersById: Map<String, User>,
-    licenceImages: Map<String, String?>,
+    licences: Map<String, DriverDocument?>,
     onOpenLicence: (String) -> Unit,
     onCloseLicence: (String) -> Unit,
     onApprove: (String) -> Unit,
@@ -376,8 +377,8 @@ private fun VerificationContent(
                 DriverCard(
                     driver = driver,
                     user = usersById[driver.userId],
-                    licence = licenceImages[driver.userId],
-                    licenceOpen = licenceImages.containsKey(driver.userId),
+                    licence = licences[driver.userId],
+                    licenceOpen = licences.containsKey(driver.userId),
                     onOpenLicence = { onOpenLicence(driver.userId) },
                     onCloseLicence = { onCloseLicence(driver.userId) },
                     actions = {
@@ -415,8 +416,8 @@ private fun VerificationContent(
                 DriverCard(
                     driver = driver,
                     user = usersById[driver.userId],
-                    licence = licenceImages[driver.userId],
-                    licenceOpen = licenceImages.containsKey(driver.userId),
+                    licence = licences[driver.userId],
+                    licenceOpen = licences.containsKey(driver.userId),
                     onOpenLicence = { onOpenLicence(driver.userId) },
                     onCloseLicence = { onCloseLicence(driver.userId) },
                     actions = {
@@ -446,7 +447,7 @@ private fun VerificationContent(
 private fun DriverCard(
     driver: Driver,
     user: User?,
-    licence: String?,
+    licence: DriverDocument?,
     licenceOpen: Boolean,
     onOpenLicence: () -> Unit,
     onCloseLicence: () -> Unit,
@@ -480,13 +481,11 @@ private fun DriverCard(
                 StatusChip(driver.verificationStatus)
             }
             Spacer(modifier = Modifier.height(12.dp))
-            InfoLine("License", driver.licenseNumber.ifBlank { "—" })
-            InfoLine("License Expiry", driver.licenseExpiry.ifBlank { "—" })
             InfoLine("Tricycle No.", driver.tricycleNumber.ifBlank { "—" })
             Spacer(modifier = Modifier.height(12.dp))
             LicenceReview(
                 hasImage = driver.hasLicenceImage,
-                image = licence,
+                licence = licence,
                 isOpen = licenceOpen,
                 onOpen = onOpenLicence,
                 onClose = onCloseLicence
@@ -508,74 +507,90 @@ private fun DriverCard(
 @Composable
 private fun LicenceReview(
     hasImage: Boolean,
-    image: String?,
+    licence: DriverDocument?,
     isOpen: Boolean,
     onOpen: () -> Unit,
     onClose: () -> Unit
 ) {
-    if (!hasImage) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Icon(
-                Icons.Filled.WarningAmber,
-                contentDescription = null,
-                tint = WarningColor,
-                modifier = Modifier.size(16.dp)
-            )
-            Spacer(modifier = Modifier.width(8.dp))
+    if (!isOpen) {
+        Column {
+            if (!hasImage) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(
+                        Icons.Filled.WarningAmber,
+                        contentDescription = null,
+                        tint = WarningColor,
+                        modifier = Modifier.size(16.dp)
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(
+                        "No licence photo submitted yet.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+                Spacer(modifier = Modifier.height(8.dp))
+            }
+            // Offered whether or not a photograph has arrived: the number and
+            // expiry are on the same protected node and are worth seeing on
+            // their own while an application is still incomplete.
+            OutlinedButton(
+                onClick = onOpen,
+                shape = RoundedCornerShape(14.dp),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Icon(Icons.Filled.Badge, contentDescription = null, modifier = Modifier.size(18.dp))
+                Spacer(modifier = Modifier.width(8.dp))
+                Text("View licence details")
+            }
+        }
+        return
+    }
+
+    val bitmap = remember(licence?.image) { LicenceImage.decode(licence?.image) }
+    Column {
+        InfoLine("Licence No.", licence?.licenceNumber?.ifBlank { null } ?: "—")
+        InfoLine("Licence Expiry", licence?.licenceExpiry?.ifBlank { null } ?: "—")
+        Spacer(modifier = Modifier.height(8.dp))
+
+        if (hasImage) {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(200.dp)
+                    .clip(RoundedCornerShape(12.dp))
+                    .background(MaterialTheme.colorScheme.surface),
+                contentAlignment = Alignment.Center
+            ) {
+                when {
+                    bitmap != null -> Image(
+                        bitmap = bitmap,
+                        contentDescription = "Licence photo",
+                        contentScale = ContentScale.Fit,
+                        modifier = Modifier.fillMaxSize()
+                    )
+                    licence == null -> CircularProgressIndicator(modifier = Modifier.size(24.dp))
+                    else -> Text(
+                        "That photo could not be opened.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            }
+            Spacer(modifier = Modifier.height(6.dp))
             Text(
-                "No licence photo submitted yet.",
+                "Check the number and expiry on the photo against the two lines above.",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        } else {
+            Text(
+                "No photo on file, so these details cannot be checked against one yet.",
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
         }
-        return
-    }
-
-    if (!isOpen) {
-        OutlinedButton(
-            onClick = onOpen,
-            shape = RoundedCornerShape(14.dp),
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            Icon(Icons.Filled.Badge, contentDescription = null, modifier = Modifier.size(18.dp))
-            Spacer(modifier = Modifier.width(8.dp))
-            Text("View licence photo")
-        }
-        return
-    }
-
-    val bitmap = remember(image) { LicenceImage.decode(image) }
-    Column {
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(200.dp)
-                .clip(RoundedCornerShape(12.dp))
-                .background(MaterialTheme.colorScheme.surface),
-            contentAlignment = Alignment.Center
-        ) {
-            when {
-                bitmap != null -> Image(
-                    bitmap = bitmap,
-                    contentDescription = "Licence photo",
-                    contentScale = ContentScale.Fit,
-                    modifier = Modifier.fillMaxSize()
-                )
-                image == null -> CircularProgressIndicator(modifier = Modifier.size(24.dp))
-                else -> Text(
-                    "That photo could not be opened.",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
-        }
-        Spacer(modifier = Modifier.height(6.dp))
-        Text(
-            "Check the number, name and expiry against the details above.",
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
-        )
-        TextButton(onClick = onClose) { Text("Hide photo") }
+        TextButton(onClick = onClose) { Text("Hide") }
     }
 }
 

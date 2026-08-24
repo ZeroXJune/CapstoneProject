@@ -30,8 +30,6 @@ enum class UserType {
 
 data class Driver(
     val userId: String = "",
-    val licenseNumber: String = "",
-    val licenseExpiry: String = "",
     val tricycleNumber: String = "",
     val verificationStatus: VerificationStatus = VerificationStatus.PENDING,
     val isAvailable: Boolean = false,
@@ -66,14 +64,21 @@ enum class VerificationStatus {
 }
 
 /**
- * A photograph of a driver's licence, held for verification.
+ * A driver's licence as the system holds it, for verification.
  *
- * Sensitive personal information under the Data Privacy Act of 2012, which is
- * why it is stored apart from everything else, read by nobody but the owner and
- * an administrator, and deleted when the application is refused. [consentedAt]
- * records that the driver was told what the image is for before sending it.
+ * The number, the expiry and the photograph together. All three are sensitive
+ * personal information under the Data Privacy Act of 2012 — the Act names
+ * government-issued identifiers explicitly — which is why they sit here rather
+ * than on the driver record. `drivers/{uid}` is readable by every signed-in
+ * account, because a passenger needs the availability and position on it; this
+ * node is readable only by the driver and an administrator.
+ *
+ * [consentedAt] records that the driver was told what the photograph is for
+ * before sending it.
  */
 data class DriverDocument(
+    val licenceNumber: String = "",
+    val licenceExpiry: String = "",
     val image: String = "",
     val uploadedAt: String = "",
     val consentedAt: String = "",

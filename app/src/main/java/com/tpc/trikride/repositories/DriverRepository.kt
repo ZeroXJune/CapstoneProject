@@ -25,13 +25,14 @@ class DriverRepository(
     ): Driver {
         val driver = Driver(
             userId = userId,
-            licenseNumber = licenseNumber,
-            licenseExpiry = licenseExpiry,
             tricycleNumber = tricycleNumber,
             verificationStatus = VerificationStatus.PENDING,
             isAvailable = false
         )
         firebase.registerDriver(userId, driver)
+        // The licence details go to the access-controlled node, not onto the
+        // driver record that every signed-in account can read.
+        firebase.saveLicenceDetails(userId, licenseNumber, licenseExpiry)
         return driver
     }
 
@@ -72,16 +73,15 @@ class DriverRepository(
         val encoded = withContext(Dispatchers.IO) { LicenceImage.encode(context, imageUri) }
             ?: throw IllegalStateException("That image could not be prepared. Try another photo.")
         firebase.saveLicenceImage(
-            driverId,
-            DriverDocument(
-                image = encoded,
-                uploadedAt = System.currentTimeMillis().toString(),
-                consentedAt = consentedAt
-            )
+            driverId = driverId,
+            image = encoded,
+            uploadedAt = System.currentTimeMillis().toString(),
+            consentedAt = consentedAt
         )
     }
 
-    suspend fun licenceImage(driverId: String): DriverDocument? =
+    /** The driver's licence: number, expiry and photograph. */
+    suspend fun licenceDocument(driverId: String): DriverDocument? =
         firebase.getLicenceImage(driverId)
 
     /** Lets a driver withdraw the photograph they sent. */

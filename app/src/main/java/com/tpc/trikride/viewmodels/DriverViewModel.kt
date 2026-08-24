@@ -113,21 +113,21 @@ class DriverViewModel(
     val licenceMessage: StateFlow<String?> = _licenceMessage
 
     /**
-     * The driver's own licence photograph, once something asks for it.
+     * The driver's own licence — number, expiry and photograph.
      *
-     * Fetched on demand rather than streamed. It is a couple of hundred
-     * kilobytes and it changes about once, so holding a listener open on it for
-     * the life of the session would be paying a subscription for a constant.
+     * Fetched on demand rather than streamed. The photograph is a couple of
+     * hundred kilobytes and the whole thing changes about once, so holding a
+     * listener open on it for the life of the session would be paying a
+     * subscription for a constant.
      */
-    private val _licenceImage = MutableStateFlow<String?>(null)
-    val licenceImage: StateFlow<String?> = _licenceImage
+    private val _licenceDoc = MutableStateFlow<com.tpc.trikride.models.DriverDocument?>(null)
+    val licenceDoc: StateFlow<com.tpc.trikride.models.DriverDocument?> = _licenceDoc
 
-    fun loadLicenceImage() {
+    fun loadLicenceDocument() {
         val id = driverId.value ?: return
-        if (_licenceImage.value != null) return
+        if (_licenceDoc.value != null) return
         viewModelScope.launch {
-            _licenceImage.value = runCatching { driverRepository.licenceImage(id)?.image }
-                .getOrNull()
+            _licenceDoc.value = runCatching { driverRepository.licenceDocument(id) }.getOrNull()
         }
     }
 
@@ -165,8 +165,8 @@ class DriverViewModel(
             _licenceMessage.value = null
             try {
                 driverRepository.saveLicenceImage(context, id, imageUri, consentedAt)
-                _licenceImage.value = null
-                loadLicenceImage()
+                _licenceDoc.value = null
+                loadLicenceDocument()
                 _licenceMessage.value = "Licence photo sent for review."
             } catch (e: Exception) {
                 _errorMessage.value = e.message ?: "Could not send that photo."
@@ -181,7 +181,10 @@ class DriverViewModel(
         viewModelScope.launch {
             try {
                 driverRepository.deleteLicenceImage(id)
-                _licenceImage.value = null
+                // The number and expiry survive a withdrawn photograph, so the
+                // document is refetched rather than dropped.
+                _licenceDoc.value = null
+                loadLicenceDocument()
                 _licenceMessage.value = "Licence photo removed."
             } catch (e: Exception) {
                 _errorMessage.value = e.message ?: "Could not remove that photo."

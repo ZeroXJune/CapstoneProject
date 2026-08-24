@@ -823,6 +823,8 @@ Three of the rules deserve description, because their form follows from a constr
 
 *Retention.* The retention rule is enforced in code and not left to a written policy. Refusing an application deletes the photograph in the same operation that records the refusal, since a refused applicant's licence serves no purpose the system has. An approved driver's photograph is retained while the account is active, because it is required again when the licence expires and if a concern about a ride is later disputed, and it is deleted with the account. Withdrawing an approval already granted is implemented as a separate operation from refusing an application, and deliberately does not delete the photograph: approval is usually withdrawn because a licence has lapsed or because a concern is under examination, and in either case destroying the document would remove the evidence the decision may later have to be justified against. A driver may withdraw the photograph themselves at any time.
 
+*Location.* The licence number and expiry are held with the photograph rather than on the driver record. That record is readable by every authenticated account, because a passenger needs the availability and position kept on it, and a licence number is among the government-issued identifiers the Act names. Holding all three together also means there is one node to protect and one to destroy. A consequence is that an administrator sees the number where they see the photograph, behind a deliberate action rather than on the face of the verification card, and that the exported driver report no longer carries it: that report is a record of performance, it leaves the device, and an identity number has no business travelling with it.
+
 *Proportionality.* No other document is requested. The system does not collect insurance certificates, inspection certificates, or secondary identification, all of which an earlier draft of the data model anticipated. Verification of the right to drive requires the licence, and requiring more would collect personal information the service has no use for.
 
 **Ratings without a trusted server.** A passenger must be able to rate the driver who carried them, and must not be able to edit that driver's record. With no application server between the client and the database, both halves have to be expressed as rules. Each rating is therefore written to `driverRatings/{driver}/{rater}` — keyed by the person giving it, which is the only shape a rule can restrict to that person — and validated to a value between one and five. The driver's own device reads those ratings, averages them, and writes the figure onto its own record, which the administrative screens and the exported reports then read.
@@ -1037,7 +1039,7 @@ The database is a JSON tree with seven top-level nodes.
 | Node | Key | Contents | Written by |
 |:---|:---|:---|:---|
 | `users` | user identifier | Email, mobile number, given and family name, date of birth, role, accepted document versions and the time of acceptance, timestamps | The account holder |
-| `drivers` | user identifier | Licence number and expiry, tricycle number, verification status, availability, rating, ride count, and a flag recording whether a licence photograph is on file | The driver; verification status by an administrator |
+| `drivers` | user identifier | Tricycle number, verification status, availability, rating, ride count, and a flag recording whether a licence photograph is on file | The driver; verification status by an administrator |
 | `rideRequests` | request identifier | Passenger identifier, pickup, destination, passenger count, luggage, priced fare, fare stop, rate column, requested and expiry timestamps | The passenger; deleted on acceptance or expiry |
 | `rides` | ride identifier | Passenger and driver identifiers, pickup, destination, status, fares, fare stop, rate column, lifecycle timestamps, passenger count, luggage, notes | The system on acceptance; status by the driver |
 | `config/fare` | fixed | Minimum regular fare, minimum discounted fare, flat rates, per-passenger flag, source citation, seed timestamp | An administrator |
@@ -1045,7 +1047,7 @@ The database is a JSON tree with seven top-level nodes.
 | `complaints` | complaint identifier | Reporter identifier, name and role, category, description, status, administrator note, timestamps | The reporter; status and note by an administrator |
 | `notifications` | user identifier, then notification identifier | Title, message, type, read flag, timestamp | The system |
 | `profilePhotos` | user identifier | Base64 JPEG thumbnail and the time it was set | The account holder |
-| `driverDocuments` | user identifier | Base64 JPEG of the driver's licence, the time it was sent, and the time consent was given | The driver; deleted by an administrator on refusal |
+| `driverDocuments` | user identifier | Licence number and expiry, a base64 JPEG of the licence, the time it was sent, and the time consent was given | The driver; the photograph deleted by an administrator on refusal |
 | `driverRatings` | driver identifier, then rater identifier | One star rating, from one to five | The passenger who gave it |
 
 ![Figure 11. Realtime Database Schema](figures/fig11_database_schema.png){width=4.83in}

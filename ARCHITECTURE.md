@@ -115,7 +115,7 @@ config/fareStops/{stopId}      the 240-entry rate table
 complaints/{id}                concerns raised by passengers and drivers
 notifications/{uid}/{id}       per-user notification feed
 profilePhotos/{uid}            base64 avatar, a few kilobytes
-driverDocuments/{uid}/licence  base64 photograph of the driver's licence
+driverDocuments/{uid}/licence  licence number, expiry and base64 photograph
 driverRatings/{uid}/{raterId}  one star rating per passenger, per driver
 ```
 
@@ -310,12 +310,20 @@ ride in the system to every device and spent the free tier's bandwidth doing it.
 Writes to a ride are the driver's alone. Creating one requires the new record's `driverId`
 to be the caller, which is what accepting does; after that only that driver advances it.
 
-Two gaps remain, recorded rather than glossed. `licenseNumber` sits on `drivers/{uid}`,
-which every signed-in account can read because passengers need availability and position
-from that same record; moving the licence fields into `driverDocuments` would close it.
-And `notifications/{uid}` stays writable by any authenticated user, because one party
-notifies the other and no rule can distinguish a real sender from a forged one without a
-server in the path.
+The licence number and expiry live on `driverDocuments/{uid}/licence` beside the
+photograph, not on the driver record. `drivers/{uid}` is readable by every signed-in
+account — a passenger needs the availability and position held there — and a licence
+number is a government-issued identifier, which the Data Privacy Act names explicitly.
+Keeping the three together also means one node to protect and one to destroy.
+
+Because the details now cost a fetch, the administrator's verification card shows them
+where it shows the photograph: behind a deliberate tap, one driver at a time. They were
+also dropped from the exported driver report, which is a performance record that gets
+mailed around and has no business carrying identity numbers.
+
+One gap remains, recorded rather than glossed: `notifications/{uid}` stays writable by any
+authenticated user, because one party notifies the other and no rule can distinguish a
+real sender from a forged one without a server in the path.
 
 Secrets live in `.env`, which is gitignored; `.env.example` records which keys exist
 without their values. `google-services.json` is gitignored too. The build reads `.env`

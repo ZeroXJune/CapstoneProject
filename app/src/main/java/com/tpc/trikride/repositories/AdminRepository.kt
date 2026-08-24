@@ -44,6 +44,6 @@ class AdminRepository(
         firebase.updateDriverVerification(driverId, VerificationStatus.REJECTED)
 
     /** Fetched only when an administrator opens a specific driver to review. */
-    suspend fun licenceImage(driverId: String): DriverDocument? =
+    suspend fun licenceDocument(driverId: String): DriverDocument? =
         firebase.getLicenceImage(driverId)
 }
