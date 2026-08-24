@@ -11,8 +11,6 @@ class FareRepository(
 ) {
     fun fareConfig(): Flow<FareConfig> = firebase.getFareConfigFlow()
 
-    suspend fun fareConfigOnce(): FareConfig = firebase.getFareConfigOnce()
-
     suspend fun save(config: FareConfig) = firebase.updateFareConfig(config)
 
     fun fareStops(): Flow<List<FareStop>> = firebase.getFareStopsFlow()

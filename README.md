@@ -121,7 +121,7 @@ database.
 ```
 app/src/main/java/com/tpc/trikride/
   models/         data classes: User, Ride, FareStop, Complaint, AppNotification
-  services/       FirebaseService — the only place that touches the database
+  services/       FirebaseService — rides, drivers, fares, concerns, notifications
   repositories/   six repositories between the ViewModels and the data
   viewmodels/     one per role, plus auth, profile, and support
   ui/screens/     Compose screens for passenger, driver, and admin
@@ -165,6 +165,9 @@ Google Sign-In. Email and password only.
 
 ## Documentation
 
-The full capstone manuscript is in `docs/`. Chapters 1 through 4 are complete; the
-evaluation results in section 4.9 and the conclusions in Chapter 5 are left as marked
-placeholders because the data have not been collected. Nothing in there is invented.
+The full capstone manuscript is in `docs/`. Chapters 1 through 4 are complete. Results,
+collected data, and statistical treatment are absent by intent — the evaluation has not
+been conducted and the treatment is for the study's statistician to determine, so those
+sections were removed rather than mocked up. Nothing in there is invented.
+
+Appendix I reproduces the whole source, generated from the repository at build time.

@@ -24,38 +24,6 @@ class FirebaseService {
         addOnFailureListener { cont.resumeWithException(it) }
     }
 
-    // User Operations
-    suspend fun createUser(userId: String, user: User) {
-        database.getReference("users").child(userId).setValue(user)
-    }
-
-    fun getUserFlow(userId: String): Flow<User?> = callbackFlow {
-        val listener = object : ValueEventListener {
-            override fun onDataChange(snapshot: DataSnapshot) {
-                val user = snapshot.getValue(User::class.java)
-                trySend(user)
-            }
-
-            override fun onCancelled(error: DatabaseError) {
-                close(error.toException())
-            }
-        }
-
-        val ref = database.getReference("users").child(userId)
-        ref.addValueEventListener(listener)
-
-        awaitClose { ref.removeEventListener(listener) }
-    }
-
-    suspend fun updateUserProfile(userId: String, firstName: String, phoneNumber: String) {
-        val updates = mapOf<String, Any?>(
-            "firstName" to firstName,
-            "phoneNumber" to phoneNumber,
-            "updatedAt" to System.currentTimeMillis().toString()
-        )
-        database.getReference("users").child(userId).updateChildren(updates).await()
-    }
-
     // Driver Operations
     suspend fun registerDriver(userId: String, driver: Driver) {
         database.getReference("drivers").child(userId).setValue(driver)
@@ -74,25 +42,6 @@ class FirebaseService {
         }
 
         val ref = database.getReference("drivers").child(driverId)
-        ref.addValueEventListener(listener)
-
-        awaitClose { ref.removeEventListener(listener) }
-    }
-
-    fun getAvailableDriversFlow(): Flow<List<Driver>> = callbackFlow {
-        val listener = object : ValueEventListener {
-            override fun onDataChange(snapshot: DataSnapshot) {
-                val drivers = snapshot.children.mapNotNull { it.getValue(Driver::class.java) }
-                    .filter { it.isAvailable }
-                trySend(drivers)
-            }
-
-            override fun onCancelled(error: DatabaseError) {
-                close(error.toException())
-            }
-        }
-
-        val ref = database.getReference("drivers")
         ref.addValueEventListener(listener)
 
         awaitClose { ref.removeEventListener(listener) }
@@ -172,24 +121,6 @@ class FirebaseService {
         database.getReference("rideRequests").child(rideRequest.id).setValue(rideRequest)
     }
 
-    fun getRideRequestFlow(requestId: String): Flow<RideRequest?> = callbackFlow {
-        val listener = object : ValueEventListener {
-            override fun onDataChange(snapshot: DataSnapshot) {
-                val request = snapshot.getValue(RideRequest::class.java)
-                trySend(request)
-            }
-
-            override fun onCancelled(error: DatabaseError) {
-                close(error.toException())
-            }
-        }
-
-        val ref = database.getReference("rideRequests").child(requestId)
-        ref.addValueEventListener(listener)
-
-        awaitClose { ref.removeEventListener(listener) }
-    }
-
     fun getOpenRideRequestsFlow(): Flow<List<RideRequest>> = callbackFlow {
         val listener = object : ValueEventListener {
             override fun onDataChange(snapshot: DataSnapshot) {
@@ -218,30 +149,8 @@ class FirebaseService {
         database.getReference("rides").child(ride.id).setValue(ride)
     }
 
-    fun getRideFlow(rideId: String): Flow<Ride?> = callbackFlow {
-        val listener = object : ValueEventListener {
-            override fun onDataChange(snapshot: DataSnapshot) {
-                val ride = snapshot.getValue(Ride::class.java)
-                trySend(ride)
-            }
-
-            override fun onCancelled(error: DatabaseError) {
-                close(error.toException())
-            }
-        }
-
-        val ref = database.getReference("rides").child(rideId)
-        ref.addValueEventListener(listener)
-
-        awaitClose { ref.removeEventListener(listener) }
-    }
-
     suspend fun updateRideStatus(rideId: String, status: RideStatus) {
         database.getReference("rides").child(rideId).child("status").setValue(status)
-    }
-
-    suspend fun updateRideRoute(rideId: String, route: List<Location>) {
-        database.getReference("rides").child(rideId).child("route").setValue(route)
     }
 
     fun getActiveRidesFlow(passengerId: String): Flow<List<Ride>> = callbackFlow {
@@ -491,11 +400,6 @@ class FirebaseService {
         ref.addValueEventListener(listener)
 
         awaitClose { ref.removeEventListener(listener) }
-    }
-
-    suspend fun getFareConfigOnce(): FareConfig {
-        val snapshot = database.getReference("config").child("fare").get().await()
-        return snapshot.getValue(FareConfig::class.java) ?: FareConfig()
     }
 
     suspend fun updateFareConfig(config: FareConfig) {

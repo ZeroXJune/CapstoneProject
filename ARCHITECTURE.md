@@ -13,13 +13,19 @@ ViewModels               one per role; own the screen state
       ↓ suspend calls             ↑ Flow
 Repositories             six of them; the ViewModels' only data source
       ↓
-FirebaseService          the single place that touches the database
+FirebaseService          rides, drivers, fares, concerns, notifications
       ↓ HTTPS / WebSocket
 Firebase                 Auth, Realtime Database, Cloud Messaging
 ```
 
 Each layer knows only about the one below it. A screen knows its ViewModel. A ViewModel
 knows repositories, never Firebase. A repository knows `FirebaseService`, never the UI.
+
+One exception, stated because the diagram would otherwise be a lie: `AuthRepository`
+speaks to Firebase directly rather than through `FirebaseService`. It owns authentication
+and the two nodes that belong with it — `users` and `profilePhotos` — and routing those
+through a service that does nothing else with them would add a layer without adding a
+seam. Everything else goes through `FirebaseService`.
 Changing where data live touches one layer; changing how a screen looks touches another.
 
 Data flows one way. An event goes down, a change comes back up as a `Flow`, the state
@@ -39,7 +45,7 @@ models/
   AppNotification.kt   AppNotification, NotificationType
 
 services/
-  FirebaseService.kt           every database read and write
+  FirebaseService.kt           rides, drivers, fares, concerns, notifications
   TrikRideMessagingService.kt  FCM receiver
 
 repositories/

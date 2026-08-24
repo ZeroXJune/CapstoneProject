@@ -126,23 +126,25 @@ SETUP_GUIDE.md.
 
 ### The evaluation, which is the long pole
 
-No survey data has been collected. The chain is: letters signed, respondents recruited,
-app distributed, respondents use it, responses collected and tabulated. Everything below
-is waiting on the end of that chain, and nothing in it should be invented.
+No survey data has been collected, and the manuscript no longer pretends otherwise —
+results, collected data and statistical treatment were removed rather than left as empty
+tables. The chain is: letters signed, respondents recruited, app distributed, respondents
+use it, responses collected, statistician sets the treatment, results written up.
+
+What has to be written once that is done:
 
 | Where | What is missing |
 |:---|:---|
-| Table 19 | Population figures, the sample size from Slovin's formula, respondents who took part |
-| Tables 20–22, § 4.9 | Passenger results, driver results, summary across the ISO/IEC 25010 characteristics |
-| Chapter 5 | Summary, conclusions, recommendations |
+| § 1.9 | Population figures, the sampling method and sample size, respondents who took part |
+| § 1.11 | The statistical treatment, once the statistician has specified it |
+| Chapter 4 | A section presenting the evaluation results and their interpretation |
+| Chapter 5 | A summary of findings, ahead of the conclusions already written |
 | § 4.5 | User acceptance completion rates, performance measurements, the defect log |
-| Appendix G | Item-level responses, one row per respondent |
-| Appendix H | Slovin's computation, weighted means, the independent-samples t-test |
-| § 5.1 | Frequency and percentage distribution of the needs assessment responses |
+| Appendices | Raw responses and the statistical computation, as the statistician requires |
 
-Three more appendices need nothing but capturing while the evaluation is running:
-**Appendix I**, screenshots covering every module; **Appendix O**, printed sample reports,
-one of each in both formats; and **Appendix P**, photographs of the data gathering, with
+Three appendices need nothing but capturing while the evaluation is running:
+**Appendix G**, screenshots covering every module; **Appendix M**, printed sample reports,
+one of each in both formats; and **Appendix N**, photographs of the data gathering, with
 the consent of those pictured.
 
 Then rebuild the .docx and it is submittable.
@@ -160,13 +162,17 @@ destinations as you verify their fares would cover a demo.
 `docs/capstone_manuscript.md` is the written documentation in Markdown, and
 `docs/TrikRide_Capstone_Documentation.docx` is the same thing built for submission,
 following the department's required format: preliminaries, five chapters, references in
-APA 7, and appendices A through R. The format discussion listed A through Q; Appendix D
-was added for the legal documents carried in the app, which pushed the rest down one.
+APA 7, and appendices A through P.
 
-Chapters 1 through 4 are complete. Section 4.9's results tables, Chapter 5's summary and
-conclusions, and several appendices (raw data, statistical computation, screenshots,
-signed permission letters, photographs of the data gathering) are marked as placeholders
-because they depend on work that has not happened yet.
+Chapters 1 through 4 are complete. Nothing about results, collected data, or statistical
+treatment is in the document: the evaluation has not been run, and the treatment is the
+statistician's to specify, so those sections were removed rather than left as empty
+tables. What remains to be added once the evaluation happens is the results, their
+interpretation, Chapter 5's summary and findings, and the appendices that depend on them.
+
+Appendix I carries the full source of all 55 Kotlin files. It is generated from the
+repository by `build_docx.sh`, so it cannot drift from the code — do not paste it into
+the Markdown by hand.
 
 Fourteen figures are generated from text in `docs/figures/`: research flow, conceptual
 framework, system architecture, context diagram, DFD level 1, ERD, use case, activity,
