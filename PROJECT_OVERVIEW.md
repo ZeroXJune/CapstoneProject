@@ -15,8 +15,8 @@ launch. Password reset by email.
 Returning users get the welcome artwork while the session restores.
 
 **Booking.** Pickup and destination both come from the same searchable, zone-filtered
-list of the 240 posted FeTODAT stops plus the two flat rates, and pickup can also be
-pinned anywhere on the map. Prices show against destinations only, since that is what
+list of the 240 posted FeTODAT stops plus the two flat rates, which sort to the top
+because the table has no row for them. Pickup can also be pinned anywhere on the map. Prices show against destinations only, since that is what
 the ordinance fixes. A rate column switch for regular versus senior, PWD, and student.
 One to five passengers, luggage chips, and a free-text note. The fare appears itemised as
 soon as a destination is chosen.

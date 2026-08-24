@@ -830,11 +830,25 @@ private fun StopPicker(
     val zones = remember(stops) { stops.map { it.zone }.distinct().sorted() }
 
     val results = remember(stops, query, zone) {
-        val q = query.trim().lowercase()
+        // Every word has to appear somewhere, so "poblacion talibon" and
+        // "market balintawak" both find what the passenger meant. A single
+        // substring match over the whole query found neither.
+        val terms = query.trim().lowercase().split(" ").filter { it.isNotBlank() }
         stops.asSequence()
             .filter { zone == null || it.zone == zone }
-            .filter { q.isEmpty() || it.name.lowercase().contains(q) || it.zone.lowercase().contains(q) }
-            .sortedWith(compareBy<FareStop>({ it.zone }, { it.name }))
+            .filter { stop ->
+                val haystack = "${stop.name} ${stop.zone}".lowercase()
+                terms.all { haystack.contains(it) }
+            }
+            // Flat rates first: they are the two the table has no row for, so
+            // they are the two nobody finds by scrolling.
+            .sortedWith(
+                compareBy<FareStop>(
+                    { if (it.zone == FareEngine.FLAT_ZONE) 0 else 1 },
+                    { it.zone },
+                    { it.name }
+                )
+            )
             .toList()
     }
 

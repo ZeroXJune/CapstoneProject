@@ -91,7 +91,14 @@ data class FareConfig(
         const val DEFAULT_SOURCE =
             "FeTODAT — ordinance amending Section 1 of Municipal Ordinance No. 2018-05, " +
                 "enacted 8 November 2022"
-        const val POBLACION_LABEL = "Any point within Poblacion"
+        /**
+         * Leads with the place, because that is what a passenger types. The
+         * ordinance prices Poblacion as a flat rate rather than as a named
+         * stop, so there is no "Poblacion" row in the 240 to find, and a label
+         * beginning "Any point within" sorted and read as though there were
+         * none at all.
+         */
+        const val POBLACION_LABEL = "Poblacion, Talibon — any point within"
         const val TERMINAL_ROUND_TRIP_LABEL =
             "Talibon Integrated Bus Terminal (TIBT) to NCBI, round trip"
     }
