@@ -799,6 +799,14 @@ Data flows in one direction. A user event goes from View to ViewModel to Reposit
 
 **Server-side authorization.** Because the client speaks to Firebase directly, authorization is enforced by Firebase Security Rules evaluated on the server. The rules restrict a user to reading and writing their own profile, restrict driver verification status to administrators, and make the fare table readable by all authenticated users but writable only by administrators. Client-side checks are treated as user interface convenience, not as security.
 
+Three of the rules deserve description, because their form follows from a constraint the platform imposes.
+
+*Privilege cannot be granted to oneself.* A user may write their own record, and the field determining their role sits on it, so a validation clause restricts what that field may be set to: an account may declare itself a passenger or a driver and nothing else. Five separate rules grant administrative powers on the strength of that field, and without the clause any account could award itself all of them. Administrator accounts are created by editing the field in the Firebase console, which is not subject to the rules.
+
+*Ride and concern records are scoped by requiring a query rather than by filtering.* A rule cannot return part of a collection: the platform either grants the node or refuses it. The rule therefore requires that the client asked a question already limited to itself — ordering by the passenger or driver identifier and matching its own — and refuses any broader request. The application issues exactly those queries, with the corresponding index declarations. An administrator is exempt and reads the collections whole, which is what the monitoring screen and the exported reports require.
+
+*A ride is writable only by the driver carrying it.* Creating one requires that the new record name the caller as its driver, which is what acceptance does; thereafter only that driver may advance its status. Passengers do not write to ride records at all.
+
 **Encryption in transit.** All communication uses TLS 1.2 or later. No data travels in plain text.
 
 **Secrets management.** API keys and other confidential configuration are held in a `.env` file that is excluded from version control by `.gitignore`. The build reads that file and injects the values as manifest placeholders and build configuration fields. A committed `.env.example` documents which keys are required without disclosing their values. The Firebase configuration file `google-services.json` is likewise excluded from version control.
@@ -1209,6 +1217,11 @@ Performance was assessed against the targets in Table 3. Request propagation was
 | SEC-11 | Refuse a driver application and then query the document node directly | The photograph has been deleted and the read returns nothing | Pass |
 | SEC-12 | Withdraw approval from an approved driver and query the document node | The photograph is retained, since withdrawal is not refusal | Pass |
 | SEC-13 | Uninstall the application, reinstall it, and open it | The user is returned to the sign-in screen rather than to a restored session | Pass |
+| SEC-14 | Attempt to set one's own account type to administrator | The write is refused by the validation clause on the field | Pass |
+| SEC-15 | Attempt to read the ride collection without a query limited to oneself | The read is refused | Pass |
+| SEC-16 | Attempt to read a ride belonging to two other users | The read is refused | Pass |
+| SEC-17 | Attempt to alter the status of a ride one is not the driver of | The write is refused | Pass |
+| SEC-18 | Attempt to read a concern reported by another user | The read is refused | Pass |
 
 ## 4.6 Prototype Description
 

@@ -158,7 +158,7 @@ class FirebaseService {
         val listener = object : ValueEventListener {
             override fun onDataChange(snapshot: DataSnapshot) {
                 val rides = snapshot.children.mapNotNull { it.getValue(Ride::class.java) }
-                    .filter { it.passengerId == passengerId && it.status !in terminalStatuses }
+                    .filter { it.status !in terminalStatuses }
                 trySend(rides)
             }
 
@@ -167,7 +167,11 @@ class FirebaseService {
             }
         }
 
+        // Scoped at the source rather than after the download: the rule
+        // on /rides requires this exact constraint, so the client
+        // cannot ask for anyone else's rides.
         val ref = database.getReference("rides")
+            .orderByChild("passengerId").equalTo(passengerId)
         ref.addValueEventListener(listener)
 
         awaitClose { ref.removeEventListener(listener) }
@@ -178,7 +182,7 @@ class FirebaseService {
         val listener = object : ValueEventListener {
             override fun onDataChange(snapshot: DataSnapshot) {
                 val rides = snapshot.children.mapNotNull { it.getValue(Ride::class.java) }
-                    .filter { it.driverId == driverId && it.status !in terminalStatuses }
+                    .filter { it.status !in terminalStatuses }
                 trySend(rides)
             }
 
@@ -187,7 +191,11 @@ class FirebaseService {
             }
         }
 
+        // Scoped at the source rather than after the download: the rule
+        // on /rides requires this exact constraint, so the client
+        // cannot ask for anyone else's rides.
         val ref = database.getReference("rides")
+            .orderByChild("driverId").equalTo(driverId)
         ref.addValueEventListener(listener)
 
         awaitClose { ref.removeEventListener(listener) }
@@ -199,7 +207,7 @@ class FirebaseService {
             override fun onDataChange(snapshot: DataSnapshot) {
                 trySend(
                     snapshot.children.mapNotNull { it.getValue(Ride::class.java) }
-                        .filter { it.passengerId == passengerId && it.status in finished }
+                        .filter { it.status in finished }
                         .sortedByDescending { it.requestedAt.toLongOrNull() ?: 0L }
                 )
             }
@@ -208,7 +216,11 @@ class FirebaseService {
                 close(error.toException())
             }
         }
+        // Scoped at the source rather than after the download: the rule
+        // on /rides requires this exact constraint, so the client
+        // cannot ask for anyone else's rides.
         val ref = database.getReference("rides")
+            .orderByChild("passengerId").equalTo(passengerId)
         ref.addValueEventListener(listener)
         awaitClose { ref.removeEventListener(listener) }
     }
@@ -219,7 +231,7 @@ class FirebaseService {
             override fun onDataChange(snapshot: DataSnapshot) {
                 trySend(
                     snapshot.children.mapNotNull { it.getValue(Ride::class.java) }
-                        .filter { it.driverId == driverId && it.status in finished }
+                        .filter { it.status in finished }
                         .sortedByDescending { it.requestedAt.toLongOrNull() ?: 0L }
                 )
             }
@@ -228,7 +240,11 @@ class FirebaseService {
                 close(error.toException())
             }
         }
+        // Scoped at the source rather than after the download: the rule
+        // on /rides requires this exact constraint, so the client
+        // cannot ask for anyone else's rides.
         val ref = database.getReference("rides")
+            .orderByChild("driverId").equalTo(driverId)
         ref.addValueEventListener(listener)
         awaitClose { ref.removeEventListener(listener) }
     }
@@ -323,17 +339,17 @@ class FirebaseService {
     fun getUserComplaintsFlow(userId: String): Flow<List<Complaint>> = callbackFlow {
         val listener = object : ValueEventListener {
             override fun onDataChange(snapshot: DataSnapshot) {
-                trySend(
-                    snapshot.children.mapNotNull { it.getValue(Complaint::class.java) }
-                        .filter { it.reporterId == userId }
-                )
+                trySend(snapshot.children.mapNotNull { it.getValue(Complaint::class.java) })
             }
 
             override fun onCancelled(error: DatabaseError) {
                 close(error.toException())
             }
         }
+        // Scoped at the source: the rule on /complaints requires this
+        // constraint, so nobody can read what somebody else reported.
         val ref = database.getReference("complaints")
+            .orderByChild("reporterId").equalTo(userId)
         ref.addValueEventListener(listener)
         awaitClose { ref.removeEventListener(listener) }
     }

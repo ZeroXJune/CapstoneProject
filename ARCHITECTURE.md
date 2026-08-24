@@ -288,9 +288,34 @@ Authorization is enforced by Firebase Security Rules on the server, because ther
 application server in the path to enforce it. Client-side checks are UI convenience and
 nothing more.
 
-The rules restrict a user to their own profile, make `verificationStatus` writable only
-by administrators, make the fare table readable by all authenticated users and writable
-only by administrators, and scope notifications to their owner.
+The rules restrict a user to their own profile, make `verificationStatus` writable only by
+administrators, make the fare table readable by all authenticated users and writable only
+by administrators, and scope notifications to their owner.
+
+Three of them are worth explaining, because the shape is not obvious.
+
+`userType` carries a `.validate` allowing only `PASSENGER` or `DRIVER`. Five other rules
+gate administrator powers on that field, and a user may write their own record, so without
+the validate any account could promote itself and gain every one of them. Administrators
+are made by editing the field in the Firebase console, which bypasses rules.
+
+Reads of `rides` and `complaints` are scoped by requiring a query rather than by filtering.
+A rule cannot hand back part of a list — Firebase either grants the node or refuses it — so
+the rule instead insists the client asked `orderByChild('passengerId').equalTo(<own uid>)`,
+or the equivalent on `driverId` or `reporterId`. `FirebaseService` issues exactly those
+queries, with `.indexOn` to match. This is why those flows query rather than downloading
+the node and filtering in Kotlin, which is what they used to do: the old shape leaked every
+ride in the system to every device and spent the free tier's bandwidth doing it.
+
+Writes to a ride are the driver's alone. Creating one requires the new record's `driverId`
+to be the caller, which is what accepting does; after that only that driver advances it.
+
+Two gaps remain, recorded rather than glossed. `licenseNumber` sits on `drivers/{uid}`,
+which every signed-in account can read because passengers need availability and position
+from that same record; moving the licence fields into `driverDocuments` would close it.
+And `notifications/{uid}` stays writable by any authenticated user, because one party
+notifies the other and no rule can distinguish a real sender from a forged one without a
+server in the path.
 
 Secrets live in `.env`, which is gitignored; `.env.example` records which keys exist
 without their values. `google-services.json` is gitignored too. The build reads `.env`

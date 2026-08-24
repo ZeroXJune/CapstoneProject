@@ -72,17 +72,24 @@ server in between, so anything the rules allow is allowed, whatever the interfac
 {
   "rules": {
     "users": {
+      ".read": "auth != null && root.child('users').child(auth.uid).child('userType').val() === 'ADMIN'",
       "$uid": {
         ".read": "auth != null && ($uid === auth.uid || root.child('users').child(auth.uid).child('userType').val() === 'ADMIN')",
-        ".write": "auth != null && $uid === auth.uid"
+        ".write": "auth != null && $uid === auth.uid",
+        "userType": {
+          ".validate": "newData.val() === 'PASSENGER' || newData.val() === 'DRIVER'"
+        }
       }
     },
     "drivers": {
+      ".read": "auth != null",
       "$uid": {
-        ".read": "auth != null",
         ".write": "auth != null && $uid === auth.uid",
         "verificationStatus": {
           ".write": "auth != null && root.child('users').child(auth.uid).child('userType').val() === 'ADMIN'"
+        },
+        "hasLicenceImage": {
+          ".write": "auth != null && ($uid === auth.uid || root.child('users').child(auth.uid).child('userType').val() === 'ADMIN')"
         }
       }
     },
@@ -102,15 +109,18 @@ server in between, so anything the rules allow is allowed, whatever the interfac
       }
     },
     "rideRequests": {
-      ".read": "auth != null",
+      ".read": "auth != null && (root.child('drivers').child(auth.uid).child('verificationStatus').val() === 'APPROVED' || root.child('users').child(auth.uid).child('userType').val() === 'ADMIN')",
       "$requestId": {
-        ".write": "auth != null"
+        ".read": "auth != null && data.child('passengerId').val() === auth.uid",
+        ".write": "auth != null && ((!data.exists() && newData.child('passengerId').val() === auth.uid) || (data.exists() && (data.child('passengerId').val() === auth.uid || root.child('drivers').child(auth.uid).child('verificationStatus').val() === 'APPROVED')))"
       }
     },
     "rides": {
-      ".read": "auth != null",
+      ".read": "auth != null && (root.child('users').child(auth.uid).child('userType').val() === 'ADMIN' || ((query.orderByChild === 'passengerId' || query.orderByChild === 'driverId') && query.equalTo === auth.uid))",
+      ".indexOn": ["passengerId", "driverId"],
       "$rideId": {
-        ".write": "auth != null"
+        ".read": "auth != null && (data.child('passengerId').val() === auth.uid || data.child('driverId').val() === auth.uid)",
+        ".write": "auth != null && ((!data.exists() && newData.child('driverId').val() === auth.uid) || (data.exists() && data.child('driverId').val() === auth.uid))"
       }
     },
     "config": {
@@ -118,15 +128,20 @@ server in between, so anything the rules allow is allowed, whatever the interfac
       ".write": "auth != null && root.child('users').child(auth.uid).child('userType').val() === 'ADMIN'"
     },
     "complaints": {
-      ".read": "auth != null",
+      ".read": "auth != null && (root.child('users').child(auth.uid).child('userType').val() === 'ADMIN' || (query.orderByChild === 'reporterId' && query.equalTo === auth.uid))",
+      ".indexOn": ["reporterId"],
       "$id": {
-        ".write": "auth != null"
+        ".read": "auth != null && (data.child('reporterId').val() === auth.uid || root.child('users').child(auth.uid).child('userType').val() === 'ADMIN')",
+        ".write": "auth != null && ((!data.exists() && newData.child('reporterId').val() === auth.uid) || root.child('users').child(auth.uid).child('userType').val() === 'ADMIN')"
       }
     },
     "notifications": {
       "$uid": {
         ".read": "auth != null && $uid === auth.uid",
-        ".write": "auth != null"
+        ".write": "auth != null",
+        "$id": {
+          ".validate": "newData.hasChildren(['title', 'message'])"
+        }
       }
     },
     "profilePhotos": {
@@ -139,29 +154,44 @@ server in between, so anything the rules allow is allowed, whatever the interfac
 }
 ```
 
-Four notes on these. `drivers/$uid/verificationStatus` carries its own write rule so a
-driver can edit their own record without being able to approve themselves. `config`
-covers both `config/fare` and `config/fareStops`, which every signed-in user reads to
-price a ride but only an administrator can change.
+Five notes on these.
 
-`driverRatings` exists because a passenger has to be able to record a rating without
-being able to write to the driver's record, which is the driver's own. Each rating sits
-under the key of the person giving it, so the rule can restrict it to them, and the
-`.validate` clause keeps the value between one and five. The driver's app reads its own
-ratings and writes the average back onto its own record, which is where the admin screens
-and the exported reports read it from. The effect is that a rating reaches the admin's
-view when the driver next opens the app rather than the moment it is given — the
-alternative would be letting passengers write to driver records, and that is a worse
-trade than a few hours of lag.
+**Nobody can promote themselves.** A user may write their own record, and `userType` lives
+on it, so without the `.validate` under `userType` any signed-in account could set itself
+to `ADMIN` and immediately gain every administrator power — reading all users, all rides
+and all complaints, opening any driver's licence photograph, and rewriting the fare table.
+The validate restricts self-assignment to `PASSENGER` or `DRIVER`. Administrator accounts
+are made by editing `userType` in the Firebase console, which bypasses rules; see Step 7.
 
-`driverDocuments` is the one rule here that is not readable by every signed-in user, and
-it is deliberately the odd one out. It holds photographs of drivers' licences, which are
-sensitive personal information under the Data Privacy Act of 2012, so it is scoped to the
-driver it belongs to and to administrators. Administrators need the write permission as
-well as the read: refusing an application deletes the photograph, and that delete is
-performed under the administrator's credentials. Publish this rule before letting any
-driver upload — the default rules would leave identity documents readable by every
-account on the project.
+**Rides are readable only by the two people on them.** A rule cannot filter a list per
+child — Firebase either hands over the node or refuses it — so the rule instead requires
+the client to have *asked* a scoped question, `orderByChild('passengerId').equalTo(<own
+uid>)` or the same on `driverId`. `FirebaseService` issues exactly those queries.
+Administrators are exempt and read the node whole for the monitor and the reports.
+`complaints` works the same way on `reporterId`. This is also why the two `.indexOn`
+entries are there: without them Firebase sorts on the client and logs a warning.
+
+**Only the driver on a ride may change it.** Creating one requires the new record's
+`driverId` to be the caller, which is what happens when a driver accepts; after that only
+that same driver can advance its status. Passengers never write to `rides`. Ride requests
+are writable by the passenger who made one and by any approved driver, since accepting is
+a delete.
+
+`driverDocuments` is the one node not readable by every signed-in user, holding licence
+photographs, which are sensitive personal information under the Data Privacy Act of 2012.
+It is scoped to the driver and to administrators, and administrators need write as well as
+read because refusing an application deletes the photograph.
+
+`config` covers both `config/fare` and `config/fareStops`, which every signed-in user reads
+to price a ride but only an administrator can change.
+
+**Two things these rules do not fix.** A driver's licence *number* still sits on
+`drivers/{uid}`, which every signed-in account can read because passengers need the
+availability and position on that same record; moving `licenseNumber` and `licenseExpiry`
+into `driverDocuments` would close it and is worth doing before any wider deployment. And
+`notifications/{uid}` remains writable by any authenticated user, because the app has one
+party notify the other and the rules cannot tell a legitimate sender from a spoofed one
+without a server; the `.validate` only enforces the shape.
 
 While you are still testing, you may want the looser test-mode rules Firebase offers.
 Do not leave them on once real accounts exist.
@@ -226,7 +256,9 @@ The app has no bootstrap administrator. Create one by hand the first time.
 
 1. Register an account in the app as normal.
 2. Open the Firebase console, go to Realtime Database, find `users/{uid}` for that
-   account, and change `userType` from `PASSENGER` to `ADMIN`.
+   account, and change `userType` from `PASSENGER` to `ADMIN`. This is the only way to
+   make an administrator: the security rules stop an account setting its own `userType`
+   to anything but `PASSENGER` or `DRIVER`, and console edits bypass rules.
 3. Sign out and back in. You will land on the admin dashboard.
 
 Then load the fare table, without which nothing can be booked:
