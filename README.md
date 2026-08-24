@@ -170,4 +170,5 @@ collected data, and statistical treatment are absent by intent — the evaluatio
 been conducted and the treatment is for the study's statistician to determine, so those
 sections were removed rather than mocked up. Nothing in there is invented.
 
-Appendix I reproduces the whole source, generated from the repository at build time.
+Appendix I points at this repository rather than printing the source, which would add
+about three hundred pages to a bound copy.

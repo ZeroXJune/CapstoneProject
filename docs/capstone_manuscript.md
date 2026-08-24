@@ -1718,7 +1718,27 @@ The evaluation form administered to respondents is the System Evaluation Questio
 
 ## Appendix I — Source Code
 
-The complete source code of the system is reproduced in this appendix. The repository is organized as follows.
+The complete source code of the system is held in a Git repository rather than reproduced here. At roughly twelve thousand seven hundred lines across fifty-five files it would add some three hundred pages to a bound copy, at a printing cost the study cannot justify.
+
+**Retrieving the source**
+
+The repository is at:
+
+```
+https://github.com/ZeroXJune/CapstoneProject
+```
+
+With Git installed, the whole project is obtained by opening a terminal in the folder where it should be placed and running:
+
+```
+git clone https://github.com/ZeroXJune/CapstoneProject
+```
+
+Readers without Git may instead open the address above in a browser and use the **Code → Download ZIP** button, which produces the same files. If the repository is private, the researchers can grant read access to a named GitHub account, or supply the source on request as an archive.
+
+Two files are required to build and are deliberately absent from the repository because they carry credentials: `google-services.json`, the Firebase configuration, downloaded from the project's Firebase console; and `.env`, copied from the committed `.env.example` and filled in. `SETUP_GUIDE.md` in the repository root gives the full procedure, and `ARCHITECTURE.md` explains how the code is arranged.
+
+The repository is organized as follows.
 
 | Path | Contents |
 |:---|:---|
@@ -1733,14 +1753,33 @@ The complete source code of the system is reproduced in this appendix. The repos
 | `app/src/main/res/` | Resources, launcher icons, and onboarding artwork |
 | `docs/` | This documentation and the generated figures |
 
-Two files are excluded from the listing as well as from version control, because they
-carry credentials: `google-services.json` and `.env`.
+Two files are deliberately excluded from version control and must be supplied when the project is built: `google-services.json`, the Firebase configuration, and `.env`, which holds the API keys. A committed `.env.example` records which keys are required.
 
-Every Kotlin source file follows, in package order, each preceded by its path and line
-count. The listing is generated from the repository when this document is built, so it
-cannot drift from the code it describes.
+**Representative extract — the fare engine**
 
-[[SOURCE_CODE]]
+The following is the function that prices every ride in the system. It is reproduced because it implements the central design decision described in Section 4.3: a fare is a lookup against the published schedule, raised to the ordinance minimum where necessary, and multiplied by the number of passengers.
+
+```
+fun quote(
+    config: FareConfig,
+    stop: FareStop,
+    fareType: FareType,
+    passengerCount: Int
+): FareQuote {
+    val minimum = minimumFor(config, fareType)
+    val posted = rateFor(stop, fareType)
+    val perPassenger = maxOf(posted, minimum)
+    val heads = if (config.chargePerPassenger) passengerCount.coerceAtLeast(1) else 1
+    return FareQuote(
+        perPassenger = perPassenger,
+        passengers = passengerCount.coerceAtLeast(1),
+        total = perPassenger * heads,
+        fareType = fareType,
+        minimumApplied = posted < minimum,
+        stopLabel = stop.label
+    )
+}
+```
 
 ## Appendix J — Database Schema
 

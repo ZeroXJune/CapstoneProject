@@ -170,9 +170,11 @@ statistician's to specify, so those sections were removed rather than left as em
 tables. What remains to be added once the evaluation happens is the results, their
 interpretation, Chapter 5's summary and findings, and the appendices that depend on them.
 
-Appendix I carries the full source of all 55 Kotlin files. It is generated from the
-repository by `build_docx.sh`, so it cannot drift from the code — do not paste it into
-the Markdown by hand.
+Appendix I does not print the source. Twelve thousand seven hundred lines across 55 files
+would add roughly three hundred pages to every bound copy, which the budget will not carry.
+It gives the clone URL, a walk-through for retrieving the code with Git or as a ZIP, a note
+on the two credential files that are not in the repository, and the fare engine as a
+representative extract.
 
 Fourteen figures are generated from text in `docs/figures/`: research flow, conceptual
 framework, system architecture, context diagram, DFD level 1, ERD, use case, activity,
