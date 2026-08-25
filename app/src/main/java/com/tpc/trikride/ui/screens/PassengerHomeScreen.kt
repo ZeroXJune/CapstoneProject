@@ -20,6 +20,7 @@ import androidx.compose.material.icons.filled.Chat
 import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.LocationOn
+import androidx.compose.material.icons.filled.Map
 import androidx.compose.material.icons.filled.MyLocation
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Person
@@ -68,6 +69,7 @@ import com.tpc.trikride.ui.theme.RatingColor
 import com.tpc.trikride.utils.Constants
 import com.tpc.trikride.utils.FareEngine
 import com.tpc.trikride.utils.LocationProvider
+import com.tpc.trikride.utils.LocationUtils
 import com.tpc.trikride.utils.ReverseGeocoder
 import com.tpc.trikride.viewmodels.PassengerViewModel
 import com.tpc.trikride.viewmodels.SupportViewModel
@@ -391,6 +393,7 @@ private fun BookingContent(
     var pickingDestination by remember { mutableStateOf(false) }
     var pickingPickup by remember { mutableStateOf(false) }
     var pinningPickup by remember { mutableStateOf(false) }
+    var pinningDestination by remember { mutableStateOf(false) }
 
     // The sheet carries two rates that are not tied to a numbered stop, so they
     // are offered alongside the rest rather than being admin-only trivia.
@@ -491,6 +494,21 @@ private fun BookingContent(
             enabled = bookable.isNotEmpty(),
             onClick = { pickingDestination = true }
         )
+        Spacer(modifier = Modifier.height(6.dp))
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.End
+        ) {
+            TextButton(
+                onClick = { pinningDestination = true },
+                enabled = bookable.isNotEmpty()
+            ) {
+                Icon(Icons.Filled.Map, contentDescription = null,
+                    modifier = Modifier.size(16.dp))
+                Spacer(modifier = Modifier.width(4.dp))
+                Text("Don't know the name? Find it on the map")
+            }
+        }
         Spacer(modifier = Modifier.height(16.dp))
 
         // Rate column. The driver checks the ID at pickup, the app only records it.
@@ -658,6 +676,17 @@ private fun BookingContent(
         )
     }
 
+    if (pinningDestination) {
+        DestinationFinder(
+            stops = bookable,
+            fareType = fareType,
+            initial = pickup ?: TALIBON_CENTRE,
+            onDismiss = { pinningDestination = false },
+            onPicked = { destination = it; pinningDestination = false },
+            onUseList = { pinningDestination = false; pickingDestination = true }
+        )
+    }
+
     if (pickingDestination) {
         StopPicker(
             title = "Where to?",
@@ -799,6 +828,144 @@ private fun PickupPinner(
                     )
                 }
                 Spacer(modifier = Modifier.height(20.dp))
+            }
+        }
+    }
+}
+
+/**
+ * Full-screen map for choosing a destination by pointing at it.
+ *
+ * The ordinance prices a ride per named stop, not per kilometre, so this cannot
+ * drop a pin anywhere and charge for it. What it does instead is let the
+ * passenger move the map to roughly where they are going and name the posted
+ * stop nearest to that point, with its fare, which is the part they could not
+ * do before: you can find your destination without already knowing what the
+ * fare sheet calls it.
+ *
+ * Only stops with coordinates can be found this way, and those are filled in by
+ * the administrator over time. When none has been yet, the map is pointless and
+ * the list is offered instead.
+ */
+@Composable
+private fun DestinationFinder(
+    stops: List<FareStop>,
+    fareType: FareType,
+    initial: Location,
+    onDismiss: () -> Unit,
+    onPicked: (FareStop) -> Unit,
+    onUseList: () -> Unit
+) {
+    val mappable = remember(stops) { stops.filter { it.hasCoordinates } }
+    var centre by remember { mutableStateOf(if (initial.hasCoordinates) initial else TALIBON_CENTRE) }
+
+    val nearest = remember(mappable, centre.latitude, centre.longitude) {
+        mappable.minByOrNull { LocationUtils.distanceKm(centre, it.location) }
+    }
+    val awayKm = nearest?.let { LocationUtils.distanceKm(centre, it.location) }
+
+    Dialog(
+        onDismissRequest = onDismiss,
+        properties = DialogProperties(usePlatformDefaultWidth = false)
+    ) {
+        Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
+            Column(modifier = Modifier.fillMaxSize()) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(start = 4.dp, end = 16.dp, top = 8.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    IconButton(onClick = onDismiss) {
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Close")
+                    }
+                    Text(
+                        "Find your destination",
+                        style = MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+
+                if (mappable.isEmpty()) {
+                    Column(modifier = Modifier.padding(20.dp)) {
+                        SectionCard {
+                            Column {
+                                Text(
+                                    "No stop has a map position yet",
+                                    style = MaterialTheme.typography.titleSmall,
+                                    fontWeight = FontWeight.Bold
+                                )
+                                Spacer(modifier = Modifier.height(6.dp))
+                                Text(
+                                    "The posted fare sheet gives names, not coordinates, so " +
+                                        "the administrator adds positions to the stops over " +
+                                        "time. Until then, choose your destination from the " +
+                                        "list — the fare is the same either way.",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+                        }
+                        Spacer(modifier = Modifier.height(16.dp))
+                        PrimaryButton(text = "Choose from the list", onClick = onUseList)
+                    }
+                } else {
+                    Text(
+                        "Move the map to where you are going. The nearest posted stop is " +
+                            "named below, and that is the one you will be charged for.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.padding(horizontal = 20.dp)
+                    )
+                    Spacer(modifier = Modifier.height(10.dp))
+
+                    PickerMap(
+                        height = 360.dp,
+                        centre = centre,
+                        pinColor = ForestGreen,
+                        onMoved = { centre = it },
+                        modifier = Modifier.padding(horizontal = 20.dp)
+                    )
+
+                    Spacer(modifier = Modifier.height(12.dp))
+                    Column(modifier = Modifier.padding(horizontal = 20.dp)) {
+                        SectionCard {
+                            Column {
+                                Text(
+                                    "Nearest posted stop",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                                Text(
+                                    nearest?.label ?: "—",
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    fontWeight = FontWeight.SemiBold
+                                )
+                                if (nearest != null && awayKm != null) {
+                                    Spacer(modifier = Modifier.height(4.dp))
+                                    Text(
+                                        "%s from the pin · ₱%.2f".format(
+                                            if (awayKm < 1.0) "%.0f m".format(awayKm * 1000)
+                                            else "%.1f km".format(awayKm),
+                                            FareEngine.rateFor(nearest, fareType)
+                                        ),
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                }
+                            }
+                        }
+                        Spacer(modifier = Modifier.height(8.dp))
+                        TextButton(onClick = onUseList) { Text("Choose from the list instead") }
+                        Spacer(modifier = Modifier.height(4.dp))
+                        PrimaryButton(
+                            text = "Use this stop",
+                            onClick = { nearest?.let(onPicked) },
+                            enabled = nearest != null
+                        )
+                    }
+                    Spacer(modifier = Modifier.height(20.dp))
+                }
             }
         }
     }

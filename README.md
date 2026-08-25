@@ -151,8 +151,10 @@ the map with the point reverse-geocoded to a readable label. It used to come fro
 fixed list of campus points, which only worked for passengers who happened to be starting
 at the campus. Destinations stay on the posted fare table, because
 the fare is fixed per named stop by ordinance and must not depend on where someone drops a
-pin. Stops can carry coordinates so they appear on the map; the admin fills those in over
-time and a stop without them still books normally.
+pin. The map still helps find one: move it to roughly where you are going and the app names
+the nearest posted stop and its fare, so you do not have to already know what the sheet
+calls the place. That needs the stop to carry coordinates, which the admin fills in over
+time; a stop without them still books normally, it just cannot be found this way.
 
 ## Not in this build
 

@@ -51,8 +51,10 @@ pull-to-refresh, and a concern form for passengers and drivers.
 Maps when `MAPS_API_KEY` is set and OpenStreetMap through osmdroid when it is not. Drivers publish their
 position while online with the app open, and passengers watch it move. Pickup can be
 pinned anywhere on the map and is reverse-geocoded to a readable label. Destinations stay
-on the fare table, since the ordinance fixes the price per named stop. Fare stops can
-carry coordinates, editable in the admin fare screen, and appear on the map once they do.
+on the fare table, since the ordinance fixes the price per named stop, but the map can be
+used to find one: the passenger moves it to where they are going and the app names the
+nearest posted stop with its fare. Fare stops can carry coordinates, editable in the admin
+fare screen, and appear on the map — and become findable that way — once they do.
 
 **Agreements.** The Terms and Conditions, Privacy Policy, Safety and Community
 Guidelines, and Driver Agreement are all in the app and all readable from Settings. The
@@ -152,8 +154,9 @@ Then rebuild the .docx and it is submittable.
 ### Worth doing, not blocking
 
 **Stop coordinates.** None of the 240 fare stops has a position yet. They book and price
-fine without one; they just do not appear on the map. Filling in the dozen or so common
-destinations as you verify their fares would cover a demo.
+fine without one; they just do not appear on the map, and cannot be found through it —
+"Find it on the map" has nothing to offer until at least a few are filled in. Doing the
+dozen or so common destinations as you verify their fares would cover a demo.
 
 **The onboarding artwork.** See the rough edges at the end of this file.
 
