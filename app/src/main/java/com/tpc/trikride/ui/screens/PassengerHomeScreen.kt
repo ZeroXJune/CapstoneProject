@@ -14,9 +14,9 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.Chat
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.CheckCircle
-import androidx.compose.material.icons.filled.Chat
 import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.LocationOn
@@ -1251,7 +1251,7 @@ private fun RideTrackingContent(ride: Ride, driverLocation: Location?) {
                     }
                 }
                 IconButton(onClick = { }) {
-                    Icon(Icons.Filled.Chat, contentDescription = "Message",
+                    Icon(Icons.AutoMirrored.Filled.Chat, contentDescription = "Message",
                         tint = MaterialTheme.colorScheme.primary)
                 }
                 IconButton(onClick = { }) {

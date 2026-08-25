@@ -10,9 +10,9 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.DirectionsWalk
 import androidx.compose.material.icons.filled.CalendarMonth
 import androidx.compose.material.icons.filled.ChevronRight
-import androidx.compose.material.icons.filled.DirectionsWalk
 import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.LocalTaxi
@@ -510,7 +510,7 @@ private fun AccountSelectionScreen(
         Spacer(modifier = Modifier.height(32.dp))
 
         AccountTypeCard(
-            icon = Icons.Filled.DirectionsWalk,
+            icon = Icons.AutoMirrored.Filled.DirectionsWalk,
             title = "I'm a Passenger",
             subtitle = "Book rides and travel around the campus",
             enabled = !isLoading,
