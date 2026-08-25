@@ -182,6 +182,20 @@ object ReportBuilder {
             .joinToString(" ").ifBlank { user.email }
     }
 
+    /**
+     * Who filed a concern.
+     *
+     * The name stored on the complaint is left blank by both the passenger and
+     * the driver form, so the account is the only place the name actually is.
+     * The stored value is still preferred over "Unknown" for a report covering
+     * an account that has since been deleted.
+     */
+    fun reporterName(complaint: Complaint, usersById: Map<String, User>): String {
+        val user = usersById[complaint.reporterId]
+        if (user != null) return name(user)
+        return complaint.reporterName.ifBlank { "Unknown" }
+    }
+
     /** Which months and years the admin can pick, newest first, from real data. */
     fun availablePeriods(rides: List<Ride>): List<ReportPeriod> {
         val stamps = rides.mapNotNull { millis(it.requestedAt) }
@@ -372,7 +386,11 @@ object ReportBuilder {
     }
 
     /** Concerns filed in the period, with how they were handled. */
-    fun complaintsCsv(complaints: List<Complaint>, period: ReportPeriod): String {
+    fun complaintsCsv(
+        complaints: List<Complaint>,
+        usersById: Map<String, User>,
+        period: ReportPeriod
+    ): String {
         val inPeriod = complaintsIn(complaints, period)
         val sb = StringBuilder()
         sb.appendLine(row("TrikRide concerns and complaints report"))
@@ -406,7 +424,7 @@ object ReportBuilder {
                     c.id,
                     readable(c.createdAt),
                     readable(c.resolvedAt),
-                    c.reporterName,
+                    reporterName(c, usersById),
                     c.reporterType.name,
                     c.category,
                     c.status.name,

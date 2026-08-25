@@ -306,6 +306,7 @@ object PdfReportWriter {
     fun writeConcernReport(
         out: OutputStream,
         complaints: List<Complaint>,
+        usersById: Map<String, User>,
         period: ReportPeriod
     ) {
         val doc = PdfDocument()
@@ -387,7 +388,7 @@ object PdfReportWriter {
         val rows = inPeriod.map { c ->
             listOf(
                 shortDateTime(c.createdAt),
-                c.reporterName,
+                ReportBuilder.reporterName(c, usersById),
                 c.reporterType.name.lowercase().replaceFirstChar { it.uppercase() },
                 c.category,
                 c.description,

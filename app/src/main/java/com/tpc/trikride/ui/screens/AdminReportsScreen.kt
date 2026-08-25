@@ -144,7 +144,7 @@ fun AdminReportsContent(
     fun csvFor(kind: ReportKind): String = when (kind) {
         ReportKind.RIDES -> ReportBuilder.ridesCsv(rides, complaints, usersById, period)
         ReportKind.DRIVERS -> ReportBuilder.driversCsv(rides, drivers, usersById, period)
-        ReportKind.CONCERNS -> ReportBuilder.complaintsCsv(complaints, period)
+        ReportKind.CONCERNS -> ReportBuilder.complaintsCsv(complaints, usersById, period)
     }
 
     fun pdfFor(kind: ReportKind): (java.io.OutputStream) -> Unit = { out ->
@@ -154,7 +154,7 @@ fun AdminReportsContent(
             ReportKind.DRIVERS ->
                 PdfReportWriter.writeDriverReport(out, rides, drivers, usersById, period)
             ReportKind.CONCERNS ->
-                PdfReportWriter.writeConcernReport(out, complaints, period)
+                PdfReportWriter.writeConcernReport(out, complaints, usersById, period)
         }
     }
 
