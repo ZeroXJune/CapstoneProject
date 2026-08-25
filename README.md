@@ -136,6 +136,7 @@ docs/
   TrikRide_Capstone_Documentation.docx  the same, built for submission
   figures/                            generated diagrams
   legal/                              the four user agreements, as Markdown
+  user-manual.md                      how to use the app, for all three roles
 ```
 
 ## Maps and live tracking

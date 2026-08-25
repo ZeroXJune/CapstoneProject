@@ -9,7 +9,7 @@ picks this up next, including us in a month.
 number, and a password checked against a live rule list as it is typed. The Terms,
 Privacy Policy and Community Guidelines must be ticked before the account is created. Sign-in remembers the email if asked.
 Firebase keeps the session, so the app opens straight to the dashboard on the next
-launch. Password reset by email.
+launch. Password reset by email, from the sign-in screen or from Settings.
 
 **First run.** A five-slide carousel on first launch, shown once and never again.
 Returning users get the welcome artwork while the session restores.
@@ -45,7 +45,8 @@ whose first page carries the headline figures and four charts, or as a spreadshe
 
 **Everywhere.** Profile editing with a photo from camera or gallery, dark mode, terms and
 privacy text, an in-app notification centre with unread counts, skeleton loading,
-pull-to-refresh, and a concern form for passengers and drivers.
+pull-to-refresh, and a concern form on the Support tab for passengers and drivers
+alike, with the reporter's own past reports and the administrator's reply beneath it.
 
 **Maps and live tracking.** Real maps on the booking and tracking screens, from Google
 Maps when `MAPS_API_KEY` is set and OpenStreetMap through osmdroid when it is not. Drivers publish their
@@ -177,7 +178,8 @@ tables. What remains to be added once the evaluation happens is the results, the
 interpretation, Chapter 5's summary and findings, and the appendices that depend on them.
 
 Appendix D now carries all four user agreements in full rather than a summary and a
-placeholder. They are also in `docs/legal/` as Markdown, generated from the strings in
+placeholder, and Appendix H the user manual rather than an outline of one. The manual is
+also `docs/user-manual.md`, so it can be handed out on its own. They are also in `docs/legal/` as Markdown, generated from the strings in
 `LegalScreen.kt` by `docs/legal/sync.py`, which with `--check` reports whether the two
 have drifted.
 

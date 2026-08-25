@@ -25,7 +25,9 @@ class AuthViewModel(
         // True while we check for an existing signed-in session on launch.
         val isBootstrapping: Boolean = true,
         // Known synchronously at startup: is someone already signed in?
-        val hasExistingSession: Boolean = false
+        val hasExistingSession: Boolean = false,
+        // Set after a password-reset email is requested from the sign-in screen.
+        val resetNotice: String? = null
     )
 
     private val _state = MutableStateFlow(
@@ -135,12 +137,43 @@ class AuthViewModel(
         }
     }
 
+    /**
+     * Asks Firebase to email a reset link.
+     *
+     * The same message comes back whether or not the address has an account.
+     * Firebase reports "no user record" for an unknown one, and repeating that
+     * turns the sign-in screen into a way of finding out who is registered.
+     */
+    fun sendPasswordReset(email: String) {
+        if (email.isBlank()) return
+        viewModelScope.launch {
+            _state.update { it.copy(isLoading = true, error = null, resetNotice = null) }
+            val notice = "If ${email.trim()} has an account, a reset link is on its way. " +
+                "Check the spam folder if it does not arrive."
+            try {
+                withTimeout(DB_TIMEOUT_MS) { repo.sendPasswordReset(email) }
+                _state.update { it.copy(isLoading = false, resetNotice = notice) }
+            } catch (e: TimeoutCancellationException) {
+                _state.update { it.copy(isLoading = false, error = DB_UNREACHABLE) }
+            } catch (e: Exception) {
+                val msg = e.message.orEmpty()
+                if (msg.contains("no user record", ignoreCase = true)) {
+                    _state.update { it.copy(isLoading = false, resetNotice = notice) }
+                } else {
+                    _state.update { it.copy(isLoading = false, error = friendly(e)) }
+                }
+            }
+        }
+    }
+
     fun signOut() {
         repo.signOut()
         _state.value = AuthUiState(isBootstrapping = false)
     }
 
     fun clearError() = _state.update { it.copy(error = null) }
+
+    fun clearResetNotice() = _state.update { it.copy(resetNotice = null) }
 
     private companion object {
         const val DB_TIMEOUT_MS = 12_000L

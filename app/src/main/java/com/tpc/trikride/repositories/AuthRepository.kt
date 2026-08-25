@@ -132,6 +132,14 @@ class AuthRepository(
         auth.sendPasswordResetEmail(email).await()
     }
 
+    /**
+     * Sends a password-reset email to any address, for someone who cannot sign
+     * in to ask for one.
+     */
+    suspend fun sendPasswordReset(email: String) {
+        auth.sendPasswordResetEmail(email.trim()).await()
+    }
+
     /** Returns the stored account type for a user, or null if not set. */
     suspend fun loadUserType(uid: String): UserType? {
         val snapshot = database.getReference("users").child(uid).child("userType").get().await()

@@ -158,7 +158,10 @@ fun MainAppScreen(
         AppScreen.LOGIN -> LoginScreen(
             isLoading = state.isLoading,
             error = state.error,
+            resetNotice = state.resetNotice,
             onLogin = { email, password -> authViewModel.login(email, password) },
+            onForgotPassword = { authViewModel.sendPasswordReset(it) },
+            onDismissResetNotice = { authViewModel.clearResetNotice() },
             onRegisterClick = { authViewModel.clearError(); screen = AppScreen.REGISTER }
         )
         AppScreen.REGISTER -> RegisterScreen(
@@ -188,13 +191,17 @@ fun MainAppScreen(
 private fun LoginScreen(
     isLoading: Boolean,
     error: String?,
+    resetNotice: String?,
     onLogin: (String, String) -> Unit,
+    onForgotPassword: (String) -> Unit,
+    onDismissResetNotice: () -> Unit,
     onRegisterClick: () -> Unit
 ) {
     val context = LocalContext.current
     var email by remember { mutableStateOf(AuthPrefs.rememberedEmail(context)) }
     var password by remember { mutableStateOf("") }
     var rememberMe by remember { mutableStateOf(email.isNotBlank()) }
+    var askingReset by remember { mutableStateOf(false) }
 
     Column(
         modifier = Modifier
@@ -225,7 +232,7 @@ private fun LoginScreen(
             Checkbox(checked = rememberMe, onCheckedChange = { rememberMe = it })
             Text("Remember me", style = MaterialTheme.typography.bodyMedium)
             Spacer(modifier = Modifier.weight(1f))
-            TextButton(onClick = { }) {
+            TextButton(onClick = { askingReset = true }) {
                 Text("Forgot Password?", color = MaterialTheme.colorScheme.primary)
             }
         }
@@ -261,6 +268,47 @@ private fun LoginScreen(
                 modifier = Modifier.clickable(onClick = onRegisterClick)
             )
         }
+    }
+
+    if (askingReset) {
+        var resetEmail by remember { mutableStateOf(email) }
+        AlertDialog(
+            onDismissRequest = { askingReset = false },
+            title = { Text("Reset your password") },
+            text = {
+                Column {
+                    Text(
+                        "We will email you a link to set a new one.",
+                        style = MaterialTheme.typography.bodyMedium
+                    )
+                    Spacer(modifier = Modifier.height(12.dp))
+                    TrikTextField(
+                        resetEmail, { resetEmail = it }, "Email",
+                        Icons.Filled.Email, keyboardType = KeyboardType.Email
+                    )
+                }
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = { askingReset = false; onForgotPassword(resetEmail) },
+                    enabled = resetEmail.isNotBlank() && !isLoading
+                ) { Text("Send link") }
+            },
+            dismissButton = {
+                TextButton(onClick = { askingReset = false }) { Text("Cancel") }
+            }
+        )
+    }
+
+    if (resetNotice != null) {
+        AlertDialog(
+            onDismissRequest = onDismissResetNotice,
+            title = { Text("Check your email") },
+            text = { Text(resetNotice) },
+            confirmButton = {
+                TextButton(onClick = onDismissResetNotice) { Text("OK") }
+            }
+        )
     }
 }
 

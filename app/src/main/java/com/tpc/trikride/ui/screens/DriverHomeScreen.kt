@@ -19,6 +19,7 @@ import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Payments
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Star
+import androidx.compose.material.icons.filled.SupportAgent
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -42,6 +43,7 @@ import com.tpc.trikride.ui.components.PrimaryButton
 import com.tpc.trikride.ui.components.RefreshableBox
 import com.tpc.trikride.ui.components.SectionCard
 import com.tpc.trikride.ui.components.SkeletonCard
+import com.tpc.trikride.ui.components.SupportPanel
 import com.tpc.trikride.ui.components.TrikTextField
 import com.tpc.trikride.ui.theme.ErrorColor
 import com.tpc.trikride.ui.theme.RatingColor
@@ -53,7 +55,7 @@ import com.tpc.trikride.utils.LocationProvider
 import com.tpc.trikride.viewmodels.DriverViewModel
 import com.tpc.trikride.viewmodels.SupportViewModel
 
-private enum class DriverTab { DASHBOARD, REQUESTS, HISTORY, PROFILE }
+private enum class DriverTab { DASHBOARD, REQUESTS, HISTORY, SUPPORT, PROFILE }
 
 @Composable
 fun DriverHomeScreen(
@@ -172,6 +174,11 @@ fun DriverHomeScreen(
                     onAccept = viewModel::acceptRequest
                 )
                 DriverTab.HISTORY -> DriverHistoryContent(viewModel)
+                DriverTab.SUPPORT -> SupportPanel(
+                    userId = userId,
+                    reporterType = com.tpc.trikride.models.UserType.DRIVER,
+                    viewModel = supportViewModel
+                )
                 DriverTab.PROFILE -> SettingsScreen(
                     userId = userId,
                     userType = com.tpc.trikride.models.UserType.DRIVER,
@@ -218,6 +225,12 @@ private fun DriverBottomBar(
             onClick = { onSelect(DriverTab.HISTORY) },
             icon = { Icon(Icons.Filled.History, contentDescription = "History") },
             label = { Text("History") }
+        )
+        NavigationBarItem(
+            selected = selected == DriverTab.SUPPORT,
+            onClick = { onSelect(DriverTab.SUPPORT) },
+            icon = { Icon(Icons.Filled.SupportAgent, contentDescription = "Support") },
+            label = { Text("Support") }
         )
         NavigationBarItem(
             selected = selected == DriverTab.PROFILE,
