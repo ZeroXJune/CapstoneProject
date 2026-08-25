@@ -266,7 +266,12 @@ Then load the fare table, without which nothing can be booked:
 4. Go to the **Fares** tab. It will say no rate table is loaded.
 5. Tap **Load official rates**. This writes all 240 stops from the transcribed FeTODAT
    schedule into `config/fareStops` in one request.
-6. Tap the **Needs review** chip. Forty-six entries are flagged as uncertain from the
+6. Open the minimums and flat rates dialog and check the four numbers: minimum regular
+   ₱25, minimum discounted ₱20, Poblacion flat ₱25, terminal round trip ₱25. Loading the
+   rates leaves these four alone on purpose, so that an administrator's corrections
+   survive a reload — which also means a database seeded before these values were fixed
+   still holds the old ones, and reloading will not put them right. Edit them here.
+7. Tap the **Needs review** chip. Forty-six entries are flagged as uncertain from the
    transcription and three are switched off because no usable rate could be read. Check
    them against the physical posted sheet before anyone uses the app for real. Each one
    opens with the specific problem written at the top of the dialog.

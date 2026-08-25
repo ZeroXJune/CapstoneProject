@@ -107,7 +107,10 @@ evaluation, which cannot start until the first seven are done.
 4. **Publish the security rules,** including `driverDocuments` and `driverRatings`.
    Without the first, licence uploads are refused; without the second, ratings are.
 5. **Load the fare table.** Sign in as an administrator and use Fares → Load official
-   rates. The app cannot price a ride until this is done once.
+   rates. The app cannot price a ride until this is done once. Then open the minimums
+   and flat rates dialog and check the four numbers read ₱25, ₱20, ₱25, ₱25. Loading
+   the rates deliberately leaves those alone, so a database seeded before they were
+   corrected still holds the old ones and no amount of re-loading will change them.
 
 Steps 1 to 5 are an afternoon. Full instructions are in the Deployment section of
 SETUP_GUIDE.md.
