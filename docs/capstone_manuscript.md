@@ -1631,29 +1631,284 @@ Sex: Male ☐  Female ☐    Age: _________
 
 ## Appendix D — Legal Documents Presented In-App
 
-The following documents are carried inside the application, are readable at any time from
-the profile screen, and must be accepted before the service becomes available. They are
-reproduced here as issued, effective 28 July 2026.
+Four documents are carried inside the application and are readable at any time from the
+profile screen. The Terms and Conditions, the Privacy Policy and the Safety and Community
+Guidelines must each be accepted before the service becomes available; the Driver
+Agreement is presented to a driver after they choose a driver account. Acceptance is
+recorded against a version string, so that a revision asks every existing user again on
+their next launch.
 
-**D.1 Terms and Conditions.** Ten sections covering eligibility, account registration,
-ride booking obligations for passengers and drivers, prohibited activities, limitation of
-liability, account suspension, intellectual property, amendments, governing rules, and
-acceptance.
+They are reproduced below as issued. The text held in the application is the copy of
+record, since it is what a user reads before agreeing; its source is
+`app/src/main/java/com/tpc/trikride/ui/screens/LegalScreen.kt`, and Markdown copies
+generated from it are in `docs/legal/` of the repository given in Appendix I.
 
-**D.2 Privacy Policy.** Eight sections covering what is collected, how it is used,
-location, storage, sharing, user choices, children, and contact.
+[[PB]]
 
-**D.3 Safety and Community Guidelines.** Commitment, respect, safe riding, driver
-responsibilities, passenger responsibilities, prohibited conduct, reporting safety
-concerns, and account enforcement.
+### D.1 Terms and Conditions
 
-**D.4 Driver Agreement.** Driver eligibility, driver responsibilities, professional
-conduct, safety requirements, suspension and termination, limitation of responsibility,
-and agreement.
+*Effective Date: July 28, 2026*
 
-*[Insert the full text of each document here. The text held in the application is
-reproduced verbatim from the issued documents; the source is
-`app/src/main/java/com/tpc/trikride/ui/screens/LegalScreen.kt`.]*
+By creating an account or using TrikRide, you agree to comply with these Terms and Conditions.
+
+**1. Eligibility**
+
+Users must be:
+- Registered students, faculty, or authorized personnel of the participating institution.
+- Registered and approved drivers for driver accounts.
+
+**2. Account Registration**
+
+Users agree to:
+- Provide accurate and complete information.
+- Maintain only one active account unless otherwise authorized.
+- Keep login credentials confidential.
+- Notify the administrator immediately if they suspect unauthorized access to their account.
+
+**3. Ride Booking**
+
+Passengers agree to:
+- Enter accurate pickup and destination locations.
+- Be present at the designated pickup point on time.
+- Treat drivers and fellow passengers with courtesy and respect.
+
+Drivers agree to:
+- Maintain valid registration and any required permits.
+- Arrive at pickup locations promptly whenever possible.
+- Provide safe, respectful, and professional service.
+- Follow all applicable traffic laws and institutional policies.
+
+**4. Prohibited Activities**
+
+Users shall not:
+- Create fake or fraudulent accounts.
+- Impersonate another person.
+- Submit false booking requests.
+- Harass, threaten, or discriminate against other users.
+- Attempt unauthorized access to the system.
+- Use the application for illegal or unlawful activities.
+
+Violations may result in temporary suspension or permanent removal from the TrikRide platform.
+
+**5. Limitation of Liability**
+
+TrikRide is a ride scheduling and driver matching platform. While we strive to provide reliable service, we cannot guarantee uninterrupted availability and are not responsible for delays caused by traffic, weather, vehicle issues, or other circumstances beyond our reasonable control.
+
+**6. Account Suspension**
+
+The system administrator reserves the right to suspend or terminate accounts found to be in violation of these Terms and Conditions.
+
+**7. Intellectual Property**
+
+All application content, including the TrikRide name, logo, interface design, graphics, source code, and documentation, is owned by the TrikRide development team unless otherwise stated. Unauthorized reproduction or distribution is prohibited.
+
+**8. Amendments**
+
+These Terms and Conditions may be updated from time to time. Continued use of TrikRide after changes are published constitutes acceptance of the updated Terms.
+
+**9. Governing Rules**
+
+These Terms shall be governed by applicable Philippine laws and the policies of the participating educational institution.
+
+**10. Acceptance**
+
+By registering and using TrikRide, you confirm that you have read, understood, and agreed to these Terms and Conditions and the Privacy Policy.
+
+[[PB]]
+
+### D.2 Privacy Policy
+
+*Effective Date: August 16, 2026*
+
+**1. Information We Collect**
+
+We collect the information you provide during registration (name, email, phone number, date of birth, and — for drivers — license and tricycle details), an optional profile photo, and information generated while using the app (ride requests, pickup/destination, ride history, and any concerns you report).
+
+Drivers are also asked for a photograph of their driver's license. Under the Data Privacy Act of 2012 (Republic Act No. 10173) a license is sensitive personal information, so it is treated separately from everything else in this policy and is covered by section 9 below. You are asked to agree to it specifically at the moment you send it, not merely by accepting this policy.
+
+**2. How We Use Information**
+
+Your information is used to create your account, match passengers with drivers, price rides, support driver verification, and improve the service.
+
+**3. Location**
+
+Location is used to show pickup/destination and, for drivers, availability. Location is only used while you are using the relevant features of the app.
+
+**4. Data Storage**
+
+Account, ride, and profile photo data are stored in Google Firebase. A profile photo is reduced to a small thumbnail before it is stored. Communications with the server are encrypted in transit. TrikRide does not collect card, bank, or any other payment details; fares are paid in cash directly to the driver.
+
+**5. Sharing**
+
+A passenger's ride details are shared with the assigned driver (and vice versa) to complete the ride. Administrators can view driver records and ride logs to operate and monitor the service. We do not sell your personal information.
+
+**6. Your Choices**
+
+You can edit your profile details and sign out at any time. You may request account concerns or corrections through the Support feature.
+
+**7. Children**
+
+The service is intended for members of the college community and is not directed at children under 13.
+
+**8. Contact**
+
+For privacy questions, contact the TrikRide support hotline listed in the app.
+
+**9. Driver's License Photographs**
+
+This section applies only to drivers, and only to the photograph of the license itself.
+
+Purpose. The photograph is used for one thing: to confirm that the person applying to carry passengers holds the license they say they hold, and to check it again when that license expires. It is not used for anything else.
+
+Who can see it. You, and a TrikRide administrator. It is never shown to passengers, never attached to a ride, and never included in any exported report.
+
+How long we keep it. If your application is refused, the photograph is deleted at the moment of that decision. If you are approved, it is kept while your account is active, because it is needed again at renewal and if a concern about a ride is ever disputed. Withdrawing an approval already given is not the same as refusing an application and does not delete the photograph, for that same reason. It is deleted with your account.
+
+Your control. You may remove the photograph yourself at any time from your driver profile. Removing it means you cannot be approved to carry passengers until you provide another one.
+
+How it is stored. Separately from your account record, so that ordinary use of the app never reads it, and reduced in size before it is stored. Communications are encrypted in transit.
+
+[[PB]]
+
+### D.3 Safety and Community Guidelines
+
+*Effective Date: July 28, 2026*
+
+**Our Commitment**
+
+TrikRide is committed to providing a safe, respectful, and reliable transportation environment for students, drivers, faculty, and staff.
+
+**Respect Everyone**
+
+- Treat all users with courtesy and professionalism.
+- Avoid abusive, offensive, discriminatory, or threatening language.
+- Respect personal space and privacy.
+
+**Safe Riding**
+
+- Wait at the designated pickup location.
+- Verify the driver's identity before boarding.
+- Follow the driver's safety instructions during the trip.
+- Remain seated while the vehicle is moving.
+- Do not distract the driver while driving.
+
+**Driver Responsibilities**
+
+Drivers are expected to:
+- Drive safely and obey all traffic laws.
+- Maintain a roadworthy and clean vehicle.
+- Arrive at pickup locations as promptly as possible.
+- Treat every passenger fairly and respectfully.
+- Never operate a vehicle while under the influence of alcohol or illegal drugs.
+
+**Passenger Responsibilities**
+
+Passengers are expected to:
+- Arrive on time for scheduled pickups.
+- Respect the driver's vehicle and property.
+- Avoid behavior that may endanger others.
+- Report emergencies or unsafe situations immediately.
+
+**Prohibited Conduct**
+
+The following are strictly prohibited:
+- Violence or physical assault.
+- Sexual harassment or misconduct.
+- Bullying, intimidation, or discrimination.
+- Possession or use of illegal drugs.
+- Carrying dangerous weapons or prohibited items.
+- Vandalism or intentional damage to vehicles.
+- Providing false information or fake bookings.
+
+**Reporting Safety Concerns**
+
+Users are encouraged to report:
+- Unsafe driving.
+- Harassment or inappropriate behavior.
+- Fake accounts or fraudulent activities.
+- Vehicle safety issues.
+- Lost belongings.
+
+Reports will be reviewed by authorized administrators, and appropriate action may be taken. Use the Support tab to file a report.
+
+**Account Enforcement**
+
+Violations of these Community Guidelines may result in:
+- Warning notices.
+- Temporary account suspension.
+- Permanent account removal.
+- Referral to school authorities or law enforcement when necessary.
+
+By using TrikRide, all users agree to help maintain a safe, respectful, and welcoming community.
+
+[[PB]]
+
+### D.4 Driver Agreement
+
+*Effective Date: August 16, 2026*
+
+This Driver Agreement establishes the responsibilities and expectations for all drivers using the TrikRide platform.
+
+**Driver Eligibility**
+
+To become a TrikRide driver, you must:
+- Be at least 18 years old.
+- Possess a valid driver's license appropriate for the vehicle operated.
+- Operate a legally registered tricycle or authorized vehicle.
+- Submit a legible photograph of that license for verification, and keep a current one on file.
+- Complete the registration and verification process required by TrikRide.
+
+**Your License Photograph**
+
+The photograph you submit is checked by an administrator against the license details you entered, and again when the license expires. Only you and an administrator can view it; it is never shown to passengers. If your application is refused it is deleted immediately. If you are approved it is kept while your account is active and deleted with the account; that remains so if your approval is later withdrawn, since the reason for withdrawing it may itself need to be evidenced. You may remove it yourself at any time, though you cannot carry passengers without one on file. Section 9 of the Privacy Policy sets this out in full.
+
+TrikRide checks that a document was presented and that it matches what you entered. It does not and cannot confirm with the Land Transportation Office that a license is current or has not been suspended. Driving on a valid license remains your responsibility, and submitting a false or altered document ends your access to the platform.
+
+**Driver Responsibilities**
+
+Drivers agree to:
+- Provide accurate personal and vehicle information.
+- Keep account information updated.
+- Drive safely and comply with all traffic laws.
+- Treat all passengers respectfully and without discrimination.
+- Arrive at pickup locations as promptly as possible.
+- Notify passengers through the app if delays occur.
+- Maintain a clean and safe vehicle.
+
+**Professional Conduct**
+
+Drivers shall:
+- Wear appropriate attire while providing transportation services.
+- Avoid abusive or inappropriate language.
+- Respect passenger privacy.
+- Never ask for personal information unrelated to the ride.
+
+**Safety Requirements**
+
+Drivers shall never:
+- Drive while under the influence of alcohol or illegal drugs.
+- Allow unauthorized persons to operate their registered vehicle.
+- Accept bookings using another driver's account.
+- Endanger passengers through reckless driving.
+
+**Account Suspension or Termination**
+
+TrikRide may suspend or terminate a driver's account for:
+- Repeated complaints.
+- Unsafe driving practices.
+- Fraudulent activity.
+- Submission of false documents.
+- Violation of this Agreement or applicable laws.
+
+**Limitation of Responsibility**
+
+Drivers acknowledge that TrikRide functions as a ride scheduling and matching platform. Drivers remain responsible for complying with all traffic regulations and for the safe operation of their vehicles.
+
+**Agreement**
+
+By registering as a TrikRide driver, you confirm that you have read, understood, and agreed to abide by this Driver Agreement.
+
+[[PB]]
 
 ## Appendix E — Interview Guide
 

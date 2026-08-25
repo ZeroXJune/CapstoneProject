@@ -64,6 +64,9 @@ alternative is signing out. What was accepted is stored on the account against a
 string, so an account created before this existed gets asked on its next launch, and
 bumping `Constants.LEGAL_VERSION` when the documents are revised asks everyone again.
 
+All four are readable in `docs/legal/`, generated from the text in the app so the two
+cannot quietly drift apart.
+
 ## Fares
 
 The app does not estimate. It looks up the posted rate for the destination, raises it to
@@ -132,6 +135,7 @@ docs/
   capstone_manuscript.md              the written documentation, in Markdown
   TrikRide_Capstone_Documentation.docx  the same, built for submission
   figures/                            generated diagrams
+  legal/                              the four user agreements, as Markdown
 ```
 
 ## Maps and live tracking

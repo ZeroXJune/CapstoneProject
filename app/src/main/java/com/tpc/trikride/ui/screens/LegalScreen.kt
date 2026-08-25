@@ -67,6 +67,12 @@ fun LegalScreen(doc: LegalDoc, onBack: () -> Unit) {
     }
 }
 
+// These four strings are the copy of record: they are what a user reads before
+// ticking the box. docs/legal/ holds Markdown copies for reading and printing,
+// generated from here by docs/legal/sync.py. Editing any of them means running
+// that script and bumping Constants.LEGAL_VERSION, or the revision is shown to
+// nobody who has already agreed.
+
 private val TERMS_TEXT = """
 Terms and Conditions for TrikRide
 Effective Date: July 28, 2026

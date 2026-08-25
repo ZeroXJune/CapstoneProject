@@ -176,6 +176,11 @@ statistician's to specify, so those sections were removed rather than left as em
 tables. What remains to be added once the evaluation happens is the results, their
 interpretation, Chapter 5's summary and findings, and the appendices that depend on them.
 
+Appendix D now carries all four user agreements in full rather than a summary and a
+placeholder. They are also in `docs/legal/` as Markdown, generated from the strings in
+`LegalScreen.kt` by `docs/legal/sync.py`, which with `--check` reports whether the two
+have drifted.
+
 Appendix I does not print the source. Twelve thousand seven hundred lines across 55 files
 would add roughly three hundred pages to every bound copy, which the budget will not carry.
 It gives the clone URL, a walk-through for retrieving the code with Git or as a ZIP, a note
