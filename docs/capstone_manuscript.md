@@ -566,17 +566,13 @@ Task-Technology Fit (Goodhue & Thompson, 1995) holds that a technology improves 
 
 The task in this study has a specific shape. Fares are fixed per destination by ordinance, not computed from distance. Trips are short and local. Drivers work from a small set of known terminals. Passengers travel to a known set of destinations. A technology that fits this task must therefore price from a lookup table rather than a formula, must offer destinations from a defined list rather than an open map search, and must work on inexpensive Android devices over an intermittent mobile connection.
 
-This theory accounts for the central design decision of the study, which is that the fare engine performs a lookup against the published schedule rather than a distance calculation. A distance-based fare engine would be a poorer fit for the task even though it is the more common design.
+This theory accounts for the central design decision of the study, which is that the fare engine performs a lookup against the published schedule rather than a distance calculation. A distance-based fare engine would be a poorer fit for the task even though it is the more common design. The fit extends beyond the calculation itself: because the schedule the system prices from is the one the association already publishes and posts, the system introduces no pricing scheme that a driver or a passenger has to learn or accept.
 
 ### Information Systems Success Model
 
 The DeLone and McLean Information Systems Success Model (DeLone & McLean, 2003) holds that the success of an information system is a function of system quality, information quality, and service quality, which shape use and user satisfaction, which in turn produce net benefits.
 
-In this study, system quality is measured by the reliability and efficiency characteristics of the evaluation instrument. Information quality is addressed by the accuracy of the fare table, which is why rows transcribed with any uncertainty are flagged for verification and rows without a usable rate are disabled rather than left to price a ride with a wrong number. Net benefits correspond to the reduction in passenger waiting time and the improvement in driver utilization named in objectives four and five.
-
-### Diffusion of Innovations
-
-Rogers (2003) identified five attributes that predict how quickly an innovation spreads: relative advantage, compatibility, complexity, trialability, and observability. The system is designed with these in mind. Relative advantage is the elimination of waiting and searching. Compatibility is served by pricing from the schedule the association already publishes rather than introducing a new pricing scheme. Complexity is kept low. Trialability is served by distribution to a defined group of testers before any wider release. Observability is served by the administrative monitor and the exported reports, which make the system's effects visible to the college and the association.
+In this study, system quality is measured by the reliability and efficiency characteristics of the evaluation instrument. Information quality is addressed by the accuracy of the fare table, which is why rows transcribed with any uncertainty are flagged for verification and rows without a usable rate are disabled rather than left to price a ride with a wrong number. Net benefits correspond to the reduction in passenger waiting time and the improvement in driver utilization named in objective four.
 
 ## 2.5 Conceptual Framework
 
@@ -1424,8 +1420,6 @@ Narayanan, S., & Antoniou, C. (2021). A systematic literature review of ride-sha
 Rapp, D., Bräunl, T., & Collett, T. (2023). On-demand ride sharing: Scheduling of an autonomous bus fleet for last-mile travel. *Robotics and Autonomous Systems, 170*, 104559. https://doi.org/10.1016/j.robot.2023.104559
 
 Republic of the Philippines. (2012). *Republic Act No. 10173: An act protecting individual personal information in information and communications systems in the government and the private sector, creating for this purpose a National Privacy Commission, and for other purposes* (Data Privacy Act of 2012). Official Gazette. https://www.officialgazette.gov.ph/2012/08/15/republic-act-no-10173/
-
-Rogers, E. M. (2003). *Diffusion of innovations* (5th ed.). Free Press.
 
 Wang, H., Zhang, J., & Li, Q. (2022). Intelligent transportation systems and smart mobility solutions for urban transportation management. *IEEE Access, 10*, 49792–49805. https://doi.org/10.1109/ACCESS.2022.3172017
 
