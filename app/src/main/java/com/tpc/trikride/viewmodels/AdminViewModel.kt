@@ -12,6 +12,7 @@ import com.tpc.trikride.models.Complaint
 import com.tpc.trikride.models.ComplaintStatus
 import com.tpc.trikride.repositories.AdminRepository
 import com.tpc.trikride.repositories.FareRepository
+import com.tpc.trikride.models.NotificationType
 import com.tpc.trikride.repositories.SupportRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -100,6 +101,11 @@ class AdminViewModel(
         viewModelScope.launch {
             try {
                 repo.approveDriver(driverId)
+                notifyDecision(
+                    driverId,
+                    "Your application was approved",
+                    "You can now go online and accept passengers."
+                )
             } catch (e: Exception) {
                 _error.value = e.message ?: "Failed to approve driver"
             }
@@ -110,6 +116,12 @@ class AdminViewModel(
         viewModelScope.launch {
             try {
                 repo.rejectDriver(driverId)
+                notifyDecision(
+                    driverId,
+                    "Your application was not approved",
+                    "The licence photograph you submitted has been deleted. Speak to " +
+                        "the administrator before applying again."
+                )
                 // The image is gone from the database; drop the copy held here
                 // too rather than leaving a deleted document on screen.
                 closeLicence(driverId)
@@ -124,9 +136,32 @@ class AdminViewModel(
         viewModelScope.launch {
             try {
                 repo.revokeApproval(driverId)
+                notifyDecision(
+                    driverId,
+                    "Your approval has been withdrawn",
+                    "You cannot accept passengers for now. Speak to the administrator."
+                )
             } catch (e: Exception) {
                 _error.value = e.message ?: "Failed to revoke approval"
             }
+        }
+    }
+
+    /**
+     * Tells the driver what was decided.
+     *
+     * A failure here is deliberately not surfaced as an error: the decision it
+     * describes has already been written and taken effect, and reporting the
+     * notification as a failed approval would be worse than a missing message.
+     */
+    private suspend fun notifyDecision(driverId: String, title: String, message: String) {
+        runCatching {
+            supportRepo.notify(
+                userId = driverId,
+                title = title,
+                message = message,
+                type = NotificationType.ACCOUNT
+            )
         }
     }
 

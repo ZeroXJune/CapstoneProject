@@ -138,7 +138,7 @@ server in between, so anything the rules allow is allowed, whatever the interfac
     "notifications": {
       "$uid": {
         ".read": "auth != null && $uid === auth.uid",
-        ".write": "auth != null",
+        ".write": "auth != null && ($uid === auth.uid || root.child('users').child(auth.uid).child('userType').val() === 'ADMIN' || root.child('drivers').child(auth.uid).child('verificationStatus').val() === 'APPROVED')",
         "$id": {
           ".validate": "newData.hasChildren(['title', 'message'])"
         }
@@ -185,16 +185,22 @@ read because refusing an application deletes the photograph.
 `config` covers both `config/fare` and `config/fareStops`, which every signed-in user reads
 to price a ride but only an administrator can change.
 
-**Two things these rules do not fix.** A driver's licence *number* still sits on
-`drivers/{uid}`, which every signed-in account can read because passengers need the
-availability and position on that same record; moving `licenseNumber` and `licenseExpiry`
-into `driverDocuments` would close it and is worth doing before any wider deployment. And
-`notifications/{uid}` remains writable by any authenticated user, because the app has one
-party notify the other and the rules cannot tell a legitimate sender from a spoofed one
-without a server; the `.validate` only enforces the shape.
+**What these rules still do not fix.** Notifications are written by one party about
+another — a driver tells a passenger their ride was accepted, an administrator tells a
+driver the verification decision — so the write cannot be limited to the owner of the
+node. It is limited instead to the three kinds of account that legitimately send one: the
+owner, an administrator, and an approved driver. That is narrower than any signed-in
+account, but an approved driver could still write a notification to a passenger they are
+not carrying. Closing it properly means moving the send to a Cloud Function, which is the
+same deferred work as server-side push. The `.validate` only enforces the shape.
 
-While you are still testing, you may want the looser test-mode rules Firebase offers.
-Do not leave them on once real accounts exist.
+**If Firebase emails you about insecure rules,** it is telling you the published rules are
+more open than these. The most common cause is that the database is still on the test-mode
+rules Firebase creates it with, which allow any signed-in account to read and write
+everything and expire after thirty days. Open the email: it names the paths it objects to.
+Then open Realtime Database → Rules in the console, check that what is published matches
+the block above, and publish it if it does not. Test-mode rules are fine while nothing but
+your own test accounts exist, and must be gone before the evaluation.
 
 ## Step 5: Maps
 

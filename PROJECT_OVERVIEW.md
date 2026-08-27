@@ -106,7 +106,9 @@ evaluation, which cannot start until the first seven are done.
    it is lost.
 3. **Fill `.env`.** Copy `.env.example`. The build reads it.
 4. **Publish the security rules,** including `driverDocuments` and `driverRatings`.
-   Without the first, licence uploads are refused; without the second, ratings are.
+   Without the first, licence uploads are refused; without the second, ratings are. If
+   Firebase has emailed about insecure rules, the database is still on test-mode rules
+   and this is the step that was skipped.
 5. **Load the fare table.** Sign in as an administrator and use Fares → Load official
    rates. The app cannot price a ride until this is done once. Then open the minimums
    and flat rates dialog and check the four numbers read ₱25, ₱20, ₱25, ₱25. Loading
