@@ -481,9 +481,50 @@ evaluation chapter.
 the link as a QR code. Users have to allow installation from outside the app store, so
 include the illustrated install guide from the user manual.
 
-The Play Store is neither free nor quick: a one-time developer fee, and for new
-individual accounts a closed testing period before public release. Nothing in the project
-prevents publishing there later.
+### The Play Store
+
+Nothing in the project prevents publishing there, but it is the wrong channel for the
+evaluation and a poor one for this app even afterwards. Read this before starting, because
+the first two items cost weeks, not hours.
+
+**A closed testing period comes first.** A personal developer account has to run a closed
+test with twelve testers who keep the app installed for fourteen continuous days before it
+may even apply for production access, and the application is then reviewed. An
+organisation account skips this but needs a D-U-N-S number for the college, which takes
+its own weeks to obtain. Google changes these terms; check what the Console says when you
+start.
+
+**The API level is too low.** Google requires a new app to target the API level released
+the previous year, enforced every 31 August. `targetSdk` is 34, which is behind that bar
+and will be refused at upload. Raising it is not one line: a higher target turns on
+behaviour the app has never run under — edge-to-edge drawing in particular, which lets
+content sit under the status and navigation bars — so every screen needs looking at on a
+device afterwards. `compileSdk` may need raising with it.
+
+Then, in order:
+
+1. **Register.** play.google.com/console, one-time fee, identity verification.
+2. **Build a bundle, not an APK.** `./gradlew bundleRelease`, output in
+   `app/build/outputs/bundle/release/`. Play has not accepted APKs for new apps in years.
+3. **Accept Play App Signing.** Google holds the signing key and your keystore becomes the
+   *upload* key. This is worth understanding before you agree to it: it changes what
+   losing the keystore means, and it cannot be undone later.
+4. **Host the privacy policy at a public URL.** The listing requires a link, not a
+   document. GitHub Pages serving `docs/legal/privacy-policy.md` is enough.
+5. **Fill the Data safety form honestly.** The app collects name, email, phone number,
+   date of birth, precise location, a profile photograph, and — for drivers — a photograph
+   of a government identity document. All of it has to be declared, and the licence
+   photograph is the one that will draw questions, so have Section 9 of the privacy policy
+   to hand. A form that does not match what the app does is grounds for removal.
+6. **Complete the content rating questionnaire, target audience declaration, and store
+   listing** — icon, feature graphic, screenshots, description.
+
+**One thing to think about before any of that.** A Play listing is public, and this app
+does nothing useful outside Talibon: it needs an administrator to have loaded the fare
+table, and it prices rides against one municipality's ordinance. Anyone who installs it
+from a public listing gets an app that cannot book a ride. App Distribution reaches
+exactly the people the evaluation needs and no one else, which is both the right audience
+and the right evidence.
 
 ## Support
 
