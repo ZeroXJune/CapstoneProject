@@ -301,9 +301,11 @@ Nothing can be booked until this is done once.
 You can also search the table by stop or zone, filter by zone, edit any entry, switch one
 off, add one, or delete one. Editing an entry clears its review flag.
 
-**Map positions.** A stop can be given coordinates in the same dialog. A stop without them
-books and prices normally; it just does not appear on the map, and cannot be found through
-"Find it on the map". Filling in the common destinations is worth doing.
+**Map positions.** Open a stop and tap **Set it on the map**, then drag until the pin sits
+on the place and confirm. There is no need to type coordinates. A stop without a position
+books and prices normally; it just does not appear on the map, cannot be found through
+"Find it on the map", and cannot be handed to a driver's navigation app. Filling in the
+common destinations is worth doing, and is what turns those two features on.
 
 ### 4.2 Verifying drivers
 

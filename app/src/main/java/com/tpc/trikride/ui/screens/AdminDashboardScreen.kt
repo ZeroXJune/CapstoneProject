@@ -13,6 +13,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Groups
@@ -23,6 +24,7 @@ import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Badge
 import androidx.compose.material.icons.filled.WarningAmber
 import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.Place
 import androidx.compose.material.icons.filled.VerifiedUser
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -46,11 +48,17 @@ import com.tpc.trikride.models.Ride
 import com.tpc.trikride.models.RideStatus
 import com.tpc.trikride.models.User
 import com.tpc.trikride.models.VerificationStatus
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
+import com.tpc.trikride.models.Location
+import com.tpc.trikride.ui.components.PickerMap
 import com.tpc.trikride.ui.components.PrimaryButton
 import com.tpc.trikride.ui.components.SectionCard
+import com.tpc.trikride.ui.components.TALIBON_CENTRE
 import com.tpc.trikride.utils.FareSeed
 import com.tpc.trikride.utils.LicenceImage
 import com.tpc.trikride.ui.theme.ErrorColor
+import com.tpc.trikride.ui.theme.ForestGreen
 import com.tpc.trikride.ui.theme.SuccessColor
 import com.tpc.trikride.ui.theme.WarningColor
 import com.tpc.trikride.viewmodels.AdminViewModel
@@ -1072,6 +1080,7 @@ private fun FareStopDialog(
     var reviewed by remember { mutableStateOf(!stop.needsReview) }
     var lat by remember { mutableStateOf(if (stop.latitude == 0.0) "" else stop.latitude.toString()) }
     var lng by remember { mutableStateOf(if (stop.longitude == 0.0) "" else stop.longitude.toString()) }
+    var pickingPoint by remember { mutableStateOf(false) }
 
     val regularValue = regular.toDoubleOrNull()
     val discountedValue = discounted.toDoubleOrNull()
@@ -1151,6 +1160,23 @@ private fun FareStopDialog(
                         MoneyField("Longitude", lng) { lng = it }
                     }
                 }
+                // Typing two decimals is why none of the 240 stops has a
+                // position. Dropping a pin is the same job in a few seconds.
+                TextButton(onClick = { pickingPoint = true }) {
+                    Icon(
+                        Icons.Filled.Place,
+                        contentDescription = null,
+                        modifier = Modifier.size(16.dp)
+                    )
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Text(
+                        if (lat.toDoubleOrNull() != null && lng.toDoubleOrNull() != null) {
+                            "Move the pin"
+                        } else {
+                            "Set it on the map"
+                        }
+                    )
+                }
 
                 Spacer(modifier = Modifier.height(12.dp))
                 Row(
@@ -1223,6 +1249,22 @@ private fun FareStopDialog(
             }
         }
     )
+
+    if (pickingPoint) {
+        StopPointPicker(
+            stopName = name.ifBlank { "this stop" },
+            initial = Location(
+                latitude = lat.toDoubleOrNull() ?: TALIBON_CENTRE.latitude,
+                longitude = lng.toDoubleOrNull() ?: TALIBON_CENTRE.longitude
+            ),
+            onDismiss = { pickingPoint = false },
+            onPicked = { point ->
+                lat = "%.6f".format(point.latitude)
+                lng = "%.6f".format(point.longitude)
+                pickingPoint = false
+            }
+        )
+    }
 }
 
 /** Minimum fares and the two flat rates that are not tied to a stop. */
@@ -1296,6 +1338,79 @@ private fun GlobalRatesDialog(
 }
 
 @Composable
+/**
+ * Puts a fare stop on the map by dragging rather than by typing coordinates.
+ *
+ * The posted schedule gives names, not positions, so every one of the 240 has
+ * to be placed by somebody who knows the town. Asking that person for two
+ * six-decimal numbers per stop is why none of them had a position at all.
+ */
+@Composable
+private fun StopPointPicker(
+    stopName: String,
+    initial: Location,
+    onDismiss: () -> Unit,
+    onPicked: (Location) -> Unit
+) {
+    var centre by remember { mutableStateOf(initial) }
+
+    Dialog(
+        onDismissRequest = onDismiss,
+        properties = DialogProperties(usePlatformDefaultWidth = false)
+    ) {
+        Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
+            Column(modifier = Modifier.fillMaxSize()) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(start = 4.dp, end = 16.dp, top = 8.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    IconButton(onClick = onDismiss) {
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Close")
+                    }
+                    Text(
+                        "Where is it?",
+                        style = MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+                Text(
+                    "Move the map so the pin sits on $stopName. Passengers can then find " +
+                        "it from the map, and a driver can navigate to it.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(horizontal = 20.dp)
+                )
+                Spacer(modifier = Modifier.height(10.dp))
+
+                PickerMap(
+                    height = 420.dp,
+                    centre = centre,
+                    pinColor = ForestGreen,
+                    onMoved = { centre = it },
+                    modifier = Modifier.padding(horizontal = 20.dp)
+                )
+
+                Spacer(modifier = Modifier.height(12.dp))
+                Column(modifier = Modifier.padding(horizontal = 20.dp)) {
+                    Text(
+                        "%.6f, %.6f".format(centre.latitude, centre.longitude),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    Spacer(modifier = Modifier.height(10.dp))
+                    PrimaryButton(
+                        text = "Use this point",
+                        onClick = { onPicked(centre) }
+                    )
+                }
+                Spacer(modifier = Modifier.height(20.dp))
+            }
+        }
+    }
+}
+
 private fun MoneyField(label: String, value: String, onChange: (String) -> Unit) {
     OutlinedTextField(
         value = value,

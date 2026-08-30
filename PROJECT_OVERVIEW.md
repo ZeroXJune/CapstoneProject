@@ -160,9 +160,10 @@ Then rebuild the .docx and it is submittable.
 ### Worth doing, not blocking
 
 **Stop coordinates.** None of the 240 fare stops has a position yet. They book and price
-fine without one; they just do not appear on the map, and cannot be found through it —
-"Find it on the map" has nothing to offer until at least a few are filled in. Doing the
-dozen or so common destinations as you verify their fares would cover a demo.
+fine without one; they just do not appear on the map, cannot be found through it, and
+cannot be navigated to. Open a stop in the Fares tab and tap "Set it on the map" —
+drag, confirm, save. Doing the dozen or so common destinations as you verify their
+fares would cover a demo and turn on both of those features for the stops that matter.
 
 **The onboarding artwork.** See the rough edges at the end of this file.
 
