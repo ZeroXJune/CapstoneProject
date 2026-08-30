@@ -124,6 +124,12 @@ by the number of passengers. Poblacion and the terminal round trip are flat rate
 is calculated from distance, so the number you are shown before booking is the number you
 pay, in cash, directly to the driver.
 
+**₱25 is the minimum, not the price.** It is what the shortest rides cost and what any
+posted rate below it is raised to. Further destinations cost more — the highest on the
+posted schedule is ₱150 — so a ride is only ₱25 if the schedule says so for the place you
+are going. The screen tells you which before you commit to anything, and the picker shows
+the price beside every destination.
+
 ### 2.7 Waiting for a driver
 
 The request goes to every online, verified driver at once, and the first to accept gets

@@ -512,6 +512,19 @@ private fun BookingContent(
                 Text("Don't know the name? Find it on the map")
             }
         }
+        // No fare is shown at all until a destination is chosen, which is the
+        // moment someone assumes the minimum is the price.
+        if (destination == null) {
+            val minimum = "₱%.0f".format(FareEngine.minimumFor(fareConfig, fareType))
+            Text(
+                "The fare depends on where you are going. $minimum is the minimum, " +
+                    "not a flat rate, and longer trips cost more. Choose a destination " +
+                    "and the exact amount appears here.",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+            Spacer(modifier = Modifier.height(12.dp))
+        }
         Spacer(modifier = Modifier.height(16.dp))
 
         // Rate column. The driver checks the ID at pickup, the app only records it.
@@ -696,6 +709,7 @@ private fun BookingContent(
             stops = bookable,
             fareType = fareType,
             showFares = true,
+            minimumFare = FareEngine.minimumFor(fareConfig, fareType),
             onDismiss = { pickingDestination = false },
             onPick = { destination = it; pickingDestination = false }
         )
@@ -707,6 +721,7 @@ private fun BookingContent(
             stops = bookable,
             fareType = fareType,
             showFares = false,
+            minimumFare = FareEngine.minimumFor(fareConfig, fareType),
             onDismiss = { pickingPickup = false },
             onPick = { pickup = it.location; pickingPickup = false }
         )
@@ -992,6 +1007,7 @@ private fun StopPicker(
      * read as the price of being collected there, which is not a thing.
      */
     showFares: Boolean,
+    minimumFare: Double,
     onDismiss: () -> Unit,
     onPick: (FareStop) -> Unit
 ) {
@@ -1043,6 +1059,30 @@ private fun StopPicker(
                         fontWeight = FontWeight.Bold
                     )
                 }
+
+                // The minimum is the number people remember, and they remember
+                // it as the price. Saying what the rest of the table looks like
+                // is the difference between a fare that is higher than expected
+                // and one that feels like being overcharged.
+                val highest = remember(stops, fareType) {
+                    stops.maxOfOrNull { FareEngine.rateFor(it, fareType) }
+                }
+                val note = if (showFares) {
+                    val floor = "₱%.0f".format(minimumFare)
+                    val ceiling = highest?.let { " and rise to ₱%.0f".format(it) }.orEmpty()
+                    "Fares start at $floor$ceiling, depending on how far you are going. " +
+                        "$floor is the least a ride can cost, not the usual price."
+                } else {
+                    "No prices here: the fare comes from where you are going, not " +
+                        "from where you are collected."
+                }
+                Text(
+                    note,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(horizontal = 20.dp, vertical = 4.dp)
+                )
+                Spacer(modifier = Modifier.height(6.dp))
 
                 OutlinedTextField(
                     value = query,
