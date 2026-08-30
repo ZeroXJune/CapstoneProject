@@ -2357,6 +2357,11 @@ is reduced too, but a very large file can still fail.
 **The map is blank.** Tiles are downloaded, so a slow or absent connection leaves the map
 empty while everything else works. It will fill in.
 
+**The pinned pickup shows numbers instead of a place name.** Most of Talibon has no street
+address on record, so the app names the barangay and municipality instead. Where even that
+is unavailable it falls back to the coordinates, which a driver can still navigate to from
+the pin. Add a landmark in the notes if the label is not something you would say aloud.
+
 **The driver's position is not moving.** They have closed the app or gone offline. There is
 no background tracking, by design.
 
