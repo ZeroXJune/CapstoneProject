@@ -250,6 +250,13 @@ go:
 The passenger's screen follows each step. Marking a ride completed records the fare and
 asks the passenger to rate you.
 
+**Navigation.** TrikRide does not give turn-by-turn directions itself. Where the point it
+is sending you to has a map position, the active ride shows **Waze** and **Google Maps**
+buttons that open whichever of those you have with the route already started — the pickup
+before the passenger is aboard, the destination once the ride is under way. The buttons
+only appear for apps you actually have installed, and only when the point has coordinates,
+which for a destination means the administrator has positioned that stop.
+
 Check identification when a passenger has booked the discounted rate. The app records the
 column they chose; it cannot verify anyone is a senior, a PWD or a student.
 
@@ -399,6 +406,14 @@ no background tracking, by design.
 
 **Signed out unexpectedly.** The documents were revised, or the account was signed out on
 another device. Sign in again; nothing is lost.
+
+**The password reset email never arrives.** The app confirms that Firebase accepted the
+request, which is not the same as the mail reaching you. Check the spam folder first: the
+message comes from a `firebaseapp.com` address and is filtered often. Then check the
+address the confirmation named is one you can actually open — a mistyped address at
+registration will never receive anything. If neither explains it, the administrator should
+open Firebase Console, Authentication, Templates, and confirm the password reset template
+is enabled for the project.
 
 **Anything urgent.** Use the hotline on the Support tab. Do not wait on a report in the
 app.

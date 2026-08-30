@@ -10,10 +10,18 @@
     <!-- Ride notifications on Android 13 and later. -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
 
-    <!-- Held for the map work deferred to deployment. Nothing requests them yet,
-         so the runtime prompt never appears in the current build. -->
+    <!-- Pinning a pickup point, and publishing a driver's position while they are
+         online with the app open. Neither is used in the background. -->
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+
+    <!-- Android 11 hides installed packages unless they are named here. Without
+         this the app cannot tell whether a driver has Waze or Maps, and the
+         hand-off buttons would offer apps that are not there. -->
+    <queries>
+        <package android:name="com.waze" />
+        <package android:name="com.google.android.apps.maps" />
+    </queries>
 
     <application
         android:allowBackup="false"

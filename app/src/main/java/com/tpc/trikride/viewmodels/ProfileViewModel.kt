@@ -92,8 +92,13 @@ class ProfileViewModel(
     fun sendPasswordReset() {
         viewModelScope.launch {
             try {
-                repo.sendPasswordReset()
-                _state.update { it.copy(message = "Password reset email sent") }
+                val email = repo.sendPasswordReset()
+                _state.update {
+                    it.copy(
+                        message = "Reset link sent to $email. It can take a few " +
+                            "minutes, and it often lands in spam."
+                    )
+                }
             } catch (e: Exception) {
                 _state.update { it.copy(error = e.message ?: "Failed to send reset email") }
             }

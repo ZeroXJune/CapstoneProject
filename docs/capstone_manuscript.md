@@ -340,7 +340,7 @@ This study covers the development of a Smart Tricycle Ride and Driver Onboarding
 3. The system requires an internet connection. It does not operate offline.
 4. The system does not include online payment integration. All fares are settled in cash between the passenger and the driver.
 5. The system does not cover other transportation types such as jeepneys, buses, or motorcycle taxis.
-6. Turn-by-turn navigation is not included. The booking and tracking screens show an interactive map with the relevant positions on it, but the system does not compute or display a driving route, because route calculation is a billed web service and the study operates at no cost.
+6. Turn-by-turn navigation is not computed by the system. The booking and tracking screens show an interactive map with the relevant positions on it, but no driving route is calculated, because route calculation is a billed web service and the study operates at no cost. Where the point concerned has coordinates, a driver may hand it to Waze or Google Maps on their own device, which navigates at no cost to the study.
 7. A driver's position is published only while the application is open and the driver is marked online. There is no background tracking, so a passenger sees no position for a driver who has closed the application.
 8. Destinations are selected from the published FeTODAT schedule rather than by pinning a point on the map, because the governing ordinance fixes the fare for each named destination. The map may be used to find a destination — the system names the posted stop nearest to the point the passenger indicates, together with its fare — but the ride is booked and priced against that named stop, not against the point. A pickup point may be pinned freely, as it does not affect the fare.
 9. Fare stops carry a map position only where an administrator has supplied one. A stop without coordinates books and prices normally but does not appear on the map.
@@ -2218,6 +2218,13 @@ go:
 The passenger's screen follows each step. Marking a ride completed records the fare and
 asks the passenger to rate you.
 
+**Navigation.** TrikRide does not give turn-by-turn directions itself. Where the point it
+is sending you to has a map position, the active ride shows **Waze** and **Google Maps**
+buttons that open whichever of those you have with the route already started — the pickup
+before the passenger is aboard, the destination once the ride is under way. The buttons
+only appear for apps you actually have installed, and only when the point has coordinates,
+which for a destination means the administrator has positioned that stop.
+
 Check identification when a passenger has booked the discounted rate. The app records the
 column they chose; it cannot verify anyone is a senior, a PWD or a student.
 
@@ -2367,6 +2374,14 @@ no background tracking, by design.
 
 **Signed out unexpectedly.** The documents were revised, or the account was signed out on
 another device. Sign in again; nothing is lost.
+
+**The password reset email never arrives.** The app confirms that Firebase accepted the
+request, which is not the same as the mail reaching you. Check the spam folder first: the
+message comes from a `firebaseapp.com` address and is filtered often. Then check the
+address the confirmation named is one you can actually open — a mistyped address at
+registration will never receive anything. If neither explains it, the administrator should
+open Firebase Console, Authentication, Templates, and confirm the password reset template
+is enabled for the project.
 
 **Anything urgent.** Use the hotline on the Support tab. Do not wait on a report in the
 app.

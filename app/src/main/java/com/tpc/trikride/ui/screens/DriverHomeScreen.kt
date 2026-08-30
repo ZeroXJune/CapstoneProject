@@ -45,6 +45,7 @@ import com.tpc.trikride.ui.components.SectionCard
 import com.tpc.trikride.ui.components.SkeletonCard
 import com.tpc.trikride.ui.components.SupportPanel
 import com.tpc.trikride.ui.components.TrikTextField
+import com.tpc.trikride.utils.Navigation
 import com.tpc.trikride.ui.theme.ErrorColor
 import com.tpc.trikride.ui.theme.RatingColor
 import kotlinx.coroutines.delay
@@ -661,6 +662,10 @@ private fun ActiveRideContent(ride: Ride, onAdvance: () -> Unit) {
                 }
             }
         }
+        Spacer(modifier = Modifier.height(16.dp))
+
+        NavigationHandoff(ride)
+
         Spacer(modifier = Modifier.height(20.dp))
 
         val actionLabel = when (ride.status) {
@@ -797,6 +802,63 @@ private fun DriverOnboardingContent(
                 licenseExpiry.isNotBlank() && tricycleNumber.isNotBlank()
         )
         Spacer(modifier = Modifier.height(16.dp))
+    }
+}
+
+/**
+ * Opens the driver's own navigation app at whichever end of the ride is next.
+ *
+ * Before the passenger is aboard that is the pickup; afterwards it is the
+ * destination. Nothing is drawn when the relevant point has no coordinates,
+ * which is the case for any fare stop the administrator has not positioned, and
+ * nothing is drawn when neither app is installed.
+ */
+@Composable
+private fun NavigationHandoff(ride: Ride) {
+    val context = LocalContext.current
+    val heading = if (ride.status == RideStatus.IN_PROGRESS) {
+        ride.dropoffLocation
+    } else {
+        ride.pickupLocation
+    }
+    if (!heading.hasCoordinates) return
+
+    val hasWaze = remember { Navigation.isInstalled(context, Navigation.WAZE) }
+    val hasMaps = remember { Navigation.isInstalled(context, Navigation.GOOGLE_MAPS) }
+    if (!hasWaze && !hasMaps) return
+
+    val label = if (ride.status == RideStatus.IN_PROGRESS) "destination" else "pickup"
+
+    SectionCard {
+        Column {
+            Text(
+                "Navigate to the $label",
+                style = MaterialTheme.typography.titleSmall,
+                fontWeight = FontWeight.Bold
+            )
+            Text(
+                heading.address.ifBlank { "Pinned point" },
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+            Spacer(modifier = Modifier.height(10.dp))
+            Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                if (hasWaze) {
+                    OutlinedButton(
+                        onClick = { Navigation.openWaze(context, heading) },
+                        shape = RoundedCornerShape(14.dp),
+                        modifier = Modifier.weight(1f)
+                    ) { Text("Waze") }
+                }
+                if (hasMaps) {
+                    OutlinedButton(
+                        onClick = { Navigation.openGoogleMaps(context, heading) },
+                        shape = RoundedCornerShape(14.dp),
+                        modifier = Modifier.weight(1f)
+                    ) { Text("Google Maps") }
+                }
+            }
+        }
     }
 }
 

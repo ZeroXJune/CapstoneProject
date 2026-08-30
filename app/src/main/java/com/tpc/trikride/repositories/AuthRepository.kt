@@ -126,10 +126,18 @@ class AuthRepository(
         database.getReference("users").child(uid).updateChildren(updates).await()
     }
 
-    /** Sends a password-reset email to the signed-in user's address. */
-    suspend fun sendPasswordReset() {
+    /**
+     * Sends a password-reset email to the signed-in user's address, and returns
+     * the address it went to so the caller can show it.
+     *
+     * Worth showing: Firebase reports success once it has accepted the request,
+     * not once anything is delivered, so the address on the account is the only
+     * part of the outcome the app can actually vouch for.
+     */
+    suspend fun sendPasswordReset(): String {
         val email = auth.currentUser?.email ?: error("No email on this account")
         auth.sendPasswordResetEmail(email).await()
+        return email
     }
 
     /**
