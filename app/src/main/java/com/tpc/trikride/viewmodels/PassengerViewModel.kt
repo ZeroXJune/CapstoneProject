@@ -8,6 +8,8 @@ import com.tpc.trikride.models.FareType
 import com.tpc.trikride.models.Location
 import com.tpc.trikride.models.Ride
 import com.tpc.trikride.models.RideRequest
+import com.tpc.trikride.models.Driver
+import com.tpc.trikride.repositories.AuthRepository
 import com.tpc.trikride.repositories.DriverRepository
 import com.tpc.trikride.repositories.FareRepository
 import com.tpc.trikride.repositories.RideRepository
@@ -28,7 +30,8 @@ import kotlinx.coroutines.launch
 class PassengerViewModel(
     private val rideRepository: RideRepository = RideRepository(),
     private val fareRepository: FareRepository = FareRepository(),
-    private val driverRepository: DriverRepository = DriverRepository()
+    private val driverRepository: DriverRepository = DriverRepository(),
+    private val authRepository: AuthRepository = AuthRepository()
 ) : ViewModel() {
 
     private val passengerId = MutableStateFlow<String?>(null)
@@ -71,6 +74,19 @@ class PassengerViewModel(
      * driver only publishes while their app is open and they are online, so a
      * gap here means exactly that rather than a fault.
      */
+    /**
+     * The assigned driver's record, for the tricycle number and the real
+     * rating. Their name and telephone number are not here — those come off the
+     * ride, because `users` is private and `drivers` is not.
+     */
+    val assignedDriver: StateFlow<Driver?> = activeRides
+        .map { rides -> rides.firstOrNull()?.driverId.orEmpty() }
+        .flatMapLatest { id ->
+            if (id.isBlank()) flowOf(null) else driverRepository.driverProfile(id)
+        }
+        .catch { _errorMessage.value = it.message }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
+
     val driverLocation: StateFlow<Location?> = activeRides
         .map { rides -> rides.firstOrNull()?.driverId.orEmpty() }
         .flatMapLatest { id ->
@@ -138,11 +154,32 @@ class PassengerViewModel(
         }
     }
 
+    /**
+     * Puts this passenger's name and number on the ride the first time it
+     * appears, so the driver can call them.
+     *
+     * Silent on failure. A driver who cannot telephone is a smaller problem
+     * than an error banner over a ride that is otherwise proceeding normally.
+     */
+    private fun publishContact(ride: Ride) {
+        if (ride.passengerPhone.isNotBlank()) return
+        val uid = passengerId.value ?: return
+        viewModelScope.launch {
+            runCatching {
+                val user = authRepository.loadUser(uid) ?: return@runCatching
+                if (user.phoneNumber.isBlank()) return@runCatching
+                rideRepository.attachPassengerContact(
+                    ride.id, user.firstName, user.phoneNumber
+                )
+            }
+        }
+    }
+
     /** Once a ride is active, the request has been consumed by a driver. */
     fun clearPendingRequestIfMatched() {
-        if (activeRides.value.isNotEmpty()) {
-            _pendingRequest.value = null
-        }
+        val active = activeRides.value.firstOrNull() ?: return
+        _pendingRequest.value = null
+        publishContact(active)
     }
 
     /**

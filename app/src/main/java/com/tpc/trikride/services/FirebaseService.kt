@@ -153,6 +153,19 @@ class FirebaseService {
         database.getReference("rides").child(rideId).child("status").setValue(status)
     }
 
+    /**
+     * Writes the passenger's own two contact fields and nothing else.
+     *
+     * Named children rather than the whole node, because the rules grant the
+     * passenger write on exactly these two and refuse anything wider — the ride
+     * itself belongs to the driver.
+     */
+    suspend fun attachPassengerContact(rideId: String, name: String, phone: String) {
+        val ref = database.getReference("rides").child(rideId)
+        ref.child("passengerName").setValue(name).await()
+        ref.child("passengerPhone").setValue(phone).await()
+    }
+
     fun getActiveRidesFlow(passengerId: String): Flow<List<Ride>> = callbackFlow {
         val terminalStatuses = setOf(RideStatus.COMPLETED, RideStatus.CANCELLED, RideStatus.NO_SHOW)
         val listener = object : ValueEventListener {

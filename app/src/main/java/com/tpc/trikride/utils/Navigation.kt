@@ -62,6 +62,22 @@ object Navigation {
         return launch(context, Intent(Intent.ACTION_VIEW, uri).setPackage(GOOGLE_MAPS))
     }
 
+    /**
+     * Opens the dialler with the number filled in, without placing the call.
+     *
+     * ACTION_DIAL rather than ACTION_CALL on purpose: dialling needs no
+     * permission and leaves the decision with the person holding the phone,
+     * which is the right default when the number belongs to a stranger.
+     */
+    fun dial(context: Context, phone: String): Boolean {
+        val trimmed = phone.filterNot { it.isWhitespace() }
+        if (trimmed.isBlank()) return false
+        return launch(
+            context,
+            Intent(Intent.ACTION_DIAL, Uri.parse("tel:$trimmed"))
+        )
+    }
+
     private fun coordinate(value: Double) = "%.6f".format(Locale.US, value)
 
     private fun launch(context: Context, intent: Intent): Boolean = try {

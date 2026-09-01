@@ -174,7 +174,13 @@ server in between, so anything the rules allow is allowed, whatever the interfac
       ".indexOn": ["passengerId", "driverId"],
       "$rideId": {
         ".read": "auth != null && (data.child('passengerId').val() === auth.uid || data.child('driverId').val() === auth.uid)",
-        ".write": "auth != null && ((!data.exists() && newData.child('driverId').val() === auth.uid) || (data.exists() && data.child('driverId').val() === auth.uid))"
+        ".write": "auth != null && ((!data.exists() && newData.child('driverId').val() === auth.uid) || (data.exists() && data.child('driverId').val() === auth.uid))",
+        "passengerName": {
+          ".write": "auth != null && data.parent().child('passengerId').val() === auth.uid"
+        },
+        "passengerPhone": {
+          ".write": "auth != null && data.parent().child('passengerId').val() === auth.uid"
+        }
       }
     },
     "config": {
@@ -227,9 +233,17 @@ entries are there: without them Firebase sorts on the client and logs a warning.
 
 **Only the driver on a ride may change it.** Creating one requires the new record's
 `driverId` to be the caller, which is what happens when a driver accepts; after that only
-that same driver can advance its status. Passengers never write to `rides`. Ride requests
-are writable by the passenger who made one and by any approved driver, since accepting is
-a delete.
+that same driver can advance its status. Ride requests are writable by the passenger who
+made one and by any approved driver, since accepting is a delete.
+
+The two exceptions are `passengerName` and `passengerPhone`, which the passenger writes
+and nobody else can. Names and telephone numbers live on `users/{uid}`, which is private
+to the account, so without this neither party on a ride can see or contact the other —
+the passenger cannot be told who is coming and the driver cannot ring to say they have
+arrived. Putting the two fields on the ride shares them with exactly the other person on
+it, since `rides/$rideId` is readable only by those two. The driver's own name and number
+travel the same way, written when they accept. Nothing goes on the open request: that is
+broadcast to every approved driver, and a telephone number has no business there.
 
 `driverDocuments` is the one node not readable by every signed-in user, holding licence
 photographs, which are sensitive personal information under the Data Privacy Act of 2012.

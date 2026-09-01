@@ -18,6 +18,7 @@ import androidx.compose.material.icons.filled.MyLocation
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Payments
 import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.Phone
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.SupportAgent
 import androidx.compose.material3.*
@@ -598,6 +599,7 @@ private fun RequestCard(
 
 @Composable
 private fun ActiveRideContent(ride: Ride, onAdvance: () -> Unit) {
+    val context = LocalContext.current
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -625,9 +627,12 @@ private fun ActiveRideContent(ride: Ride, onAdvance: () -> Unit) {
                         tint = MaterialTheme.colorScheme.primary)
                 }
                 Spacer(modifier = Modifier.width(12.dp))
-                Column {
-                    Text("Passenger", style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold)
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        ride.passengerName.ifBlank { "Passenger" },
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold
+                    )
                     Text(
                         "Fare ₱%.2f  •  %s".format(
                             ride.estimatedFare,
@@ -637,6 +642,12 @@ private fun ActiveRideContent(ride: Ride, onAdvance: () -> Unit) {
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
+                }
+                if (ride.passengerPhone.isNotBlank()) {
+                    IconButton(onClick = { Navigation.dial(context, ride.passengerPhone) }) {
+                        Icon(Icons.Filled.Phone, contentDescription = "Call the passenger",
+                            tint = MaterialTheme.colorScheme.primary)
+                    }
                 }
             }
         }

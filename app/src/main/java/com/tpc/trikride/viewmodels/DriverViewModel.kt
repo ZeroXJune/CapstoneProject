@@ -7,6 +7,7 @@ import com.tpc.trikride.models.Driver
 import com.tpc.trikride.models.Ride
 import com.tpc.trikride.models.RideRequest
 import com.tpc.trikride.models.NotificationType
+import com.tpc.trikride.repositories.AuthRepository
 import com.tpc.trikride.repositories.DriverRepository
 import com.tpc.trikride.repositories.RideRepository
 import com.tpc.trikride.repositories.SupportRepository
@@ -27,7 +28,8 @@ import kotlinx.coroutines.launch
 class DriverViewModel(
     private val driverRepository: DriverRepository = DriverRepository(),
     private val rideRepository: RideRepository = RideRepository(),
-    private val supportRepository: SupportRepository = SupportRepository()
+    private val supportRepository: SupportRepository = SupportRepository(),
+    private val authRepository: AuthRepository = AuthRepository()
 ) : ViewModel() {
 
     private val driverId = MutableStateFlow<String?>(null)
@@ -262,7 +264,16 @@ class DriverViewModel(
         val id = driverId.value ?: return
         viewModelScope.launch {
             try {
-                rideRepository.acceptRequest(id, request)
+                // The passenger has no other way to learn who is coming:
+                // users/{uid} is private, so the name and number travel with
+                // the ride or not at all.
+                val me = runCatching { authRepository.loadUser(id) }.getOrNull()
+                rideRepository.acceptRequest(
+                    driverId = id,
+                    request = request,
+                    driverName = me?.firstName.orEmpty(),
+                    driverPhone = me?.phoneNumber.orEmpty()
+                )
                 // Busy with a passenger, so hide from other matching until done.
                 driverRepository.setAvailability(id, false)
                 supportRepository.notify(

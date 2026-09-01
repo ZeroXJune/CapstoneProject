@@ -2115,8 +2115,13 @@ Once a driver accepts, the screen becomes a status timeline that both of you see
 progress** → **Completed**
 
 The driver advances it; your screen follows without your doing anything. Their name,
-tricycle number and rating are shown, with a button to call them. While they are online
+tricycle number and rating are shown, with a button that dials them — useful if you are
+hard to find, or if the place you are going is not quite what the fare sheet calls it. A
+driver nobody has rated yet says so rather than showing a score. While they are online
 with the app open, their position moves on the map.
+
+What you agree by telephone does not change the fare. The app charges the posted rate for
+the stop you booked, and that is what you owe.
 
 #### 2.9 Rating and history
 
@@ -2217,6 +2222,11 @@ go:
 
 The passenger's screen follows each step. Marking a ride completed records the fare and
 asks the passenger to rate you.
+
+The active ride shows the passenger's name and a button that dials them. Use it if you
+cannot find them, or if their note describes somewhere the fare sheet does not list and
+you need to agree what is actually meant. The fare stays what the app calculated for the
+stop they booked — the call is for finding each other, not for renegotiating.
 
 **Navigation.** TrikRide does not give turn-by-turn directions itself. Where the point it
 is sending you to has a map position, the active ride shows **Waze** and **Google Maps**

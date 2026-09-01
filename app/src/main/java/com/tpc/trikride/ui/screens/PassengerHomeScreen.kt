@@ -14,7 +14,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.automirrored.filled.Chat
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.History
@@ -69,6 +68,7 @@ import com.tpc.trikride.utils.Constants
 import com.tpc.trikride.utils.FareEngine
 import com.tpc.trikride.utils.LocationProvider
 import com.tpc.trikride.utils.LocationUtils
+import com.tpc.trikride.utils.Navigation
 import com.tpc.trikride.utils.ReverseGeocoder
 import com.tpc.trikride.viewmodels.PassengerViewModel
 import com.tpc.trikride.viewmodels.SupportViewModel
@@ -94,6 +94,7 @@ fun PassengerHomeScreen(
     val fareConfig by viewModel.fareConfig.collectAsState()
     val fareStops by viewModel.fareStops.collectAsState()
     val driverLocation by viewModel.driverLocation.collectAsState()
+    val assignedDriver by viewModel.assignedDriver.collectAsState()
     val ratedRides by viewModel.ratedRides.collectAsState()
 
     val notifications by supportViewModel.notifications.collectAsState()
@@ -138,7 +139,7 @@ fun PassengerHomeScreen(
                             onRate = { stars -> viewModel.rateRide(completedRide!!, stars) },
                             onBackHome = { completedRide = null; lastActive = null }
                         )
-                        active != null -> RideTrackingContent(active, driverLocation)
+                        active != null -> RideTrackingContent(active, driverLocation, assignedDriver)
                         pendingRequest != null -> SearchingContent(onCancel = viewModel::cancelPendingRequest)
                         showBooking -> BookingContent(
                             error = error,
@@ -1246,7 +1247,12 @@ private fun SearchingContent(onCancel: () -> Unit) {
 }
 
 @Composable
-private fun RideTrackingContent(ride: Ride, driverLocation: Location?) {
+private fun RideTrackingContent(
+    ride: Ride,
+    driverLocation: Location?,
+    driver: com.tpc.trikride.models.Driver?
+) {
+    val context = LocalContext.current
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -1281,22 +1287,33 @@ private fun RideTrackingContent(ride: Ride, driverLocation: Location?) {
                 }
                 Spacer(modifier = Modifier.width(12.dp))
                 Column(modifier = Modifier.weight(1f)) {
-                    Text("Your Driver", style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold)
+                    Text(
+                        ride.driverName.ifBlank { "Your Driver" },
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold
+                    )
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Icon(Icons.Filled.Star, contentDescription = null,
                             tint = RatingColor, modifier = Modifier.size(16.dp))
-                        Text(" 4.8  •  Verified", style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        // Real numbers or nothing. A driver nobody has rated
+                        // yet says so, rather than borrowing someone's score.
+                        val score = driver?.takeIf { it.ratingCount > 0 }
+                            ?.let { " %.1f".format(it.rating) } ?: " Not yet rated"
+                        val tricycle = driver?.tricycleNumber
+                            ?.takeIf { it.isNotBlank() }
+                            ?.let { "  •  Tricycle $it" }.orEmpty()
+                        Text(
+                            "$score$tricycle",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
                     }
                 }
-                IconButton(onClick = { }) {
-                    Icon(Icons.AutoMirrored.Filled.Chat, contentDescription = "Message",
-                        tint = MaterialTheme.colorScheme.primary)
-                }
-                IconButton(onClick = { }) {
-                    Icon(Icons.Filled.Phone, contentDescription = "Call",
-                        tint = MaterialTheme.colorScheme.primary)
+                if (ride.driverPhone.isNotBlank()) {
+                    IconButton(onClick = { Navigation.dial(context, ride.driverPhone) }) {
+                        Icon(Icons.Filled.Phone, contentDescription = "Call the driver",
+                            tint = MaterialTheme.colorScheme.primary)
+                    }
                 }
             }
         }

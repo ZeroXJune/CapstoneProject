@@ -77,7 +77,12 @@ class RideRepository(
      * Driver accepts a request: converts it into a Ride and removes the open request
      * so other drivers no longer see it.
      */
-    suspend fun acceptRequest(driverId: String, request: RideRequest): Ride {
+    suspend fun acceptRequest(
+        driverId: String,
+        request: RideRequest,
+        driverName: String = "",
+        driverPhone: String = ""
+    ): Ride {
         // Destinations come from the posted fare table, which carries no
         // coordinates, so the ride keeps the price the passenger already agreed
         // to rather than recomputing anything from a distance.
@@ -95,12 +100,23 @@ class RideRepository(
             luggage = request.luggage,
             fareStopId = request.fareStopId,
             fareType = request.fareType,
-            notes = request.notes
+            notes = request.notes,
+            driverName = driverName,
+            driverPhone = driverPhone
         )
         firebase.createRide(ride)
         firebase.removeRideRequest(request.id)
         return ride
     }
+
+    /**
+     * Puts the passenger's own name and number on the ride so the driver can
+     * reach them. Written by the passenger rather than copied from the request,
+     * so that an open request broadcast to every approved driver never carries
+     * a telephone number.
+     */
+    suspend fun attachPassengerContact(rideId: String, name: String, phone: String) =
+        firebase.attachPassengerContact(rideId, name, phone)
 
     suspend fun updateRideStatus(rideId: String, status: RideStatus) {
         firebase.updateRideStatus(rideId, status)

@@ -23,7 +23,21 @@ data class Ride(
     // Which row of the posted fare table priced this ride, and which column.
     val fareStopId: String = "",
     val fareType: FareType = FareType.REGULAR,
-    val notes: String = ""
+    val notes: String = "",
+    /**
+     * Enough of each party for the other to find them, and no more.
+     *
+     * Names and telephone numbers live on `users/{uid}`, which the rules keep
+     * private to the account and to administrators, so neither side could see
+     * the other at all. Copying the two fields onto the ride shares them with
+     * exactly the person on the other end of it and nobody else, which is what
+     * the Privacy Policy says happens. The driver writes their own half when
+     * they accept; the passenger writes theirs once the ride exists.
+     */
+    val driverName: String = "",
+    val driverPhone: String = "",
+    val passengerName: String = "",
+    val passengerPhone: String = ""
 )
 
 enum class RideStatus {
