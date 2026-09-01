@@ -494,12 +494,11 @@ organisation account skips this but needs a D-U-N-S number for the college, whic
 its own weeks to obtain. Google changes these terms; check what the Console says when you
 start.
 
-**The API level is too low.** Google requires a new app to target the API level released
-the previous year, enforced every 31 August. `targetSdk` is 34, which is behind that bar
-and will be refused at upload. Raising it is not one line: a higher target turns on
-behaviour the app has never run under — edge-to-edge drawing in particular, which lets
-content sit under the status and navigation bars — so every screen needs looking at on a
-device afterwards. `compileSdk` may need raising with it.
+**Check the API level.** Google requires a new app to target the API level released the
+previous year, enforced every 31 August. `targetSdk` is 35, which matches `compileSdk` and
+is as high as Android Gradle Plugin 8.7.3 goes. Going to 36 means upgrading the plugin and
+the Gradle wrapper with it, so check what the Console demands before assuming 35 is
+enough.
 
 Then, in order:
 

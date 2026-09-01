@@ -61,7 +61,10 @@ android {
     defaultConfig {
         applicationId = "com.tpc.trikride"
         minSdk = 24
-        targetSdk = 34
+        // Matches compileSdk. Raising it further means Android 16, which needs a
+        // newer Android Gradle Plugin than 8.7.3 — worth doing only if the app is
+        // ever published to Play, which enforces a recent target every August.
+        targetSdk = 35
         versionCode = 1
         versionName = "1.0.0"
 

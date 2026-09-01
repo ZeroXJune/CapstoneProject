@@ -628,7 +628,7 @@ This chapter documents the technical foundation of the developed system: what is
 | Gradle | 8.11.1, pinned by the project wrapper |
 | Kotlin | 2.1.0 |
 | Compile SDK | Android API level 35 |
-| Target SDK | Android API level 34 |
+| Target SDK | Android API level 35 (Android 15) |
 | Minimum SDK | Android API level 24 (Android 7.0 Nougat) |
 | Version control | Git, with the repository hosted on GitHub |
 | Operating system | Windows 10 or later, macOS 12 or later, or a current Linux distribution |

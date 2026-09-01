@@ -88,7 +88,7 @@ prices rides; a disabled one cannot be selected at all.
 
 Kotlin 2.1 and Jetpack Compose with Material 3, against Firebase Authentication,
 Realtime Database, and Cloud Messaging. MVVM with a repository layer. Minimum
-Android 7.0, target Android 14.
+Android 7.0, target Android 15.
 
 The whole thing runs on Firebase's free Spark plan with no card on file. Cloud Storage
 would need the paid plan, so profile photos are shrunk to 256 pixels square, compressed,
