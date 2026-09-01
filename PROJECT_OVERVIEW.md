@@ -108,7 +108,9 @@ evaluation, which cannot start until the first seven are done.
 4. **Publish the security rules,** including `driverDocuments` and `driverRatings`.
    Without the first, licence uploads are refused; without the second, ratings are. If
    Firebase has emailed about insecure rules, the database is still on test-mode rules
-   and this is the step that was skipped.
+   and this is the step that was skipped. While you are in the console, set the
+   **public-facing name** to TrikRide under Project settings — left unset, every
+   password reset email is signed by `project-<project number>` and reads like phishing.
 5. **Load the fare table.** Sign in as an administrator and use Fares → Load official
    rates. The app cannot price a ride until this is done once. Then open the minimums
    and flat rates dialog and check the four numbers read ₱25, ₱20, ₱25, ₱25. Loading

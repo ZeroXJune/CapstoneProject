@@ -61,6 +61,27 @@ before a Storage bucket can be provisioned, and Blaze requires a card on file. P
 photos are shrunk to 256 pixels square, compressed, and written into the Realtime
 Database instead, which keeps the whole project on the free Spark plan.
 
+### 3.4 Set the public-facing name
+
+Do this before anyone else uses the app. Project settings → **General** → **Public-facing
+name** → `TrikRide`. Set the **Support email** on the same page.
+
+Firebase writes that name into every email it sends, and it is not set for you: a new
+project falls back to `project-<project number>`, so a password reset arrives telling the
+user to reset their `project-369325950814` password, signed by the
+`project-369325950814` team. It looks like a phishing attempt because it reads like one.
+
+The wording itself is under Authentication → **Templates**, where the subject, the body
+and the sender's display name can all be edited. The `%APP_NAME%` placeholder in those
+templates is what pulls in the public-facing name.
+
+Expect Firebase mail to land in spam anyway. It is sent from
+`noreply@<project-id>.firebaseapp.com`, which Gmail treats with suspicion whatever the
+name says, and the user manual tells people to look there. Marking one message "not spam"
+trains Gmail for that account, which is worth doing on your own while testing. Sending
+from a domain you own would fix it properly and needs DNS records, so it is out of scope
+for the study.
+
 ## Step 4: Configure Firebase Security Rules
 
 These rules are what actually enforce access. The app talks to Firebase directly with no
