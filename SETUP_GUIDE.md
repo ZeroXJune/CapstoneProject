@@ -567,7 +567,12 @@ enough.
 
 Then, in order:
 
-1. **Register.** play.google.com/console, one-time fee, identity verification.
+1. **Register.** play.google.com/console. US$25, paid once — not annual, not per app —
+   plus identity verification. Publishing itself costs nothing afterwards, and Google
+   takes a share only of money that passes through Play, which for a free app settled in
+   cash is none. The fee needs a card that accepts international online payments; a
+   virtual card from GCash or Maya is the usual way round not having one, though neither
+   is guaranteed to be accepted.
 2. **Build a bundle, not an APK.** `./gradlew bundleRelease`, output in
    `app/build/outputs/bundle/release/`. Play has not accepted APKs for new apps in years.
 3. **Accept Play App Signing.** Google holds the signing key and your keystore becomes the
