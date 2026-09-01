@@ -1337,7 +1337,6 @@ private fun GlobalRatesDialog(
     )
 }
 
-@Composable
 /**
  * Puts a fare stop on the map by dragging rather than by typing coordinates.
  *
@@ -1411,6 +1410,7 @@ private fun StopPointPicker(
     }
 }
 
+@Composable
 private fun MoneyField(label: String, value: String, onChange: (String) -> Unit) {
     OutlinedTextField(
         value = value,
