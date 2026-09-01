@@ -37,6 +37,14 @@ import com.tpc.trikride.R
 import com.tpc.trikride.ui.theme.EmeraldGreen
 import kotlinx.coroutines.launch
 
+/**
+ * The sky the slides open on, sampled from the artwork itself.
+ *
+ * The container shows through wherever the image does not reach the edge of a
+ * particular screen, and black bars against pale artwork look like a fault.
+ */
+private val SLIDE_BACKDROP = Color(0xFFEBF3FA)
+
 /** Slides shown on first launch, in order. Text is part of the artwork. */
 private val ONBOARDING_SLIDES = listOf(
     R.drawable.onboarding_1,
@@ -53,7 +61,7 @@ fun OnboardingScreen(onFinish: () -> Unit) {
     val lastPage = ONBOARDING_SLIDES.lastIndex
     val onLastPage = pagerState.currentPage == lastPage
 
-    Box(modifier = Modifier.fillMaxSize().background(Color.Black)) {
+    Box(modifier = Modifier.fillMaxSize().background(SLIDE_BACKDROP)) {
         HorizontalPager(
             state = pagerState,
             modifier = Modifier.fillMaxSize()
@@ -86,7 +94,13 @@ fun OnboardingScreen(onFinish: () -> Unit) {
                     .align(Alignment.TopEnd)
                     .padding(top = 12.dp, end = 8.dp)
             ) {
-                Text("Skip", color = Color.White, fontWeight = FontWeight.SemiBold)
+                // Dark, because the top of every slide is a pale sky. White
+                // here disappeared entirely against the new artwork.
+                Text(
+                    "Skip",
+                    color = Color(0xFF1B3A2A),
+                    fontWeight = FontWeight.SemiBold
+                )
             }
         }
 

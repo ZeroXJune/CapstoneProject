@@ -210,10 +210,17 @@ pandoc omits them, and without them neither Word nor LibreOffice will open the f
 
 ## Known rough edges
 
-The onboarding slides are around 316 pixels wide and will look soft stretched to a
-1080-pixel screen. Slides four and five have a strip of a neighbouring image along the
-top edge, cropped from a contact sheet a few pixels low. Replacements can be dropped over
-the same filenames in `app/src/main/res/drawable-nodpi/` with no code change.
+The onboarding slides are around 320 pixels wide and will look soft stretched to a
+1080-pixel screen. The artwork was replaced with a cleaner set that fixes the cropped
+strip on slides four and five, but at the same size, so the softness remains. Anything
+sharper can be dropped over the same filenames in `app/src/main/res/drawable-nodpi/` with
+no code change.
+
+Two slides claim more than the app does. Slide two offers to "schedule one in advance",
+and there is no scheduling — booking is immediate and a request expires in five minutes.
+Slide three says "Background Checked", where what actually happens is an administrator
+comparing a licence photograph against typed details. Both contradict Chapter 1, and the
+onboarding is the first thing a respondent sees.
 
 No automated tests exist. The test tables in the manuscript document tests that were run
 by hand. Converting the `FareEngine` and `ReportBuilder` cases into JUnit tests would be
