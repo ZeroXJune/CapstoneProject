@@ -40,14 +40,47 @@ cd capstoneproject
 1. In Firebase Console, click "Add app" → "Android"
 2. Enter package name: `com.tpc.trikride`
 3. Enter app nickname: `TrikRide`
-4. Get your SHA-1 fingerprint:
-   ```bash
-   ./gradlew signingReport
-   ```
+4. Leave the SHA-1 box empty for now — see below.
 5. Register the app and download `google-services.json`
 6. Place `google-services.json` in `app/` directory (see `app/google-services.json.template`
    for the expected shape). The build automatically enables the Google Services plugin
    once the file exists — the project still compiles without it.
+
+### 3.2a SHA-1 fingerprints
+
+**You do not need one to run this app.** Email and password sign-in, the Realtime
+Database and Cloud Messaging all work without any fingerprint registered. It is needed
+only for Google Sign-In, which is not built, and for locking a Google Maps API key to this
+app, which Step 5 covers. Add it when you do one of those, not before.
+
+**Getting the debug fingerprint.** From the project directory:
+
+```
+gradlew signingReport          # Windows
+./gradlew signingReport        # macOS and Linux
+```
+
+The output lists every variant. Find the block that says `Variant: debug`, and copy the
+line beginning `SHA1:` — forty hexadecimal characters separated by colons. Android Studio
+runs the same thing from the Gradle panel: **Tasks → android → signingReport**.
+
+**Getting the release fingerprint.** This one comes out of the keystore, so it does not
+exist until you have generated one — see Deployment. Once you have:
+
+```
+keytool -list -v -keystore trikride-release.jks -alias trikride
+```
+
+**Adding either to Firebase.** Project settings → **General** → scroll to *Your apps* →
+select the Android app → **Add fingerprint** → paste → Save. Then **download
+`google-services.json` again** and replace the one in `app/`. The file carries the
+registered fingerprints, so a stale copy behaves as though you never added it.
+
+Register both, and register them separately. A debug build is signed with the debug key
+and a distributed build with the release key, so a fingerprint that covers one does
+nothing for the other. If the app is ever published through Play App Signing, Google
+re-signs it with a key of their own and that certificate's SHA-1 has to be registered as
+well — the Play Console shows it under Setup → App signing.
 
 ### 3.3 Enable Firebase Services
 
@@ -243,12 +276,9 @@ Talibon. To get a key:
 4. Restrict it before closing the dialog. *Application restrictions* → **Android apps**,
    then add package `com.tpc.trikride` with a SHA-1. *API restrictions* → **Restrict key**
    → Maps SDK for Android only. An unrestricted key that leaks can be billed to you.
-5. You need two SHA-1s, one per signing key:
-   ```bash
-   gradlew signingReport                                        # debug
-   keytool -list -v -keystore trikride-release.jks -alias trikride   # release
-   ```
-   Add both. Debug builds break without the first, distributed builds without the second.
+5. You need two SHA-1s, one per signing key. Step 3.2a explains where each comes from.
+   Add both: debug builds show a blank map without the first, distributed builds without
+   the second.
 6. Put it in `.env` as `MAPS_API_KEY=AIza...`. The build injects it into the manifest and
    into `BuildConfig`, and `.env` is gitignored so it never reaches GitHub.
 
