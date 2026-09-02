@@ -531,39 +531,72 @@ private fun BookingContent(
         }
         Spacer(modifier = Modifier.height(16.dp))
 
-        // Who is travelling. The driver checks the ID at pickup; the app only
-        // records how many of each were declared.
+        // Who is travelling. A type is chosen first and its counter appears
+        // with it, so a party of one kind never sees a second counter sitting
+        // at zero. A count of zero and an unchosen type mean the same thing to
+        // the fare engine; the chip is what the passenger reasons about.
         SectionCard {
             Column {
                 Text("Who is travelling", style = MaterialTheme.typography.titleSmall,
                     fontWeight = FontWeight.Bold)
                 Text(
-                    "Count seniors, persons with disabilities and students separately — " +
-                        "they pay the discounted column of the posted sheet. Bring the ID; " +
-                        "the driver will ask for it.",
+                    "Choose every kind of passenger in your party. Seniors, persons " +
+                        "with disabilities and students pay the discounted column of the " +
+                        "posted sheet — bring the ID, the driver will ask for it.",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
-                Spacer(modifier = Modifier.height(12.dp))
-
-                PassengerCounter(
-                    label = "Regular",
-                    count = regularCount,
-                    canAdd = passengerCount < Constants.MAX_PASSENGERS,
-                    // Never leave the tricycle with nobody in it.
-                    canRemove = regularCount > 0 && passengerCount > 1,
-                    onAdd = { regularCount++ },
-                    onRemove = { regularCount-- }
-                )
                 Spacer(modifier = Modifier.height(10.dp))
-                PassengerCounter(
-                    label = "Senior / PWD / Student",
-                    count = discountedCount,
-                    canAdd = passengerCount < Constants.MAX_PASSENGERS,
-                    canRemove = discountedCount > 0 && passengerCount > 1,
-                    onAdd = { discountedCount++ },
-                    onRemove = { discountedCount-- }
-                )
+
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    FilterChip(
+                        selected = regularCount > 0,
+                        onClick = {
+                            // Never leave the tricycle empty: the last kind
+                            // standing cannot be unchosen.
+                            if (regularCount > 0) {
+                                if (discountedCount > 0) regularCount = 0
+                            } else if (passengerCount < Constants.MAX_PASSENGERS) {
+                                regularCount = 1
+                            }
+                        },
+                        label = { Text("Regular") }
+                    )
+                    FilterChip(
+                        selected = discountedCount > 0,
+                        onClick = {
+                            if (discountedCount > 0) {
+                                if (regularCount > 0) discountedCount = 0
+                            } else if (passengerCount < Constants.MAX_PASSENGERS) {
+                                discountedCount = 1
+                            }
+                        },
+                        label = { Text("Senior / PWD / Student") }
+                    )
+                }
+
+                if (regularCount > 0) {
+                    Spacer(modifier = Modifier.height(12.dp))
+                    PassengerCounter(
+                        label = "Regular",
+                        count = regularCount,
+                        canAdd = passengerCount < Constants.MAX_PASSENGERS,
+                        canRemove = regularCount > 1,
+                        onAdd = { regularCount++ },
+                        onRemove = { regularCount-- }
+                    )
+                }
+                if (discountedCount > 0) {
+                    Spacer(modifier = Modifier.height(12.dp))
+                    PassengerCounter(
+                        label = "Senior / PWD / Student",
+                        count = discountedCount,
+                        canAdd = passengerCount < Constants.MAX_PASSENGERS,
+                        canRemove = discountedCount > 1,
+                        onAdd = { discountedCount++ },
+                        onRemove = { discountedCount-- }
+                    )
+                }
 
                 Spacer(modifier = Modifier.height(10.dp))
                 Text(

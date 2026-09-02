@@ -2076,10 +2076,11 @@ Tap **Book a Ride** on Home.
    name? Find it on the map**, move the map to roughly the right place, and the app names
    the nearest posted stop and its fare. Only stops the administrator has given a map
    position can be found this way.
-3. **Who is travelling.** Two counters, not one. Count regular passengers on the first
-   and seniors, persons with disabilities and students on the second, up to five between
-   them. A party can be a mix — two friends and a grandmother is two regular and one
-   discounted — and each is charged from its own column of the posted sheet. Bring the
+3. **Who is travelling.** Tap every kind of passenger in your party — **Regular**,
+   **Senior / PWD / Student**, or both — and a counter appears for each one you choose.
+   Set how many of each, up to five between them. A party can be a mix: two friends and a
+   grandmother is two regular and one discounted, and each is charged from its own column
+   of the posted sheet. To drop a kind entirely, tap its chip again. Bring the
    identification; the driver will ask for it, and the app only records how many of each
    were declared.
 4. **Luggage.** Tap any that apply. This is information for the driver and does not change
