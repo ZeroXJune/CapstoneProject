@@ -586,6 +586,28 @@ repository require a GitHub account with access, so a respondent tapping the QR 
 a sign-in page. Either make the repository public first — it is on the list to do before
 the defence anyway — or use App Distribution instead.
 
+### Google Drive
+
+The option that needs nothing set up, and the weakest of the three. Use it for the adviser
+and the panel; use App Distribution for respondents.
+
+1. Rename the built APK to something meaningful first — `TrikRide-v1.0.0.apk`.
+   `app-release.apk` tells the person receiving it nothing, and leaves you unable to tell
+   two builds apart later.
+2. Upload it, then right-click → **Share** → **Anyone with the link** → **Viewer**. Miss
+   this and every respondent gets "Request access" instead of a download.
+3. Share the link, or put it through a QR generator.
+
+For a later build, do not upload a second file. Right-click the existing one → **Manage
+versions** → **Upload new version**. The link stays the same, so an old QR code still
+fetches the current build.
+
+What you give up: Drive records nothing about who downloaded or installed, so the
+participation evidence App Distribution collects for Chapter 4 has to be gathered by
+asking people. And a respondent has to dismiss Chrome's "this type of file can harm your
+device" warning on the way in — a hard thing to ask of a driver you are also asking to
+photograph their licence.
+
 Whichever route, people installing outside an app store have to permit it once. Part 1 of
 the user manual walks through that, so hand it out with the link.
 
