@@ -560,6 +560,8 @@ private fun BookingContent(
                                 regularCount = 1
                             }
                         },
+                        enabled = regularCount > 0 ||
+                            passengerCount < Constants.MAX_PASSENGERS,
                         label = { Text("Regular") }
                     )
                     FilterChip(
@@ -571,6 +573,8 @@ private fun BookingContent(
                                 discountedCount = 1
                             }
                         },
+                        enabled = discountedCount > 0 ||
+                            passengerCount < Constants.MAX_PASSENGERS,
                         label = { Text("Senior / PWD / Student") }
                     )
                 }
@@ -600,8 +604,12 @@ private fun BookingContent(
 
                 Spacer(modifier = Modifier.height(10.dp))
                 Text(
-                    "$passengerCount of ${Constants.MAX_PASSENGERS} seats" +
-                        if (fareConfig.chargePerPassenger) ", charged per head" else "",
+                    if (passengerCount >= Constants.MAX_PASSENGERS) {
+                        "Full — ${Constants.MAX_PASSENGERS} seats is the most a tricycle takes"
+                    } else {
+                        "$passengerCount of ${Constants.MAX_PASSENGERS} seats" +
+                            if (fareConfig.chargePerPassenger) ", charged per head" else ""
+                    },
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
