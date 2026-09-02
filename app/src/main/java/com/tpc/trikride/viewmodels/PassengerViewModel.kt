@@ -115,21 +115,26 @@ class PassengerViewModel(
     fun requestRide(
         pickup: Location,
         destination: FareStop,
-        fareType: FareType,
-        passengerCount: Int = 1,
+        regularCount: Int = 1,
+        discountedCount: Int = 0,
         luggage: String = "None",
         notes: String = ""
     ) {
         val id = passengerId.value ?: return
-        val quote = FareEngine.quote(fareConfig.value, destination, fareType, passengerCount)
+        val quote = FareEngine.quote(fareConfig.value, destination, regularCount, discountedCount)
         val dropoff = Location(address = destination.label)
+        // Kept for records covering a party that is all one kind; a mixed party
+        // is described by the two counts, not by this.
+        val fareType = if (regularCount > 0) FareType.REGULAR else FareType.DISCOUNTED
         viewModelScope.launch {
             try {
                 _pendingRequest.value = rideRepository.requestRide(
                     passengerId = id,
                     pickup = pickup,
                     dropoff = dropoff,
-                    passengerCount = passengerCount,
+                    passengerCount = quote.passengers,
+                    regularCount = regularCount,
+                    discountedCount = discountedCount,
                     luggage = luggage,
                     estimatedFare = quote.total,
                     fareStopId = destination.id,

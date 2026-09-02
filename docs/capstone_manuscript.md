@@ -873,10 +873,10 @@ Requirements were derived from three sources: the problems documented in the nee
 | FR-09 | The system shall allow a passenger to select a pickup point by searching the same table of stops used for destinations, or by pinning any point on the map. | Passenger | 1 |
 | FR-10 | The system shall allow a passenger to select a destination by searching the fare table by stop name or zone. | Passenger | 1 |
 | FR-10a | The system shall allow a passenger to indicate a destination on the map, and shall offer the posted stop nearest to that point, with its fare, as the destination to be booked. | Passenger | 1 |
-| FR-11 | The system shall allow a passenger to select the regular or the discounted rate column. | Passenger | 1 |
+| FR-11 | The system shall allow a passenger to declare how many of the party pay the regular rate and how many pay the discounted rate, and shall price each from its own column. | Passenger | 1 |
 | FR-12 | The system shall allow a passenger to specify between one and five passengers and to declare luggage. | Passenger | 1 |
 | FR-13 | The system shall display the computed fare, itemized, before the passenger submits the request. | Passenger | 1 |
-| FR-14 | The system shall price a ride from the posted rate for the selected destination and rate column, applying the ordinance minimum where the posted rate falls below it, and multiplying by the number of passengers where fares are charged per head. | Passenger | 1 |
+| FR-14 | The system shall price a ride from the posted rate for the selected destination, applying the ordinance minimum to each rate column where the posted rate falls below it, and, where fares are charged per head, summing both columns across the declared party. | Passenger | 1 |
 | FR-15 | The system shall broadcast a submitted ride request to all available, verified drivers. | Passenger, Driver | 3 |
 | FR-16 | The system shall expire an unaccepted ride request after five minutes. | System | 3 |
 | FR-17 | The system shall match a request to the first driver who accepts it and withdraw it from all others. | System | 3, 4 |
@@ -1288,7 +1288,7 @@ Training is organized by role and kept short, on the reasoning that a system req
 |:---|:---|:---|
 | Authentication and onboarding | Registration with password policy and document consent, a consent gate that blocks the dashboard until the current documents are accepted, the Driver Agreement for driver accounts, sign-in, session persistence, remembered email, password reset, introductory carousel, welcome screen | FR-01 to FR-05, FR-07, FR-08 |
 | Profile | Profile editing, photograph capture and selection, theme preference, terms and privacy notice, sign-out | FR-06 |
-| Passenger booking | Pickup selection, searchable destination picker across 240 stops plus two flat rates, destination selection from the map by nearest posted stop, rate column selection, passenger count and luggage, itemized fare display, request submission and cancellation | FR-09 to FR-14 |
+| Passenger booking | Pickup selection, searchable destination picker across 240 stops plus two flat rates, destination selection from the map by nearest posted stop, separate counts of regular and discounted passengers, luggage, itemized fare display showing each rate column, request submission and cancellation | FR-09 to FR-14 |
 | Matching | Broadcast of requests to available verified drivers, five-minute expiry, first-acceptance matching with withdrawal from other devices | FR-15 to FR-17 |
 | Mapping and location | Interactive maps on the booking and tracking screens, rendered by Google Maps or OpenStreetMap according to configuration; live publication of a driver's position while online; the passenger's view of that position; pinning a pickup point on the map with a reverse-geocoded label; naming the posted stop nearest a point the passenger indicates; optional coordinates on fare stops | FR-09, FR-10a, FR-18 |
 | Ride lifecycle | Shared status timeline through arriving, arrived, in progress, and completed; completion summary and rating; ride history for both parties | FR-18 to FR-20, FR-25 |
@@ -2076,10 +2076,12 @@ Tap **Book a Ride** on Home.
    name? Find it on the map**, move the map to roughly the right place, and the app names
    the nearest posted stop and its fare. Only stops the administrator has given a map
    position can be found this way.
-3. **Fare type.** **Regular**, or **Senior / PWD / Student** for the discounted column.
-   Bring the identification — the driver will ask for it, and the app only records which
-   column you chose.
-4. **Passengers.** One to five, with the plus and minus buttons.
+3. **Who is travelling.** Two counters, not one. Count regular passengers on the first
+   and seniors, persons with disabilities and students on the second, up to five between
+   them. A party can be a mix — two friends and a grandmother is two regular and one
+   discounted — and each is charged from its own column of the posted sheet. Bring the
+   identification; the driver will ask for it, and the app only records how many of each
+   were declared.
 5. **Luggage.** Tap any that apply. This is information for the driver and does not change
    the fare.
 6. **Notes.** Anything the driver should know: a landmark, a gate number, that you are
@@ -2087,10 +2089,12 @@ Tap **Book a Ride** on Home.
 7. Read the itemised fare, then tap **Find a Driver**.
 
 **About the fare.** TrikRide does not estimate. It reads the posted FeTODAT rate for your
-destination, raises it to the ordinance minimum if the posted rate is lower, and multiplies
-by the number of passengers. Poblacion and the terminal round trip are flat rates. Nothing
-is calculated from distance, so the number you are shown before booking is the number you
-pay, in cash, directly to the driver.
+destination, raises it to the ordinance minimum if the posted rate is lower, and charges
+each passenger from the column that applies to them. Two regular passengers and one senior
+are priced as two at the regular rate plus one at the discounted rate, and the fare card
+shows those two lines separately before you book. Poblacion and the terminal round trip
+are flat rates. Nothing is calculated from distance, so the number you are shown before
+booking is the number you pay, in cash, directly to the driver.
 
 **₱25 is the minimum, not the price.** It is what the shortest rides cost and what any
 posted rate below it is raised to. Further destinations cost more — the highest on the
@@ -2235,8 +2239,9 @@ before the passenger is aboard, the destination once the ride is under way. The 
 only appear for apps you actually have installed, and only when the point has coordinates,
 which for a destination means the administrator has positioned that stop.
 
-Check identification when a passenger has booked the discounted rate. The app records the
-column they chose; it cannot verify anyone is a senior, a PWD or a student.
+Check identification against the party the request declares. A card reading "2 regular,
+1 senior/PWD/student" means one person aboard should be able to show an ID. The app
+records what was declared; it cannot verify it.
 
 #### 3.6 Earnings, history and the rest
 

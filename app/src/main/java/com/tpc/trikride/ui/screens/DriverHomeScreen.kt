@@ -579,7 +579,14 @@ private fun RequestCard(
                     Text("Rate", style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant)
                     Text(
-                        if (request.fareType == FareType.REGULAR) "Regular" else "Senior / PWD / Student",
+                        if (request.regularCount > 0 || request.discountedCount > 0) {
+                            listOfNotNull(
+                                request.regularCount.takeIf { it > 0 }?.let { "$it regular" },
+                                request.discountedCount.takeIf { it > 0 }
+                                    ?.let { "$it senior/PWD/student" }
+                            ).joinToString(", ")
+                        } else if (request.fareType == FareType.REGULAR) "Regular"
+                        else "Senior / PWD / Student",
                         style = MaterialTheme.typography.titleMedium
                     )
                 }
@@ -657,11 +664,7 @@ private fun ActiveRideContent(ride: Ride, onAdvance: () -> Unit) {
                         fontWeight = FontWeight.Bold
                     )
                     Text(
-                        "Fare ₱%.2f  •  %s".format(
-                            ride.estimatedFare,
-                            if (ride.fareType == FareType.REGULAR) "regular rate"
-                            else "senior / PWD / student rate"
-                        ),
+                        "Fare ₱%.2f  •  %s".format(ride.estimatedFare, ride.partyLabel),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )

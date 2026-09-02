@@ -108,10 +108,12 @@ Tap **Book a Ride** on Home.
    name? Find it on the map**, move the map to roughly the right place, and the app names
    the nearest posted stop and its fare. Only stops the administrator has given a map
    position can be found this way.
-3. **Fare type.** **Regular**, or **Senior / PWD / Student** for the discounted column.
-   Bring the identification — the driver will ask for it, and the app only records which
-   column you chose.
-4. **Passengers.** One to five, with the plus and minus buttons.
+3. **Who is travelling.** Two counters, not one. Count regular passengers on the first
+   and seniors, persons with disabilities and students on the second, up to five between
+   them. A party can be a mix — two friends and a grandmother is two regular and one
+   discounted — and each is charged from its own column of the posted sheet. Bring the
+   identification; the driver will ask for it, and the app only records how many of each
+   were declared.
 5. **Luggage.** Tap any that apply. This is information for the driver and does not change
    the fare.
 6. **Notes.** Anything the driver should know: a landmark, a gate number, that you are
@@ -119,10 +121,12 @@ Tap **Book a Ride** on Home.
 7. Read the itemised fare, then tap **Find a Driver**.
 
 **About the fare.** TrikRide does not estimate. It reads the posted FeTODAT rate for your
-destination, raises it to the ordinance minimum if the posted rate is lower, and multiplies
-by the number of passengers. Poblacion and the terminal round trip are flat rates. Nothing
-is calculated from distance, so the number you are shown before booking is the number you
-pay, in cash, directly to the driver.
+destination, raises it to the ordinance minimum if the posted rate is lower, and charges
+each passenger from the column that applies to them. Two regular passengers and one senior
+are priced as two at the regular rate plus one at the discounted rate, and the fare card
+shows those two lines separately before you book. Poblacion and the terminal round trip
+are flat rates. Nothing is calculated from distance, so the number you are shown before
+booking is the number you pay, in cash, directly to the driver.
 
 **₱25 is the minimum, not the price.** It is what the shortest rides cost and what any
 posted rate below it is raised to. Further destinations cost more — the highest on the
@@ -267,8 +271,9 @@ before the passenger is aboard, the destination once the ride is under way. The 
 only appear for apps you actually have installed, and only when the point has coordinates,
 which for a destination means the administrator has positioned that stop.
 
-Check identification when a passenger has booked the discounted rate. The app records the
-column they chose; it cannot verify anyone is a senior, a PWD or a student.
+Check identification against the party the request declares. A card reading "2 regular,
+1 senior/PWD/student" means one person aboard should be able to show an ID. The app
+records what was declared; it cannot verify it.
 
 ### 3.6 Earnings, history and the rest
 

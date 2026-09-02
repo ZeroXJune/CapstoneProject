@@ -26,22 +26,47 @@ object FareEngine {
         FareType.DISCOUNTED -> stop.discountedFare
     }
 
+    /**
+     * Prices a party that may hold both kinds of passenger.
+     *
+     * Each column is raised to its own ordinance minimum before it is
+     * multiplied, so a senior travelling beside a regular passenger is charged
+     * the senior rate and the regular passenger is not.
+     *
+     * Where the sheet is not charged per head, one fare covers the tricycle,
+     * and it is the regular rate unless everybody aboard is entitled to the
+     * discount — charging the discounted rate for a mixed party would undercharge,
+     * and charging the regular rate to a party of seniors would overcharge them.
+     */
     fun quote(
         config: FareConfig,
         stop: FareStop,
-        fareType: FareType,
-        passengerCount: Int
+        regularCount: Int,
+        discountedCount: Int
     ): FareQuote {
-        val minimum = minimumFor(config, fareType)
-        val posted = rateFor(stop, fareType)
-        val perPassenger = maxOf(posted, minimum)
-        val heads = if (config.chargePerPassenger) passengerCount.coerceAtLeast(1) else 1
+        val regularRate = maxOf(
+            rateFor(stop, FareType.REGULAR), minimumFor(config, FareType.REGULAR)
+        )
+        val discountedRate = maxOf(
+            rateFor(stop, FareType.DISCOUNTED), minimumFor(config, FareType.DISCOUNTED)
+        )
+        val regular = regularCount.coerceAtLeast(0)
+        val discounted = discountedCount.coerceAtLeast(0)
+
+        val total = if (config.chargePerPassenger) {
+            regular * regularRate + discounted * discountedRate
+        } else {
+            if (regular > 0) regularRate else discountedRate
+        }
+
         return FareQuote(
-            perPassenger = perPassenger,
-            passengers = passengerCount.coerceAtLeast(1),
-            total = perPassenger * heads,
-            fareType = fareType,
-            minimumApplied = posted < minimum,
+            regularCount = regular,
+            discountedCount = discounted,
+            regularRate = regularRate,
+            discountedRate = discountedRate,
+            total = total,
+            minimumApplied = rateFor(stop, FareType.REGULAR) < minimumFor(config, FareType.REGULAR) ||
+                rateFor(stop, FareType.DISCOUNTED) < minimumFor(config, FareType.DISCOUNTED),
             stopLabel = stop.label
         )
     }

@@ -146,8 +146,8 @@ fun PassengerHomeScreen(
                             fareConfig = fareConfig,
                             fareStops = fareStops,
                             onDismissError = viewModel::dismissError,
-                            onConfirm = { p, stop, fareType, count, luggage, notes ->
-                                viewModel.requestRide(p, stop, fareType, count, luggage, notes)
+                            onConfirm = { p, stop, regular, discounted, luggage, notes ->
+                                viewModel.requestRide(p, stop, regular, discounted, luggage, notes)
                                 showBooking = false
                             },
                             onBack = { showBooking = false }
@@ -385,13 +385,16 @@ private fun BookingContent(
     fareConfig: FareConfig,
     fareStops: List<FareStop>,
     onDismissError: () -> Unit,
-    onConfirm: (Location, FareStop, FareType, Int, String, String) -> Unit,
+    onConfirm: (Location, FareStop, Int, Int, String, String) -> Unit,
     onBack: () -> Unit
 ) {
     var pickup by remember { mutableStateOf<Location?>(null) }
     var destination by remember { mutableStateOf<FareStop?>(null) }
-    var fareType by remember { mutableStateOf(FareType.REGULAR) }
-    var passengerCount by remember { mutableStateOf(1) }
+    // Two counters rather than one rate switch: a party can hold both kinds at
+    // once, and the posted sheet prices them from different columns.
+    var regularCount by remember { mutableStateOf(1) }
+    var discountedCount by remember { mutableStateOf(0) }
+    val passengerCount = regularCount + discountedCount
     val selectedLuggage = remember { mutableStateListOf<String>() }
     var notes by remember { mutableStateOf("") }
     var pickingDestination by remember { mutableStateOf(false) }
@@ -516,7 +519,7 @@ private fun BookingContent(
         // No fare is shown at all until a destination is chosen, which is the
         // moment someone assumes the minimum is the price.
         if (destination == null) {
-            val minimum = "₱%.0f".format(FareEngine.minimumFor(fareConfig, fareType))
+            val minimum = "₱%.0f".format(FareEngine.minimumFor(fareConfig, FareType.REGULAR))
             Text(
                 "The fare depends on where you are going. $minimum is the minimum, " +
                     "not a flat rate, and longer trips cost more. Choose a destination " +
@@ -528,62 +531,47 @@ private fun BookingContent(
         }
         Spacer(modifier = Modifier.height(16.dp))
 
-        // Rate column. The driver checks the ID at pickup, the app only records it.
+        // Who is travelling. The driver checks the ID at pickup; the app only
+        // records how many of each were declared.
         SectionCard {
             Column {
-                Text("Fare Type", style = MaterialTheme.typography.titleSmall,
+                Text("Who is travelling", style = MaterialTheme.typography.titleSmall,
                     fontWeight = FontWeight.Bold)
                 Text(
-                    "Senior citizens, persons with disabilities and students pay the " +
-                        "discounted rate. Bring your ID — the driver will ask for it.",
+                    "Count seniors, persons with disabilities and students separately — " +
+                        "they pay the discounted column of the posted sheet. Bring the ID; " +
+                        "the driver will ask for it.",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
-                Spacer(modifier = Modifier.height(8.dp))
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    FareType.entries.forEach { type ->
-                        FilterChip(
-                            selected = fareType == type,
-                            onClick = { fareType = type },
-                            label = { Text(if (type == FareType.REGULAR) "Regular" else "Senior / PWD / Student") }
-                        )
-                    }
-                }
-            }
-        }
-        Spacer(modifier = Modifier.height(12.dp))
+                Spacer(modifier = Modifier.height(12.dp))
 
-        // Passenger count
-        SectionCard {
-            Column {
-                Text("Number of Passengers", style = MaterialTheme.typography.titleSmall,
-                    fontWeight = FontWeight.Bold)
+                PassengerCounter(
+                    label = "Regular",
+                    count = regularCount,
+                    canAdd = passengerCount < Constants.MAX_PASSENGERS,
+                    // Never leave the tricycle with nobody in it.
+                    canRemove = regularCount > 0 && passengerCount > 1,
+                    onAdd = { regularCount++ },
+                    onRemove = { regularCount-- }
+                )
+                Spacer(modifier = Modifier.height(10.dp))
+                PassengerCounter(
+                    label = "Senior / PWD / Student",
+                    count = discountedCount,
+                    canAdd = passengerCount < Constants.MAX_PASSENGERS,
+                    canRemove = discountedCount > 0 && passengerCount > 1,
+                    onAdd = { discountedCount++ },
+                    onRemove = { discountedCount-- }
+                )
+
+                Spacer(modifier = Modifier.height(10.dp))
                 Text(
-                    if (fareConfig.chargePerPassenger)
-                        "Up to ${Constants.MAX_PASSENGERS} per tricycle, fare is per head"
-                    else "Up to ${Constants.MAX_PASSENGERS} per tricycle",
+                    "$passengerCount of ${Constants.MAX_PASSENGERS} seats" +
+                        if (fareConfig.chargePerPassenger) ", charged per head" else "",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
-                Spacer(modifier = Modifier.height(8.dp))
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    FilledTonalIconButton(
-                        onClick = { if (passengerCount > 1) passengerCount-- },
-                        enabled = passengerCount > 1
-                    ) { Icon(Icons.Filled.Remove, contentDescription = "Fewer") }
-                    Text(
-                        "$passengerCount",
-                        style = MaterialTheme.typography.headlineSmall,
-                        fontWeight = FontWeight.Bold,
-                        modifier = Modifier.padding(horizontal = 20.dp)
-                    )
-                    FilledTonalIconButton(
-                        onClick = {
-                            if (passengerCount < Constants.MAX_PASSENGERS) passengerCount++
-                        },
-                        enabled = passengerCount < Constants.MAX_PASSENGERS
-                    ) { Icon(Icons.Filled.Add, contentDescription = "More") }
-                }
             }
         }
         Spacer(modifier = Modifier.height(12.dp))
@@ -627,30 +615,35 @@ private fun BookingContent(
         val valid = from != null && to != null
 
         if (from != null && to != null) {
-            val quote = FareEngine.quote(fareConfig, to, fareType, passengerCount)
+            val quote = FareEngine.quote(fareConfig, to, regularCount, discountedCount)
             SectionCard {
                 Column {
                     Text("Fare", style = MaterialTheme.typography.titleSmall,
                         fontWeight = FontWeight.Bold)
                     Text(
-                        if (fareType == FareType.REGULAR) "Regular rate"
-                        else "Senior / PWD / student rate",
+                        to.name,
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                     Spacer(modifier = Modifier.height(8.dp))
-                    FareLine(to.name, "₱%.2f".format(quote.perPassenger))
-                    if (quote.minimumApplied) {
+
+                    if (quote.regularCount > 0) {
                         FareLine(
-                            "Minimum fare applied",
-                            "₱%.2f".format(FareEngine.minimumFor(fareConfig, fareType))
+                            "Regular × ${quote.regularCount}",
+                            "₱%.2f".format(quote.regularRate * quote.regularCount)
                         )
                     }
-                    if (quote.passengers > 1 && fareConfig.chargePerPassenger) {
+                    if (quote.discountedCount > 0) {
                         FareLine(
-                            "${quote.passengers} passengers",
-                            "× ${quote.passengers}"
+                            "Senior / PWD / student × ${quote.discountedCount}",
+                            "₱%.2f".format(quote.discountedRate * quote.discountedCount)
                         )
+                    }
+                    if (quote.minimumApplied) {
+                        FareLine("Minimum fare applied", "yes")
+                    }
+                    if (!fareConfig.chargePerPassenger) {
+                        FareLine("Charged per tricycle", "not per head")
                     }
                     HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
                     Row(
@@ -677,7 +670,7 @@ private fun BookingContent(
             onClick = {
                 if (from != null && to != null) {
                     val luggage = if (selectedLuggage.isEmpty()) "None" else selectedLuggage.joinToString(", ")
-                    onConfirm(from, to, fareType, passengerCount, luggage, notes)
+                    onConfirm(from, to, regularCount, discountedCount, luggage, notes)
                 }
             },
             enabled = valid
@@ -696,7 +689,6 @@ private fun BookingContent(
     if (pinningDestination) {
         DestinationFinder(
             stops = bookable,
-            fareType = fareType,
             initial = pickup ?: TALIBON_CENTRE,
             onDismiss = { pinningDestination = false },
             onPicked = { destination = it; pinningDestination = false },
@@ -708,9 +700,8 @@ private fun BookingContent(
         StopPicker(
             title = "Where to?",
             stops = bookable,
-            fareType = fareType,
             showFares = true,
-            minimumFare = FareEngine.minimumFor(fareConfig, fareType),
+            minimumFare = FareEngine.minimumFor(fareConfig, FareType.REGULAR),
             onDismiss = { pickingDestination = false },
             onPick = { destination = it; pickingDestination = false }
         )
@@ -720,12 +711,45 @@ private fun BookingContent(
         StopPicker(
             title = "Where from?",
             stops = bookable,
-            fareType = fareType,
             showFares = false,
-            minimumFare = FareEngine.minimumFor(fareConfig, fareType),
+            minimumFare = FareEngine.minimumFor(fareConfig, FareType.REGULAR),
             onDismiss = { pickingPickup = false },
             onPick = { pickup = it.location; pickingPickup = false }
         )
+    }
+}
+
+/** One row of the two-column party counter: a label, a number, and two buttons. */
+@Composable
+private fun PassengerCounter(
+    label: String,
+    count: Int,
+    canAdd: Boolean,
+    canRemove: Boolean,
+    onAdd: () -> Unit,
+    onRemove: () -> Unit
+) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Text(
+            label,
+            style = MaterialTheme.typography.bodyMedium,
+            modifier = Modifier.weight(1f)
+        )
+        FilledTonalIconButton(onClick = onRemove, enabled = canRemove) {
+            Icon(Icons.Filled.Remove, contentDescription = "One fewer $label")
+        }
+        Text(
+            "$count",
+            style = MaterialTheme.typography.titleLarge,
+            fontWeight = FontWeight.Bold,
+            modifier = Modifier.padding(horizontal = 16.dp)
+        )
+        FilledTonalIconButton(onClick = onAdd, enabled = canAdd) {
+            Icon(Icons.Filled.Add, contentDescription = "One more $label")
+        }
     }
 }
 
@@ -869,7 +893,6 @@ private fun PickupPinner(
 @Composable
 private fun DestinationFinder(
     stops: List<FareStop>,
-    fareType: FareType,
     initial: Location,
     onDismiss: () -> Unit,
     onPicked: (FareStop) -> Unit,
@@ -963,10 +986,11 @@ private fun DestinationFinder(
                                 if (nearest != null && awayKm != null) {
                                     Spacer(modifier = Modifier.height(4.dp))
                                     Text(
-                                        "%s from the pin · ₱%.2f".format(
+                                        "%s from the pin · ₱%.0f regular, ₱%.0f discounted".format(
                                             if (awayKm < 1.0) "%.0f m".format(awayKm * 1000)
                                             else "%.1f km".format(awayKm),
-                                            FareEngine.rateFor(nearest, fareType)
+                                            FareEngine.rateFor(nearest, FareType.REGULAR),
+                                            FareEngine.rateFor(nearest, FareType.DISCOUNTED)
                                         ),
                                         style = MaterialTheme.typography.bodySmall,
                                         color = MaterialTheme.colorScheme.onSurfaceVariant
@@ -1002,7 +1026,6 @@ private fun DestinationFinder(
 private fun StopPicker(
     title: String,
     stops: List<FareStop>,
-    fareType: FareType,
     /**
      * Fares belong to the destination. Showing one beside a pickup stop would
      * read as the price of being collected there, which is not a thing.
@@ -1065,8 +1088,8 @@ private fun StopPicker(
                 // it as the price. Saying what the rest of the table looks like
                 // is the difference between a fare that is higher than expected
                 // and one that feels like being overcharged.
-                val highest = remember(stops, fareType) {
-                    stops.maxOfOrNull { FareEngine.rateFor(it, fareType) }
+                val highest = remember(stops) {
+                    stops.maxOfOrNull { FareEngine.rateFor(it, FareType.REGULAR) }
                 }
                 val note = if (showFares) {
                     val floor = "₱%.0f".format(minimumFare)
@@ -1152,7 +1175,10 @@ private fun StopPicker(
                                 }
                                 if (showFares) {
                                     Text(
-                                        "₱%.2f".format(FareEngine.rateFor(stop, fareType)),
+                                        "₱%.0f / ₱%.0f".format(
+                                            FareEngine.rateFor(stop, FareType.REGULAR),
+                                            FareEngine.rateFor(stop, FareType.DISCOUNTED)
+                                        ),
                                         style = MaterialTheme.typography.titleMedium,
                                         fontWeight = FontWeight.Bold,
                                         color = MaterialTheme.colorScheme.primary

@@ -159,7 +159,7 @@ object PdfReportWriter {
             Column("Pickup", 1.5f),
             Column("Destination", 1.7f),
             Column("Pax", 0.35f, rightAligned = true),
-            Column("Rate", 0.6f),
+            Column("Party", 1.1f),
             Column("Status", 0.85f),
             Column("Fare", 0.6f, rightAligned = true)
         )
@@ -173,7 +173,7 @@ object PdfReportWriter {
                 ride.pickupLocation.address,
                 ride.dropoffLocation.address,
                 "${ride.passengerCount}",
-                if (ride.fareType.name == "DISCOUNTED") "Disc." else "Regular",
+                ride.partyLabel,
                 prettyStatus(ride.status),
                 peso(if (ride.actualFare > 0) ride.actualFare else ride.estimatedFare)
             )

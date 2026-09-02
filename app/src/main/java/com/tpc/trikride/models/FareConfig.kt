@@ -104,13 +104,33 @@ data class FareConfig(
     }
 }
 
-/** A priced ride, broken down so the passenger can see where the number came from. */
+/**
+ * A priced ride, broken down so the passenger can see where the number came from.
+ *
+ * A booking may carry both kinds of passenger at once — a student travelling
+ * with a parent is one tricycle and two different rates — so the two columns of
+ * the posted sheet are priced separately and added, rather than one rate being
+ * multiplied by everybody.
+ */
 data class FareQuote(
-    val perPassenger: Double = 0.0,
-    val passengers: Int = 1,
+    val regularCount: Int = 0,
+    val discountedCount: Int = 0,
+    /** Per head, after the ordinance minimum has been applied to each column. */
+    val regularRate: Double = 0.0,
+    val discountedRate: Double = 0.0,
     val total: Double = 0.0,
-    val fareType: FareType = FareType.REGULAR,
-    /** True when the stop's own rate fell below the ordinance minimum. */
+    /** True when either column's posted rate fell below its minimum. */
     val minimumApplied: Boolean = false,
     val stopLabel: String = ""
-)
+) {
+    @get:Exclude
+    val passengers: Int get() = regularCount + discountedCount
+
+    /** "2 regular, 1 discounted", or just the one kind when that is all there is. */
+    @get:Exclude
+    val partyLabel: String
+        get() = listOfNotNull(
+            regularCount.takeIf { it > 0 }?.let { "$it regular" },
+            discountedCount.takeIf { it > 0 }?.let { "$it discounted" }
+        ).joinToString(", ").ifBlank { "no passengers" }
+}
