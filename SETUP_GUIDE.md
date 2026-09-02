@@ -535,16 +535,59 @@ If any of the four values is missing, the build still succeeds but signs with th
 key and prints a warning saying so. That output installs and runs, and must not be handed
 to anyone: a debug-signed build cannot be updated by a properly signed one later.
 
-### Getting it to users
+### Bump the version before every build you hand out
 
-**Firebase App Distribution** is on the free tier. Upload the APK, add tester email
-addresses, and they receive an install link. Later builds go to the same group. It also
-records who installed which version, which is usable evidence of participation for the
-evaluation chapter.
+In `app/build.gradle.kts`:
 
-**A GitHub release** with the APK attached works for anyone, no invitation needed. Print
-the link as a QR code. Users have to allow installation from outside the app store, so
-include the illustrated install guide from the user manual.
+```kotlin
+versionCode = 1        // a whole number, raise it every single time
+versionName = "1.0.0"  // what people see
+```
+
+Android decides whether one build replaces another by `versionCode` alone. Hand out two
+builds with the same number and the second will not install over the first — testers get
+a failure they cannot explain and you lose an afternoon to it. Raise it for every build
+that leaves your machine, even a one-line fix.
+
+### Firebase App Distribution
+
+Free, no card, and it records who installed which version, which is participation
+evidence for Chapter 4. Nothing needs adding to the build — the console takes the APK
+directly.
+
+1. Firebase Console → **Release & Monitor** → **App Distribution** → **Get started**.
+2. **Testers & Groups** tab → **Add group** → name it something like
+   `Evaluation respondents`. Add email addresses now or later.
+3. **Releases** tab → drag `app/build/outputs/apk/release/app-release.apk` onto the page.
+4. Pick the group, write a release note saying what changed, and **Distribute**.
+
+Every tester gets an email. They open it on the phone, accept, install the **Firebase App
+Tester** app when prompted, and TrikRide installs from inside it. Later builds appear in
+App Tester automatically for the same group — no second invitation. Unlike the Apple
+equivalent, no device registration is needed.
+
+The Releases tab then shows, per build, who was invited, who accepted and who installed.
+Screenshot that for the evaluation chapter; it is the cleanest record of participation
+you will get.
+
+### A GitHub release
+
+Reaches anyone with the link and needs no invitation, which suits a QR code on a poster.
+
+1. `gradlew assembleRelease`, then find the APK in `app/build/outputs/apk/release/`.
+2. On GitHub: **Releases** → **Draft a new release**.
+3. **Choose a tag** → type `v1.0.0` → *Create new tag on publish*.
+4. Title it, describe what testers should try, and drag the APK into the attachments box.
+5. **Publish release**, then right-click the attached APK and copy its address. That link
+   is what goes into a QR generator.
+
+**The repository has to be public for this to work.** Release attachments on a private
+repository require a GitHub account with access, so a respondent tapping the QR code gets
+a sign-in page. Either make the repository public first — it is on the list to do before
+the defence anyway — or use App Distribution instead.
+
+Whichever route, people installing outside an app store have to permit it once. Part 1 of
+the user manual walks through that, so hand it out with the link.
 
 ### The Play Store
 
