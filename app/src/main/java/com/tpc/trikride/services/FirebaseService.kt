@@ -26,7 +26,7 @@ class FirebaseService {
 
     // Driver Operations
     suspend fun registerDriver(userId: String, driver: Driver) {
-        database.getReference("drivers").child(userId).setValue(driver)
+        database.getReference("drivers").child(userId).setValue(driver).await()
     }
 
     fun getDriverFlow(driverId: String): Flow<Driver?> = callbackFlow {
@@ -105,20 +105,20 @@ class FirebaseService {
     }
 
     suspend fun updateDriverLocation(driverId: String, location: Location) {
-        database.getReference("drivers").child(driverId).child("currentLocation").setValue(location)
+        database.getReference("drivers").child(driverId).child("currentLocation").setValue(location).await()
     }
 
     suspend fun updateDriverAvailability(driverId: String, isAvailable: Boolean) {
-        database.getReference("drivers").child(driverId).child("isAvailable").setValue(isAvailable)
+        database.getReference("drivers").child(driverId).child("isAvailable").setValue(isAvailable).await()
     }
 
     suspend fun updateDriverVerification(driverId: String, status: VerificationStatus) {
-        database.getReference("drivers").child(driverId).child("verificationStatus").setValue(status)
+        database.getReference("drivers").child(driverId).child("verificationStatus").setValue(status).await()
     }
 
     // Ride Operations
     suspend fun createRideRequest(rideRequest: RideRequest) {
-        database.getReference("rideRequests").child(rideRequest.id).setValue(rideRequest)
+        database.getReference("rideRequests").child(rideRequest.id).setValue(rideRequest).await()
     }
 
     fun getOpenRideRequestsFlow(): Flow<List<RideRequest>> = callbackFlow {
@@ -142,15 +142,15 @@ class FirebaseService {
     }
 
     suspend fun removeRideRequest(requestId: String) {
-        database.getReference("rideRequests").child(requestId).removeValue()
+        database.getReference("rideRequests").child(requestId).removeValue().await()
     }
 
     suspend fun createRide(ride: Ride) {
-        database.getReference("rides").child(ride.id).setValue(ride)
+        database.getReference("rides").child(ride.id).setValue(ride).await()
     }
 
     suspend fun updateRideStatus(rideId: String, status: RideStatus) {
-        database.getReference("rides").child(rideId).child("status").setValue(status)
+        database.getReference("rides").child(rideId).child("status").setValue(status).await()
     }
 
     /**
@@ -383,7 +383,7 @@ class FirebaseService {
         database.getReference("notifications")
             .child(notification.userId)
             .child(notification.id)
-            .setValue(notification)
+            .setValue(notification).await()
             .await()
     }
 
@@ -409,7 +409,7 @@ class FirebaseService {
 
     suspend fun markAllNotificationsRead(userId: String, ids: List<String>) {
         val ref = database.getReference("notifications").child(userId)
-        ids.forEach { ref.child(it).child("read").setValue(true) }
+        ids.forEach { ref.child(it).child("read").setValue(true) }.await()
     }
 
     // Fare Configuration (admin-managed pricing)
@@ -489,7 +489,7 @@ class FirebaseService {
      */
     suspend fun saveLicenceDetails(driverId: String, number: String, expiry: String) {
         database.getReference("driverDocuments").child(driverId).child("licence")
-            .updateChildren(mapOf("licenceNumber" to number, "licenceExpiry" to expiry))
+            .updateChildren(mapOf("licenceNumber" to number, "licenceExpiry" to expiry)).await()
             .await()
     }
 

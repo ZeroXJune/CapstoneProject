@@ -148,7 +148,29 @@ fun DriverHomeScreen(
     Scaffold(
         bottomBar = { DriverBottomBar(selected = tab, onSelect = { tab = it }, requestCount = openRequests.size) }
     ) { innerPadding ->
-        Box(modifier = Modifier.padding(innerPadding)) {
+        Column(modifier = Modifier.padding(innerPadding)) {
+            // Anything the database refuses — going online, accepting a ride,
+            // advancing one — used to land here and go nowhere: this error was
+            // only ever shown on the registration screen, so a driver whose
+            // account already existed saw a control that simply did not work.
+            error?.let { message ->
+                SectionCard {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text(
+                            message,
+                            color = MaterialTheme.colorScheme.error,
+                            style = MaterialTheme.typography.bodySmall,
+                            modifier = Modifier.weight(1f)
+                        )
+                        TextButton(onClick = viewModel::dismissError) { Text("Dismiss") }
+                    }
+                }
+            }
+            Box {
             when (tab) {
                 DriverTab.DASHBOARD -> {
                     val active = activeRides.firstOrNull()
@@ -192,6 +214,7 @@ fun DriverHomeScreen(
                         licenceCard()
                     }
                 )
+            }
             }
         }
     }
