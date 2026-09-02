@@ -2082,11 +2082,11 @@ Tap **Book a Ride** on Home.
    discounted — and each is charged from its own column of the posted sheet. Bring the
    identification; the driver will ask for it, and the app only records how many of each
    were declared.
-5. **Luggage.** Tap any that apply. This is information for the driver and does not change
+4. **Luggage.** Tap any that apply. This is information for the driver and does not change
    the fare.
-6. **Notes.** Anything the driver should know: a landmark, a gate number, that you are
+5. **Notes.** Anything the driver should know: a landmark, a gate number, that you are
    waiting under the awning.
-7. Read the itemised fare, then tap **Find a Driver**.
+6. Read the itemised fare, then tap **Find a Driver**.
 
 **About the fare.** TrikRide does not estimate. It reads the posted FeTODAT rate for your
 destination, raises it to the ordinance minimum if the posted rate is lower, and charges
