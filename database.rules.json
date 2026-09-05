@@ -1,0 +1,139 @@
+{
+  "rules": {
+    "users": {
+      ".read": "auth != null && root.child('users').child(auth.uid).child('userType').val() === 'ADMIN'",
+      "$uid": {
+        ".read": "auth != null && ($uid === auth.uid || root.child('users').child(auth.uid).child('userType').val() === 'ADMIN')",
+        ".write": "auth != null && $uid === auth.uid",
+        "userType": {
+          ".validate": "newData.val() === 'PASSENGER' || newData.val() === 'DRIVER'"
+        },
+        "firstName": { ".validate": "newData.isString() && newData.val().length <= 120" },
+        "lastName": { ".validate": "newData.isString() && newData.val().length <= 120" },
+        "email": { ".validate": "newData.isString() && newData.val().length <= 320" },
+        "phoneNumber": { ".validate": "newData.isString() && newData.val().length <= 32" },
+        "idNumber": { ".validate": "newData.isString() && newData.val().length <= 64" },
+        "birthDate": { ".validate": "newData.isString() && newData.val().length <= 40" },
+        "$other": { ".validate": "!newData.isString() || newData.val().length <= 512" }
+      }
+    },
+    "drivers": {
+      ".read": "auth != null",
+      "$uid": {
+        ".write": "auth != null && $uid === auth.uid",
+        "verificationStatus": {
+          ".write": "auth != null && root.child('users').child(auth.uid).child('userType').val() === 'ADMIN'",
+          ".validate": "root.child('users').child(auth.uid).child('userType').val() === 'ADMIN' || newData.val() === data.val() || (!data.exists() && newData.val() === 'PENDING')"
+        },
+        "rating": {
+          ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 5"
+        },
+        "ratingCount": {
+          ".validate": "newData.isNumber() && newData.val() >= 0"
+        },
+        "totalRides": {
+          ".validate": "newData.isNumber() && newData.val() >= 0"
+        },
+        "tricycleNumber": {
+          ".validate": "newData.isString() && newData.val().length <= 32"
+        },
+        "hasLicenceImage": {
+          ".write": "auth != null && ($uid === auth.uid || root.child('users').child(auth.uid).child('userType').val() === 'ADMIN')"
+        }
+      }
+    },
+    "driverRatings": {
+      "$driverId": {
+        ".read": "auth != null",
+        "$raterId": {
+          ".write": "auth != null && $raterId === auth.uid",
+          ".validate": "newData.isNumber() && newData.val() >= 1 && newData.val() <= 5"
+        }
+      }
+    },
+    "driverDocuments": {
+      "$uid": {
+        ".read": "auth != null && ($uid === auth.uid || root.child('users').child(auth.uid).child('userType').val() === 'ADMIN')",
+        ".write": "auth != null && ($uid === auth.uid || root.child('users').child(auth.uid).child('userType').val() === 'ADMIN')",
+        "licence": {
+          "image": { ".validate": "!newData.exists() || (newData.isString() && newData.val().length <= 300000)" },
+          "licenceNumber": { ".validate": "!newData.exists() || (newData.isString() && newData.val().length <= 64)" },
+          "licenceExpiry": { ".validate": "!newData.exists() || (newData.isString() && newData.val().length <= 40)" }
+        }
+      }
+    },
+    "rideRequests": {
+      ".read": "auth != null && (root.child('drivers').child(auth.uid).child('verificationStatus').val() === 'APPROVED' || root.child('users').child(auth.uid).child('userType').val() === 'ADMIN')",
+      "$requestId": {
+        ".read": "auth != null && data.child('passengerId').val() === auth.uid",
+        ".write": "auth != null && ((!data.exists() && newData.child('passengerId').val() === auth.uid) || (data.exists() && (data.child('passengerId').val() === auth.uid || root.child('drivers').child(auth.uid).child('verificationStatus').val() === 'APPROVED')))",
+        "notes": { ".validate": "newData.isString() && newData.val().length <= 500" },
+        "luggage": { ".validate": "newData.isString() && newData.val().length <= 200" },
+        "passengerCount": { ".validate": "newData.isNumber() && newData.val() >= 1 && newData.val() <= 5" },
+        "regularCount": { ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 5" },
+        "discountedCount": { ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 5" },
+        "estimatedFare": { ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 10000" }
+      }
+    },
+    "rides": {
+      ".read": "auth != null && (root.child('users').child(auth.uid).child('userType').val() === 'ADMIN' || ((query.orderByChild === 'passengerId' || query.orderByChild === 'driverId') && query.equalTo === auth.uid))",
+      ".indexOn": ["passengerId", "driverId"],
+      "$rideId": {
+        ".read": "auth != null && (data.child('passengerId').val() === auth.uid || data.child('driverId').val() === auth.uid)",
+        ".write": "auth != null && ((!data.exists() && newData.child('driverId').val() === auth.uid) || (data.exists() && data.child('driverId').val() === auth.uid))",
+        ".validate": "!newData.exists() || root.child('drivers').child(newData.child('driverId').val()).child('verificationStatus').val() === 'APPROVED'",
+        "passengerId": {
+          ".validate": "newData.isString() && (!data.exists() || newData.val() === data.val())"
+        },
+        "estimatedFare": {
+          ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 10000 && (!data.exists() || newData.val() === data.val())"
+        },
+        "notes": { ".validate": "newData.isString() && newData.val().length <= 500" },
+        "passengerName": {
+          ".write": "auth != null && data.parent().child('passengerId').val() === auth.uid",
+          ".validate": "newData.isString() && newData.val().length <= 120"
+        },
+        "passengerPhone": {
+          ".write": "auth != null && data.parent().child('passengerId').val() === auth.uid",
+          ".validate": "newData.isString() && newData.val().length <= 32"
+        }
+      }
+    },
+    "config": {
+      ".read": "auth != null",
+      ".write": "auth != null && root.child('users').child(auth.uid).child('userType').val() === 'ADMIN'"
+    },
+    "complaints": {
+      ".read": "auth != null && (root.child('users').child(auth.uid).child('userType').val() === 'ADMIN' || (query.orderByChild === 'reporterId' && query.equalTo === auth.uid))",
+      ".indexOn": ["reporterId"],
+      "$id": {
+        ".read": "auth != null && (data.child('reporterId').val() === auth.uid || root.child('users').child(auth.uid).child('userType').val() === 'ADMIN')",
+        ".write": "auth != null && ((!data.exists() && newData.child('reporterId').val() === auth.uid) || root.child('users').child(auth.uid).child('userType').val() === 'ADMIN')",
+        "description": { ".validate": "newData.isString() && newData.val().length <= 2000" },
+        "adminNote": { ".validate": "newData.isString() && newData.val().length <= 2000" },
+        "status": {
+          ".write": "auth != null && root.child('users').child(auth.uid).child('userType').val() === 'ADMIN'",
+          ".validate": "root.child('users').child(auth.uid).child('userType').val() === 'ADMIN' || newData.val() === data.val() || (!data.exists() && newData.val() === 'OPEN')"
+        }
+      }
+    },
+    "notifications": {
+      "$uid": {
+        ".read": "auth != null && $uid === auth.uid",
+        ".write": "auth != null && ($uid === auth.uid || root.child('users').child(auth.uid).child('userType').val() === 'ADMIN' || root.child('drivers').child(auth.uid).child('verificationStatus').val() === 'APPROVED')",
+        "$id": {
+          ".validate": "newData.hasChildren(['title', 'message'])",
+          "title": { ".validate": "newData.isString() && newData.val().length <= 120" },
+          "message": { ".validate": "newData.isString() && newData.val().length <= 500" }
+        }
+      }
+    },
+    "profilePhotos": {
+      "$uid": {
+        ".read": "auth != null",
+        ".write": "auth != null && $uid === auth.uid",
+        "data": { ".validate": "newData.isString() && newData.val().length <= 40000" }
+      }
+    }
+  }
+}

@@ -47,8 +47,18 @@ object FareEngine {
         val regularRate = maxOf(
             rateFor(stop, FareType.REGULAR), minimumFor(config, FareType.REGULAR)
         )
-        val discountedRate = maxOf(
-            rateFor(stop, FareType.DISCOUNTED), minimumFor(config, FareType.DISCOUNTED)
+        // Never above the regular rate for the same stop. Three rows of the
+        // transcribed table carry a discounted rate higher than the regular one
+        // — Mar Auguis, Dancy, and the Arlen special trip — and would otherwise
+        // charge a senior, a person with a disability or a student more than
+        // the passenger beside them, which RA 9994 and RA 10754 forbid. The
+        // clamp is here rather than in the seed so that a rate typed wrong in
+        // the admin fare screen cannot do it either.
+        val discountedRate = minOf(
+            maxOf(
+                rateFor(stop, FareType.DISCOUNTED), minimumFor(config, FareType.DISCOUNTED)
+            ),
+            regularRate
         )
         val regular = regularCount.coerceAtLeast(0)
         val discounted = discountedCount.coerceAtLeast(0)

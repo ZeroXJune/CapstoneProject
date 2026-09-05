@@ -37,8 +37,8 @@ sealed class ReportPeriod {
     /** Safe for a filename on any platform the admin might open this on. */
     val slug: String
         get() = when (this) {
-            is Month -> "%04d-%02d".format(year, month + 1)
-            is Year -> "%04d".format(year)
+            is Month -> "%04d-%02d".format(Locale.US, year, month + 1)
+            is Year -> "%04d".format(Locale.US, year)
             AllTime -> "all-time"
             is Custom -> "${fileDate(startMillis)}-to-${fileDate(endMillis)}"
         }
@@ -75,7 +75,7 @@ sealed class ReportPeriod {
 
         private fun shortDate(ms: Long): String {
             val cal = Calendar.getInstance().apply { timeInMillis = ms }
-            return "%d %s %d".format(
+            return "%d %s %d".format(Locale.US, 
                 cal.get(Calendar.DAY_OF_MONTH),
                 MONTH_NAMES[cal.get(Calendar.MONTH)].take(3),
                 cal.get(Calendar.YEAR)
@@ -84,7 +84,7 @@ sealed class ReportPeriod {
 
         private fun fileDate(ms: Long): String {
             val cal = Calendar.getInstance().apply { timeInMillis = ms }
-            return "%04d%02d%02d".format(
+            return "%04d%02d%02d".format(Locale.US, 
                 cal.get(Calendar.YEAR), cal.get(Calendar.MONTH) + 1, cal.get(Calendar.DAY_OF_MONTH)
             )
         }
@@ -157,7 +157,7 @@ object ReportBuilder {
     private fun readable(value: String): String {
         val ms = millis(value) ?: return ""
         val cal = Calendar.getInstance().apply { timeInMillis = ms }
-        return "%04d-%02d-%02d %02d:%02d".format(
+        return "%04d-%02d-%02d %02d:%02d".format(Locale.US, 
             cal.get(Calendar.YEAR),
             cal.get(Calendar.MONTH) + 1,
             cal.get(Calendar.DAY_OF_MONTH),
@@ -166,13 +166,35 @@ object ReportBuilder {
         )
     }
 
-    /** Wraps a value so commas, quotes and newlines inside it survive the round trip. */
+    /**
+     * Wraps a value so commas, quotes and newlines inside it survive the round
+     * trip, and so that nothing in it is run as a formula when the file opens.
+     *
+     * Quoting alone does not stop the second problem. Excel, LibreOffice and
+     * Sheets all evaluate a cell whose text begins `=`, `+`, `-` or `@` — and
+     * `\t` or `\r` before one of those is skipped over — quoted or not, which
+     * turns a passenger's ride note or a driver's own name into something that
+     * runs on the administrator's computer when they open the report. Prefixing
+     * an apostrophe is the standard defence: spreadsheets read it as "this is
+     * text", strip it on display, and a plain CSV reader sees one extra
+     * character rather than a formula.
+     */
     private fun cell(value: Any?): String {
         val text = value?.toString().orEmpty()
         if (text.isEmpty()) return ""
-        val escaped = text.replace("\"", "\"\"")
+        val neutralised = if (startsFormula(text)) "'$text" else text
+        val escaped = neutralised.replace("\"", "\"\"")
         return "\"$escaped\""
     }
+
+    /** Whether a spreadsheet would treat this text as a formula rather than a value. */
+    private fun startsFormula(text: String): Boolean {
+        val first = text.firstOrNull { it != '\t' && it != '\r' && it != '\n' && it != ' ' }
+        return first != null && first in FORMULA_LEADS
+    }
+
+    private val FORMULA_LEADS = charArrayOf('=', '+', '-', '@')
+
 
     private fun row(vararg values: Any?): String = values.joinToString(",") { cell(it) }
 
@@ -273,8 +295,8 @@ object ReportBuilder {
         sb.appendLine(row("Completed", s.completed))
         sb.appendLine(row("Cancelled or no-show", s.cancelled))
         sb.appendLine(row("Still open", s.inProgress))
-        sb.appendLine(row("Gross fares (PHP)", "%.2f".format(s.grossFares)))
-        sb.appendLine(row("Average completed fare (PHP)", "%.2f".format(s.averageFare)))
+        sb.appendLine(row("Gross fares (PHP)", "%.2f".format(Locale.US, s.grossFares)))
+        sb.appendLine(row("Average completed fare (PHP)", "%.2f".format(Locale.US, s.averageFare)))
         sb.appendLine(row("Passengers served", s.uniquePassengers))
         sb.appendLine(row("Drivers with at least one ride", s.activeDrivers))
         sb.appendLine()
@@ -306,8 +328,8 @@ object ReportBuilder {
                     ride.passengerCount,
                     ride.luggage,
                     ride.status.name,
-                    "%.2f".format(ride.estimatedFare),
-                    "%.2f".format(ride.actualFare),
+                    "%.2f".format(Locale.US, ride.estimatedFare),
+                    "%.2f".format(Locale.US, ride.actualFare),
                     ride.notes
                 )
             )
@@ -358,9 +380,9 @@ object ReportBuilder {
                         driverRides.count {
                             it.status == RideStatus.CANCELLED || it.status == RideStatus.NO_SHOW
                         },
-                        "%.2f".format(gross),
-                        "%.2f".format(if (done.isEmpty()) 0.0 else gross / done.size),
-                        "%.1f".format(record?.rating ?: 0.0)
+                        "%.2f".format(Locale.US, gross),
+                        "%.2f".format(Locale.US, if (done.isEmpty()) 0.0 else gross / done.size),
+                        "%.1f".format(Locale.US, record?.rating ?: 0.0)
                     )
                 )
             }
@@ -448,7 +470,7 @@ object ReportBuilder {
         inPeriod.forEach { ride ->
             val ms = millis(ride.requestedAt) ?: return@forEach
             val cal = Calendar.getInstance().apply { timeInMillis = ms }
-            val key = "%04d-%02d-%02d".format(
+            val key = "%04d-%02d-%02d".format(Locale.US, 
                 cal.get(Calendar.YEAR), cal.get(Calendar.MONTH) + 1, cal.get(Calendar.DAY_OF_MONTH)
             )
             counts[key] = (counts[key] ?: 0) + 1

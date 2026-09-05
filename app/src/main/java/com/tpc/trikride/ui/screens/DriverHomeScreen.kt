@@ -365,7 +365,11 @@ private fun DriverDashboard(
                     tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(32.dp))
                 Spacer(modifier = Modifier.width(12.dp))
                 Column {
-                    Text("Earnings Today", style = MaterialTheme.typography.bodySmall,
+                    // Not today's: `earnings` sums every completed ride this
+                    // driver has ever finished, because the history flow it
+                    // folds is not filtered by date. Labelled for what it is
+                    // rather than left saying something untrue.
+                    Text("Total Earned", style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant)
                     Text("₱%.2f".format(earnings), style = MaterialTheme.typography.headlineSmall,
                         fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)

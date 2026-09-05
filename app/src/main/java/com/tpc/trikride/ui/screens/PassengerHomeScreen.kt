@@ -96,6 +96,11 @@ fun PassengerHomeScreen(
     val driverLocation by viewModel.driverLocation.collectAsState()
     val assignedDriver by viewModel.assignedDriver.collectAsState()
     val ratedRides by viewModel.ratedRides.collectAsState()
+    // The dashboard below is only reached when there is no active ride, so the
+    // active list it used to be given was empty by construction and "Recent
+    // Rides" read "No rides yet" for everybody. Finished rides are what the
+    // heading means.
+    val rideHistory by viewModel.rideHistory.collectAsState()
 
     val notifications by supportViewModel.notifications.collectAsState()
     val unreadCount = notifications.count { !it.read }
@@ -153,7 +158,7 @@ fun PassengerHomeScreen(
                             onBack = { showBooking = false }
                         )
                         else -> PassengerDashboard(
-                            rides = activeRides,
+                            rides = rideHistory,
                             unreadCount = unreadCount,
                             onBookRide = { showBooking = true },
                             onOpenNotifications = { showNotifications = true },

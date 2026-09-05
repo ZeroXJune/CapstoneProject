@@ -384,7 +384,6 @@ class FirebaseService {
             .child(notification.userId)
             .child(notification.id)
             .setValue(notification).await()
-            .await()
     }
 
     fun getNotificationsFlow(userId: String): Flow<List<AppNotification>> = callbackFlow {
@@ -409,7 +408,10 @@ class FirebaseService {
 
     suspend fun markAllNotificationsRead(userId: String, ids: List<String>) {
         val ref = database.getReference("notifications").child(userId)
-        ids.forEach { ref.child(it).child("read").setValue(true) }.await()
+        // Awaited one at a time: forEach returns Unit, so awaiting the loop
+        // rather than the writes inside it did not compile and, had it, would
+        // have returned before any of them landed.
+        ids.forEach { ref.child(it).child("read").setValue(true).await() }
     }
 
     // Fare Configuration (admin-managed pricing)
@@ -490,7 +492,6 @@ class FirebaseService {
     suspend fun saveLicenceDetails(driverId: String, number: String, expiry: String) {
         database.getReference("driverDocuments").child(driverId).child("licence")
             .updateChildren(mapOf("licenceNumber" to number, "licenceExpiry" to expiry)).await()
-            .await()
     }
 
     /**
