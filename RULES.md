@@ -128,3 +128,16 @@ coordinates to real latitudes and longitudes.
 This bounds the damage; it does not remove the need for a range check in the dialog,
 which should refuse the value where the administrator can see why rather than letting the
 write fail against a rule.
+
+## Keeping the two caps in step
+
+`complaints/$id/adminNote` is capped at 2000 characters and the notification that relays
+it verbatim was capped at 500. A note between the two lengths updated the complaint and
+then failed the notification write — and `SupportRepository.updateComplaint` does not
+isolate the second call, so the administrator was told the whole update failed after it
+had already succeeded, and would reasonably retry. The notification message cap now
+matches the note it carries.
+
+The underlying shape is still wrong: the complaint update and the notification are two
+writes reported as one outcome. Wrapping the notify call the way `AdminViewModel`
+already does for verification decisions would fix it properly.

@@ -142,7 +142,7 @@
         "$id": {
           ".validate": "newData.hasChildren(['title', 'message'])",
           "title": { ".validate": "newData.isString() && newData.val().length <= 120" },
-          "message": { ".validate": "newData.isString() && newData.val().length <= 500" }
+          "message": { ".validate": "newData.isString() && newData.val().length <= 2000" }
         }
       }
     },
