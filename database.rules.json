@@ -102,7 +102,24 @@
     },
     "config": {
       ".read": "auth != null",
-      ".write": "auth != null && root.child('users').child(auth.uid).child('userType').val() === 'ADMIN'"
+      ".write": "auth != null && root.child('users').child(auth.uid).child('userType').val() === 'ADMIN'",
+      "fare": {
+        "minimumRegular": { ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 1000" },
+        "minimumDiscounted": { ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 1000" },
+        "poblacionFlat": { ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 1000" },
+        "terminalRoundTrip": { ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 1000" }
+      },
+      "fareStops": {
+        "$stopId": {
+          "regularFare": { ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 1000" },
+          "discountedFare": { ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 1000" },
+          "name": { ".validate": "newData.isString() && newData.val().length <= 200" },
+          "zone": { ".validate": "newData.isString() && newData.val().length <= 100" },
+          "note": { ".validate": "newData.isString() && newData.val().length <= 1000" },
+          "latitude": { ".validate": "newData.isNumber() && newData.val() >= -90 && newData.val() <= 90" },
+          "longitude": { ".validate": "newData.isNumber() && newData.val() >= -180 && newData.val() <= 180" }
+        }
+      }
     },
     "complaints": {
       ".read": "auth != null && (root.child('users').child(auth.uid).child('userType').val() === 'ADMIN' || (query.orderByChild === 'reporterId' && query.equalTo === auth.uid))",

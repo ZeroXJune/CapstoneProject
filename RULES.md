@@ -116,3 +116,15 @@ and use `updateChildren`.
   collection read stops enumeration, not targeted following. The clean fix is to move
   `currentLocation` off `drivers/{uid}` into a per-ride node written by that ride's
   driver and readable only by its two parties — a schema change, not a rules change.
+
+## Fare bounds
+
+`config` was administrator-only for writes and otherwise unvalidated, so a mistyped rate
+went straight into the table that prices every ride. The admin fare dialog gates Save on
+`toDoubleOrNull() != null` and nothing else, which accepts a negative fare and a fare of
+999999 equally. Rates, the two minimums and the flat rates are now bounded to 0–1000, and
+coordinates to real latitudes and longitudes.
+
+This bounds the damage; it does not remove the need for a range check in the dialog,
+which should refuse the value where the administrator can see why rather than letting the
+write fail against a rule.
