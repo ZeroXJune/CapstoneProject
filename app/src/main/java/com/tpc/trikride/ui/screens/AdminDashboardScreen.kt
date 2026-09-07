@@ -36,7 +36,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.withContext
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.tpc.trikride.models.Complaint
 import com.tpc.trikride.models.ComplaintStatus
@@ -58,10 +60,12 @@ import com.tpc.trikride.ui.components.TALIBON_CENTRE
 import com.tpc.trikride.utils.FareSeed
 import com.tpc.trikride.utils.LicenceImage
 import com.tpc.trikride.ui.theme.ErrorColor
+import com.tpc.trikride.ui.theme.InfoColor
 import com.tpc.trikride.ui.theme.ForestGreen
 import com.tpc.trikride.ui.theme.SuccessColor
 import com.tpc.trikride.ui.theme.WarningColor
 import com.tpc.trikride.viewmodels.AdminViewModel
+import java.util.Locale
 
 private enum class AdminTab { VERIFY, CONCERNS, MONITOR, FARES, PROFILE }
 
@@ -328,7 +332,7 @@ private fun ComplaintCard(
 private fun ComplaintStatusChip(status: ComplaintStatus) {
     val (color, label) = when (status) {
         ComplaintStatus.OPEN -> WarningColor to "Open"
-        ComplaintStatus.IN_REVIEW -> SuccessColor to "In review"
+        ComplaintStatus.IN_REVIEW -> InfoColor to "In review"
         ComplaintStatus.RESOLVED -> SuccessColor to "Resolved"
     }
     Box(
@@ -399,6 +403,9 @@ private fun VerificationContent(
                             ) { Text("Reject") }
                             Button(
                                 onClick = { onApprove(driver.userId) },
+                                // There is nothing to verify against without one, and
+                                // the whole premise of the app is that somebody looked.
+                                enabled = driver.hasLicenceImage,
                                 shape = RoundedCornerShape(14.dp),
                                 modifier = Modifier.weight(1f)
                             ) { Text("Approve") }
@@ -439,6 +446,7 @@ private fun VerificationContent(
                         } else {
                             Button(
                                 onClick = { onApprove(driver.userId) },
+                                enabled = driver.hasLicenceImage,
                                 shape = RoundedCornerShape(14.dp),
                                 modifier = Modifier.fillMaxWidth()
                             ) { Text("Approve") }
@@ -555,7 +563,18 @@ private fun LicenceReview(
         return
     }
 
-    val bitmap = remember(licence?.image) { LicenceImage.decode(licence?.image) }
+    // Decoded off the main thread: this is a ~200 KB base64 string becoming a
+    // 1280-pixel bitmap, and doing it inside composition drops frames on the
+    // screen an administrator uses to work through a verification queue.
+    val imageData = licence?.image
+    // `settled` separates "still decoding" from "decoded to nothing", so the
+    // failure message below cannot flash up in the moment before the bitmap
+    // arrives.
+    var settled by remember(imageData) { mutableStateOf(false) }
+    val bitmap by produceState<androidx.compose.ui.graphics.ImageBitmap?>(null, imageData) {
+        value = withContext(Dispatchers.Default) { LicenceImage.decode(imageData) }
+        settled = true
+    }
     Column {
         InfoLine("Licence No.", licence?.licenceNumber?.ifBlank { null } ?: "—")
         InfoLine("Licence Expiry", licence?.licenceExpiry?.ifBlank { null } ?: "—")
@@ -572,12 +591,13 @@ private fun LicenceReview(
             ) {
                 when {
                     bitmap != null -> Image(
-                        bitmap = bitmap,
+                        bitmap = bitmap!!,
                         contentDescription = "Licence photo",
                         contentScale = ContentScale.Fit,
                         modifier = Modifier.fillMaxSize()
                     )
-                    licence == null -> CircularProgressIndicator(modifier = Modifier.size(24.dp))
+                    licence == null || !settled ->
+                        CircularProgressIndicator(modifier = Modifier.size(24.dp))
                     else -> Text(
                         "That photo could not be opened.",
                         style = MaterialTheme.typography.bodySmall,
@@ -730,7 +750,7 @@ private fun LiveMonitorContent(drivers: List<Driver>, rides: List<Ride>) {
                         ) {
                             Text(ride.status.name, style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.primary)
-                            Text("₱%.2f".format(ride.estimatedFare),
+                            Text("₱%.2f".format(Locale.US, ride.estimatedFare),
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant)
                         }
@@ -795,12 +815,16 @@ private fun FareConfigContent(
     val flaggedCount = remember(stops) { stops.count { it.needsReview } }
 
     val visible = remember(stops, query, zoneFilter, flaggedOnly) {
-        val q = query.trim().lowercase()
+        val terms = query.trim().lowercase().split(" ").filter { it.isNotBlank() }
         stops.asSequence()
             .filter { zoneFilter == null || it.zone == zoneFilter }
             .filter { !flaggedOnly || it.needsReview }
-            .filter {
-                q.isEmpty() || it.name.lowercase().contains(q) || it.zone.lowercase().contains(q)
+            .filter { stop ->
+                // Every word has to appear somewhere, which is what the
+                // passenger's picker does. A single substring match over the
+                // whole query found nothing for "poblacion talibon".
+                val haystack = "${stop.name} ${stop.zone}".lowercase()
+                terms.all { haystack.contains(it) }
             }
             .sortedWith(compareBy<FareStop>({ it.zone }, { it.name }))
             .toList()
@@ -934,6 +958,7 @@ private fun FareConfigContent(
         FareStopDialog(
             stop = stop,
             isNew = false,
+            existingIds = stops.map { it.id }.toSet(),
             onDismiss = { editing = null },
             onSave = { updated -> onSaveStop(updated); editing = null },
             onDelete = { onDeleteStop(stop.id); editing = null }
@@ -944,6 +969,7 @@ private fun FareConfigContent(
         FareStopDialog(
             stop = FareStop(zone = zoneFilter ?: zones.firstOrNull().orEmpty()),
             isNew = true,
+            existingIds = stops.map { it.id }.toSet(),
             onDismiss = { addingNew = false },
             onSave = { created -> onSaveStop(created); addingNew = false },
             onDelete = null
@@ -1049,13 +1075,13 @@ private fun FareStopRow(stop: FareStop, onClick: () -> Unit) {
             }
             Column(horizontalAlignment = Alignment.End) {
                 Text(
-                    "₱%.2f".format(stop.regularFare),
+                    "₱%.2f".format(Locale.US, stop.regularFare),
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.primary
                 )
                 Text(
-                    "₱%.2f discounted".format(stop.discountedFare),
+                    "₱%.2f discounted".format(Locale.US, stop.discountedFare),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -1068,24 +1094,40 @@ private fun FareStopRow(stop: FareStop, onClick: () -> Unit) {
 private fun FareStopDialog(
     stop: FareStop,
     isNew: Boolean,
+    /** Every id already in the table, so a new stop cannot land on one. */
+    existingIds: Set<String>,
     onDismiss: () -> Unit,
     onSave: (FareStop) -> Unit,
     onDelete: (() -> Unit)?
 ) {
     var name by remember { mutableStateOf(stop.name) }
     var zone by remember { mutableStateOf(stop.zone) }
-    var regular by remember { mutableStateOf(if (stop.regularFare == 0.0) "" else "%.2f".format(stop.regularFare)) }
-    var discounted by remember { mutableStateOf(if (stop.discountedFare == 0.0) "" else "%.2f".format(stop.discountedFare)) }
+    // Locale.US on the way in because toDoubleOrNull() only ever reads a dot on
+    // the way out. Formatting with the device locale put "25,00" in the field on
+    // any comma-decimal phone, which parsed as null and left Save permanently
+    // disabled with nothing on screen saying why.
+    var regular by remember { mutableStateOf(if (stop.regularFare == 0.0) "" else "%.2f".format(Locale.US, stop.regularFare)) }
+    var discounted by remember { mutableStateOf(if (stop.discountedFare == 0.0) "" else "%.2f".format(Locale.US, stop.discountedFare)) }
     var active by remember { mutableStateOf(stop.active) }
     var reviewed by remember { mutableStateOf(!stop.needsReview) }
     var lat by remember { mutableStateOf(if (stop.latitude == 0.0) "" else stop.latitude.toString()) }
     var lng by remember { mutableStateOf(if (stop.longitude == 0.0) "" else stop.longitude.toString()) }
     var pickingPoint by remember { mutableStateOf(false) }
 
+    var confirmDelete by remember { mutableStateOf(false) }
+
     val regularValue = regular.toDoubleOrNull()
     val discountedValue = discounted.toDoubleOrNull()
-    val canSave = name.isNotBlank() && zone.isNotBlank() &&
-        regularValue != null && discountedValue != null
+    // A rate has to be a real amount of money. Parsing alone accepted -25 and
+    // 999999 as readily as 25, and the table this writes to prices every ride.
+    val ratesSane = regularValue != null && discountedValue != null &&
+        regularValue in 0.0..MAX_FARE && discountedValue in 0.0..MAX_FARE
+    val latValue = lat.toDoubleOrNull()
+    val lngValue = lng.toDoubleOrNull()
+    val pointSane = (lat.isBlank() && lng.isBlank()) ||
+        (latValue != null && lngValue != null &&
+            latValue in -90.0..90.0 && lngValue in -180.0..180.0)
+    val canSave = name.isNotBlank() && zone.isNotBlank() && ratesSane && pointSane
 
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -1220,9 +1262,17 @@ private fun FareStopDialog(
                 enabled = canSave,
                 onClick = {
                     val id = stop.id.ifBlank {
-                        (zone + "__" + name).lowercase()
+                        // Two names differing only in punctuation collapse to the
+                        // same slug, and saveFareStop writes with setValue, so
+                        // without this a new stop silently replaced an existing one.
+                        val base = (zone + "__" + name).lowercase()
                             .replace(Regex("[^a-z0-9]+"), "_")
                             .trim('_')
+                            .ifBlank { "stop" }
+                        if (base !in existingIds) base
+                        else generateSequence(2) { it + 1 }
+                            .map { "${base}_$it" }
+                            .first { it !in existingIds }
                     }
                     onSave(
                         stop.copy(
@@ -1233,8 +1283,8 @@ private fun FareStopDialog(
                             discountedFare = discountedValue ?: 0.0,
                             active = active,
                             needsReview = stop.needsReview && !reviewed,
-                            latitude = lat.toDoubleOrNull() ?: 0.0,
-                            longitude = lng.toDoubleOrNull() ?: 0.0
+                            latitude = latValue ?: 0.0,
+                            longitude = lngValue ?: 0.0
                         )
                     )
                 }
@@ -1243,12 +1293,36 @@ private fun FareStopDialog(
         dismissButton = {
             Row {
                 if (onDelete != null) {
-                    TextButton(onClick = onDelete) { Text("Delete", color = ErrorColor) }
+                    TextButton(onClick = { confirmDelete = true }) {
+                        Text("Delete", color = ErrorColor)
+                    }
                 }
                 TextButton(onClick = onDismiss) { Text("Cancel") }
             }
         }
     )
+
+    if (confirmDelete && onDelete != null) {
+        AlertDialog(
+            onDismissRequest = { confirmDelete = false },
+            title = { Text("Remove ${stop.name}?") },
+            text = {
+                Text(
+                    "Passengers will no longer be able to book this destination, and " +
+                        "the posted rate for it is not kept anywhere else. Rides already " +
+                        "taken to it are unaffected."
+                )
+            },
+            confirmButton = {
+                TextButton(onClick = { confirmDelete = false; onDelete() }) {
+                    Text("Remove", color = ErrorColor)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { confirmDelete = false }) { Text("Keep it") }
+            }
+        )
+    }
 
     if (pickingPoint) {
         StopPointPicker(
@@ -1259,8 +1333,8 @@ private fun FareStopDialog(
             ),
             onDismiss = { pickingPoint = false },
             onPicked = { point ->
-                lat = "%.6f".format(point.latitude)
-                lng = "%.6f".format(point.longitude)
+                lat = "%.6f".format(Locale.US, point.latitude)
+                lng = "%.6f".format(Locale.US, point.longitude)
                 pickingPoint = false
             }
         )
@@ -1274,11 +1348,25 @@ private fun GlobalRatesDialog(
     onDismiss: () -> Unit,
     onSave: (FareConfig) -> Unit
 ) {
-    var minRegular by remember(config) { mutableStateOf("%.2f".format(config.minimumRegular)) }
-    var minDiscounted by remember(config) { mutableStateOf("%.2f".format(config.minimumDiscounted)) }
-    var poblacion by remember(config) { mutableStateOf("%.2f".format(config.poblacionFlat)) }
-    var terminal by remember(config) { mutableStateOf("%.2f".format(config.terminalRoundTrip)) }
+    // Locale.US, for the same reason as the stop dialog: these are read back
+    // with toDoubleOrNull(), which only ever accepts a dot.
+    var minRegular by remember(config) { mutableStateOf("%.2f".format(Locale.US, config.minimumRegular)) }
+    var minDiscounted by remember(config) { mutableStateOf("%.2f".format(Locale.US, config.minimumDiscounted)) }
+    var poblacion by remember(config) { mutableStateOf("%.2f".format(Locale.US, config.poblacionFlat)) }
+    var terminal by remember(config) { mutableStateOf("%.2f".format(Locale.US, config.terminalRoundTrip)) }
     var perHead by remember(config) { mutableStateOf(config.chargePerPassenger) }
+
+    // Every field has to be a real amount before anything is written. This used
+    // to fall back to the existing value per field, so a cleared or unparseable
+    // box saved the old number and still reported success.
+    fun rate(text: String): Double? = text.toDoubleOrNull()?.takeIf { it in 0.0..MAX_FARE }
+    val minRegularValue = rate(minRegular)
+    val minDiscountedValue = rate(minDiscounted)
+    val poblacionValue = rate(poblacion)
+    val terminalValue = rate(terminal)
+    val canSave = minRegularValue != null && minDiscountedValue != null &&
+        poblacionValue != null && terminalValue != null &&
+        minDiscountedValue <= minRegularValue
 
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -1290,6 +1378,15 @@ private fun GlobalRatesDialog(
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
+                if (!canSave) {
+                    Spacer(modifier = Modifier.height(6.dp))
+                    Text(
+                        "Every box needs an amount between 0 and ${MAX_FARE.toInt()}, and the " +
+                            "discounted minimum cannot be above the regular one.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = ErrorColor
+                    )
+                }
                 Spacer(modifier = Modifier.height(12.dp))
                 MoneyField("Minimum regular fare (₱)", minRegular) { minRegular = it }
                 Spacer(modifier = Modifier.height(10.dp))
@@ -1318,18 +1415,20 @@ private fun GlobalRatesDialog(
             }
         },
         confirmButton = {
-            TextButton(onClick = {
-                onSave(
-                    config.copy(
-                        minimumRegular = minRegular.toDoubleOrNull() ?: config.minimumRegular,
-                        minimumDiscounted = minDiscounted.toDoubleOrNull()
-                            ?: config.minimumDiscounted,
-                        poblacionFlat = poblacion.toDoubleOrNull() ?: config.poblacionFlat,
-                        terminalRoundTrip = terminal.toDoubleOrNull() ?: config.terminalRoundTrip,
-                        chargePerPassenger = perHead
+            TextButton(
+                enabled = canSave,
+                onClick = {
+                    onSave(
+                        config.copy(
+                            minimumRegular = minRegularValue ?: config.minimumRegular,
+                            minimumDiscounted = minDiscountedValue ?: config.minimumDiscounted,
+                            poblacionFlat = poblacionValue ?: config.poblacionFlat,
+                            terminalRoundTrip = terminalValue ?: config.terminalRoundTrip,
+                            chargePerPassenger = perHead
+                        )
                     )
-                )
-            }) { Text("Save") }
+                }
+            ) { Text("Save") }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) { Text("Cancel") }
@@ -1394,7 +1493,7 @@ private fun StopPointPicker(
                 Spacer(modifier = Modifier.height(12.dp))
                 Column(modifier = Modifier.padding(horizontal = 20.dp)) {
                     Text(
-                        "%.6f, %.6f".format(centre.latitude, centre.longitude),
+                        "%.6f, %.6f".format(Locale.US, centre.latitude, centre.longitude),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -1409,6 +1508,9 @@ private fun StopPointPicker(
         }
     }
 }
+
+/** Matches the ceiling the database rules enforce on a written rate. */
+private const val MAX_FARE = 1000.0
 
 @Composable
 private fun MoneyField(label: String, value: String, onChange: (String) -> Unit) {

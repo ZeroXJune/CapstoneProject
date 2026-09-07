@@ -10,6 +10,7 @@ import com.tpc.trikride.models.Driver
 import com.tpc.trikride.models.Ride
 import com.tpc.trikride.models.RideStatus
 import com.tpc.trikride.models.User
+import java.util.Locale
 import java.io.OutputStream
 import java.util.Calendar
 
@@ -127,7 +128,7 @@ object PdfReportWriter {
             title = "Rides by hour of day",
             subtitle = "when to have drivers waiting",
             values = byHour,
-            labels = (0..23).map { "%02d".format(it) },
+            labels = (0..23).map { "%02d".format(Locale.US, it) },
             labelEvery = 3
         )
 
@@ -214,7 +215,7 @@ object PdfReportWriter {
                 Triple("Gross fares", peso(gross), null),
                 Triple(
                     "Average per driver",
-                    if (byDriver.isEmpty()) "0" else "%.1f".format(inPeriod.size.toDouble() / byDriver.size),
+                    if (byDriver.isEmpty()) "0" else "%.1f".format(Locale.US, inPeriod.size.toDouble() / byDriver.size),
                     "rides"
                 )
             )
@@ -292,7 +293,7 @@ object PdfReportWriter {
                 "${done.size}",
                 "${driverRides.count { it.status == RideStatus.CANCELLED || it.status == RideStatus.NO_SHOW }}",
                 peso(g),
-                "%.1f".format(record?.rating ?: 0.0)
+                "%.1f".format(Locale.US, record?.rating ?: 0.0)
             )
         }
         writeTablePages(doc, "Driver Performance Report", period, columns, rows, startingPage = 2)
@@ -553,14 +554,14 @@ object PdfReportWriter {
 
     // ----------------------------------------------------------- Formatting
 
-    private fun peso(value: Double) = "P%,.2f".format(value)
+    private fun peso(value: Double) = "P%,.2f".format(Locale.US, value)
 
     private fun completionNote(s: ReportSummary): String? =
         if (s.totalRides == 0) null
-        else "%.0f%% of all rides".format(s.completed * 100.0 / s.totalRides)
+        else "%.0f%% of all rides".format(Locale.US, s.completed * 100.0 / s.totalRides)
 
     private fun resolutionNote(filed: Int, resolved: Int): String? =
-        if (filed == 0) null else "%.0f%% of those filed".format(resolved * 100.0 / filed)
+        if (filed == 0) null else "%.0f%% of those filed".format(Locale.US, resolved * 100.0 / filed)
 
     private fun displayName(user: User?): String = when {
         user == null -> "Unknown"
@@ -575,6 +576,7 @@ object PdfReportWriter {
         val ms = raw.toLongOrNull() ?: return ""
         val cal = Calendar.getInstance().apply { timeInMillis = ms }
         return "%02d %s %02d:%02d".format(
+            Locale.US,
             cal.get(Calendar.DAY_OF_MONTH),
             ReportPeriod.MONTH_NAMES[cal.get(Calendar.MONTH)].take(3),
             cal.get(Calendar.HOUR_OF_DAY),
@@ -585,6 +587,7 @@ object PdfReportWriter {
     private fun today(): String {
         val cal = Calendar.getInstance()
         return "%d %s %d".format(
+            Locale.US,
             cal.get(Calendar.DAY_OF_MONTH),
             ReportPeriod.MONTH_NAMES[cal.get(Calendar.MONTH)],
             cal.get(Calendar.YEAR)
@@ -607,7 +610,7 @@ object PdfReportWriter {
         val spansYears = counts.keys.map { it / 12 }.distinct().size > 1
         return counts.map { (key, n) ->
             val name = ReportPeriod.MONTH_NAMES[key % 12].take(3)
-            (if (spansYears) "$name ${"%02d".format((key / 12) % 100)}" else name) to n
+            (if (spansYears) "$name ${"%02d".format(Locale.US, (key / 12) % 100)}" else name) to n
         }
     }
 }

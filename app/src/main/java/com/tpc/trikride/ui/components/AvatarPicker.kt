@@ -32,6 +32,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -82,7 +83,11 @@ fun AvatarPicker(
     var showChooser by remember { mutableStateOf(false) }
     var pendingCameraUri by remember { mutableStateOf<Uri?>(null) }
     // Decoding is cheap at this size, but not free, so tie it to the data.
-    val photo = remember(photoData) { ProfilePhoto.decode(photoData) }
+    // Smaller than a licence, but the same shape, and this one sits on a screen
+    // that is opened far more often.
+    val photo by produceState<androidx.compose.ui.graphics.ImageBitmap?>(null, photoData) {
+        value = withContext(Dispatchers.Default) { ProfilePhoto.decode(photoData) }
+    }
 
     // The image chosen but not yet positioned. Decoding it is disk work, so it
     // happens off the main thread and the cropper waits for it.
@@ -144,7 +149,7 @@ fun AvatarPicker(
         when {
             isUploading -> CircularProgressIndicator(modifier = Modifier.size(size / 3))
             photo != null -> Image(
-                bitmap = photo,
+                bitmap = photo!!,
                 contentDescription = "Profile photo",
                 contentScale = ContentScale.Crop,
                 modifier = Modifier.fillMaxSize()

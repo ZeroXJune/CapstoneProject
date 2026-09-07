@@ -34,8 +34,11 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -79,7 +82,12 @@ fun LicenceUploadCard(
     // Stamped when the driver agrees, not when the write lands.
     var consentedAt by remember { mutableStateOf("") }
 
-    val preview = remember(imageData) { LicenceImage.decode(imageData) }
+    // Decoded off the main thread: this is a ~200 KB base64 string becoming a
+    // 1280-pixel bitmap, and doing it inside composition drops frames on the
+    // screen an administrator uses to work through a verification queue.
+    val preview by produceState<androidx.compose.ui.graphics.ImageBitmap?>(null, imageData) {
+        value = withContext(Dispatchers.Default) { LicenceImage.decode(imageData) }
+    }
 
     fun send(uri: Uri) = onSubmit(uri, consentedAt)
 
@@ -145,7 +153,7 @@ fun LicenceUploadCard(
 
             if (preview != null) {
                 Image(
-                    bitmap = preview,
+                    bitmap = preview!!,
                     contentDescription = "Your licence photo",
                     contentScale = ContentScale.Fit,
                     modifier = Modifier
