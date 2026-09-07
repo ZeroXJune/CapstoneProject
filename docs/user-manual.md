@@ -164,7 +164,7 @@ the stop you booked, and that is what you owe.
 
 When the ride completes you are asked to rate the driver from one to five stars. Tap the
 stars, then **Send rating** — tapping a star does not send it, so a slip is not a rating.
-You can skip it, but only once: a ride can be rated one time.
+You can skip it. Only one rating is kept per driver: if you ride with the same driver again and rate them, the new rating replaces the earlier one.
 
 **History** lists your past rides, most recent first, with the fare and how each ended.
 
@@ -278,7 +278,7 @@ records what was declared; it cannot verify it.
 
 ### 3.6 Earnings, history and the rest
 
-The dashboard shows today's earnings. **History** lists every completed and cancelled trip
+The dashboard shows your total earned across every completed trip, which is the same figure History shows. **History** lists every completed and cancelled trip
 with a running total. Your rating and trip count are at the top of the dashboard and on
 your Profile tab.
 
@@ -315,7 +315,7 @@ Nothing can be booked until this is done once.
    physical posted sheet before anyone uses the app for real.
 
 You can also search the table by stop or zone, filter by zone, edit any entry, switch one
-off, add one, or delete one. Editing an entry clears its review flag.
+off, add one, or delete one. An entry that was flagged for review carries a **Checked against the sheet** switch; turning that on is what clears the flag. Editing the rate alone does not.
 
 **Map positions.** Open a stop and tap **Set it on the map**, then drag until the pin sits
 on the place and confirm. There is no need to type coordinates. A stop without a position

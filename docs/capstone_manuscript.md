@@ -1029,7 +1029,7 @@ The sequence diagram shows the same transaction as an exchange between component
 
 ### Database Design
 
-The database is a JSON tree with seven top-level nodes.
+The database is a JSON tree with ten top-level nodes.
 
 : Table 8. Realtime Database Node Structure
 
@@ -1300,7 +1300,7 @@ Training is organized by role and kept short, on the reasoning that a system req
 | Driver verification | Licence photograph submission with consent recorded at the point of upload, administrator review of the photograph against the entered details, approval, refusal with immediate deletion of the photograph, and withdrawal by the driver | FR-08a, FR-08b, NFR-10a |
 | Monitoring and reporting | Live counts and recent activity, period selection, summary statistics, three report types, document and spreadsheet export through the file picker and sharing | FR-36 to FR-39 |
 
-All forty-three functional requirements were implemented, as were the seventeen non-functional requirements.
+All forty-four functional requirements were implemented, as were the seventeen non-functional requirements.
 
 ### Reports Generated
 
