@@ -44,6 +44,46 @@ single account can write megabytes into a node the administrator screens read in
 full — `users`, `rides`, `complaints` are all loaded whole by the admin app —
 and exhaust the free tier's storage and download quota for everybody.
 
+## Read scope
+
+Two collection-level read grants were wider than any implemented feature needed and
+have been narrowed:
+
+- **`drivers`** was readable by every signed-in account. Only the administrator screens
+  read the node whole (`AdminRepository.drivers()`); a passenger tracking their ride
+  reads one record through `getDriverFlow(driverId)`. Leaving the collection open let
+  any account pull every driver's live `currentLocation` in a single request and follow
+  the whole fleet. The collection is now administrator-only and `drivers/$uid` stays
+  readable, so nothing in the app changes. This narrows bulk enumeration; it does not
+  stop someone who already knows a uid from watching that one driver, which needs the
+  position to move off the driver record entirely — see below.
+- **`profilePhotos/$uid`** was readable by every signed-in account. `ProfileViewModel`
+  only ever loads the signed-in user's own avatar, so it is now scoped to the owner and
+  administrators.
+
+## A rule that would have frozen rides
+
+The `.validate` on `rides/$rideId` requires the driver to be `APPROVED`. Firebase
+evaluates a `.validate` at every ancestor of the write location, so as first written it
+would also have run when the driver advanced the ride's `status` and when the passenger
+attached their contact details. An administrator revoking a driver mid-ride would then
+have made that ride unfinishable by anyone — the same permanent-stuck-ride state the
+audit records as C-03, reachable through a legitimate administrator action. The check is
+now gated on `data.exists()`, so it applies only when the ride is created.
+
+Verify this one in the Rules Playground before relying on it: the exact ancestor-validate
+behaviour is the reason the bug existed, and it is worth confirming rather than reasoning
+about twice.
+
+## A useful side effect
+
+`registerDriver` writes the whole `drivers/{uid}` node with `setValue`, which resets
+`verificationStatus` to `PENDING`. The new `.validate` refuses that write for a driver
+whose record already exists, which turns the silent de-approval and history wipe recorded
+as H-06 into a visible error. That is a better failure than the one it replaces, but it is
+not the fix — the client should still distinguish "record not loaded yet" from "no record"
+and use `updateChildren`.
+
 ## What these rules still do not fix
 
 - **Ride creation is not validated against a request.** A driver may create a
@@ -62,3 +102,17 @@ and exhaust the free tier's storage and download quota for everybody.
   one party writes to another. Titles and messages are length-capped, but a
   hostile approved driver can still send a plausible-looking message to any user
   whose uid it knows.
+- **A driver can write their own cached rating.** `drivers/$uid` is theirs to write and
+  the average lives on it, so the range check (0–5) bounds the value but not the lie: a
+  driver can set `rating` to 5 and `ratingCount` to anything. The authoritative ratings
+  under `driverRatings/` are correct; the figure the admin screens and exported reports
+  read is the cache.
+- **Notification volume is unbounded.** Title and message are length-capped, but nothing
+  limits how many notifications one sender writes into another user's feed.
+- **Only string fields are size-capped.** The `$other` limit on `users/$uid` bounds
+  strings; a nested object written under an unexpected key is still unbounded. Closing
+  this properly needs an explicit allow-list of fields per node.
+- **Driver position sits on a record other accounts can read by uid.** Narrowing the
+  collection read stops enumeration, not targeted following. The clean fix is to move
+  `currentLocation` off `drivers/{uid}` into a per-ride node written by that ride's
+  driver and readable only by its two parties — a schema change, not a rules change.

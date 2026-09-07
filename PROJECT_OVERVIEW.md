@@ -188,7 +188,7 @@ also `docs/user-manual.md`, so it can be handed out on its own. They are also in
 `LegalScreen.kt` by `docs/legal/sync.py`, which with `--check` reports whether the two
 have drifted.
 
-Appendix I does not print the source. Twelve thousand seven hundred lines across 55 files
+Appendix I does not print the source. Nearly fourteen thousand lines across 57 files
 would add roughly three hundred pages to every bound copy, which the budget will not carry.
 It gives the clone URL, a walk-through for retrieving the code with Git or as a ZIP, a note
 on the two credential files that are not in the repository, and the fare engine as a
@@ -222,6 +222,12 @@ Slide three says "Background Checked", where what actually happens is an adminis
 comparing a licence photograph against typed details. Both contradict Chapter 1, and the
 onboarding is the first thing a respondent sees.
 
-No automated tests exist. The test tables in the manuscript document tests that were run
-by hand. Converting the `FareEngine` and `ReportBuilder` cases into JUnit tests would be
-straightforward and worth doing; they are pure functions with no Android dependency.
+The test tables in the manuscript document tests that were run by hand. There are now 52
+JUnit tests in `app/src/test/java/com/tpc/trikride/` over the parts that are pure
+functions with no Android dependency — the fare engine, the integrity of the seeded fare
+table, the report builder, the password rules and the distance helper. Run them with
+`./gradlew test`.
+
+Nothing above that line is covered: no repository test, no instrumented test, no UI test,
+and no continuous integration to run any of it. A job doing nothing but
+`./gradlew assembleDebug test` on every push is the highest-value thing still missing.

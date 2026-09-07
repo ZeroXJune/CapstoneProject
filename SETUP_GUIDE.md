@@ -486,8 +486,10 @@ enforcing access. Checks in the interface are convenience, not security.
 ./gradlew connectedAndroidTest # instrumented tests, needs a device or emulator
 ```
 
-There are no automated tests in the repository yet. `FareEngine` and `ReportBuilder` are
-pure functions with no Android dependency and are the obvious place to start.
+`./gradlew test` runs 52 JUnit tests covering the fare engine, the integrity of the
+seeded fare table, the report builder, the password rules and the distance helper — the
+parts that are pure functions with no Android dependency. `connectedAndroidTest` has
+nothing to run: there are no instrumented or UI tests yet, and no CI runs any of this.
 
 ## Deployment
 

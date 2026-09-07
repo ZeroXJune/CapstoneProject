@@ -7,7 +7,7 @@ three-person team from stepping on each other.
 ## Layers
 
 ```
-Compose screens          render state, emit events, hold no logic
+Compose screens          render state and emit events; should hold no logic
       ↓ events                    ↑ StateFlow
 ViewModels               one per role; own the screen state
       ↓ suspend calls             ↑ Flow
@@ -20,6 +20,12 @@ Firebase                 Auth, Realtime Database, Cloud Messaging
 
 Each layer knows only about the one below it. A screen knows its ViewModel. A ViewModel
 knows repositories, never Firebase. A repository knows `FirebaseService`, never the UI.
+
+`PassengerHomeScreen` is the exception and is not meant to be one: it calls `FareEngine`
+in eleven places, including pricing the quote it displays, while `PassengerViewModel`
+prices the same booking again when the request is submitted. The two agree because they
+read the same inputs, but the fare is computed twice from two layers, and the displayed
+number is the screen's rather than the one that is sent.
 
 One exception, stated because the diagram would otherwise be a lie: `AuthRepository`
 speaks to Firebase directly rather than through `FirebaseService`. It owns authentication
@@ -37,8 +43,8 @@ directly.
 ```
 models/
   User.kt              User, UserType, Driver, Passenger, VerificationStatus,
-                       Document, DocumentType, SavedLocation, Location
-  Ride.kt              Ride, RideStatus, RideRequest, RideOffer, RideReview,
+                       DriverDocument, SavedLocation, Location
+  Ride.kt              Ride, RideStatus, RideRequest, RideOffer, OfferStatus,
                        PaymentMethod, PaymentStatus
   FareConfig.kt        FareStop, FareType, FareConfig, FareQuote
   Complaint.kt         Complaint, ComplaintStatus, COMPLAINT_CATEGORIES
@@ -83,6 +89,9 @@ ui/components/
   AvatarPicker.kt      circular avatar with a camera/gallery chooser
   LicenceUpload.kt     licence submission, with its own consent step
   TrikMap.kt           OpenStreetMap view and the centre-pin location picker
+  GoogleMapView.kt     the Google Maps renderer, used when a key is configured
+  AvatarCropper.kt     drag-and-pinch crop behind a circular window
+  SupportPanel.kt      the concern form, past reports, and contact details
 
 utils/
   FareEngine.kt     prices a ride from the table
@@ -103,7 +112,7 @@ utils/
 
 ## Database
 
-Realtime Database, seven top-level nodes.
+Realtime Database, ten top-level nodes.
 
 ```
 users/{uid}                    profile
@@ -124,12 +133,18 @@ price is a small write instead of a rewrite of all 240. Profile photos are separ
 `users` for the same kind of reason: the admin screens read every user record constantly,
 and an avatar embedded in each one would be pulled down every time.
 
-**Licence photographs.** `driverDocuments/{uid}/licence` is the one node not readable by
-every signed-in account. A licence is sensitive personal information under the Data
+**Licence photographs.** `driverDocuments/{uid}/licence` is the most tightly scoped node
+in the database. A licence is sensitive personal information under the Data
 Privacy Act of 2012, so the rules scope it to its owner and to administrators, and the
 driver record carries only a `hasLicenceImage` flag — enough for the admin list to say
 whether there is anything to review, without dragging a few hundred kilobytes of identity
 document into every list read.
+
+Two other reads were narrowed after the audit: the `drivers` collection is administrator-
+only, because leaving it open let any signed-in account pull every driver's live position
+in one request, and `profilePhotos/{uid}` is scoped to its owner and administrators.
+Reading a single `drivers/{uid}` is unchanged, which is what a passenger tracking their
+own ride does.
 
 `LicenceImage` is `ProfilePhoto` with different targets: 1280 pixels on the long edge and
 about 200 KB, aspect ratio kept. An avatar only has to look like the person; a licence has
@@ -170,7 +185,13 @@ memory in a Firebase app; this makes it structural rather than something to reme
 **Matching.** A request is written to `rideRequests` and every online driver is
 listening on that node, so it appears on their devices without polling. The first driver
 to accept writes a `rides` entry and deletes the request, which removes it from every
-other device. There is no lock; the delete is the resolution.
+other device.
+
+There is no lock, and the delete is not actually the resolution: two drivers who tap
+Accept before either write lands both read an open request, both create a ride, and both
+delete a node that only needed deleting once. The passenger then sees whichever ride the
+listener happens to hand back first while a second driver is also on the way. Making the
+claim a transaction on the request node is the fix.
 
 **Pricing.** `FareEngine.quote()` takes the config, the stop, the rate column, and the
 head count. It reads the posted rate, raises it to the ordinance minimum if lower, and
@@ -289,7 +310,10 @@ application server in the path to enforce it. Client-side checks are UI convenie
 nothing more.
 
 The rules restrict a user to their own profile, make `verificationStatus` writable only by
-administrators, make the fare table readable by all authenticated users and writable only
+administrators (which required a `.validate`, not the child `.write` that was there first —
+a Firebase write granted at a shallower path cannot be revoked deeper, so the child rule
+had only been *adding* an administrator as a second permitted writer while every driver
+kept the ability to approve themselves; see `RULES.md`), make the fare table readable by all authenticated users and writable only
 by administrators, and scope notifications to their owner.
 
 Three of them are worth explaining, because the shape is not obvious.
@@ -321,9 +345,12 @@ where it shows the photograph: behind a deliberate tap, one driver at a time. Th
 also dropped from the exported driver report, which is a performance record that gets
 mailed around and has no business carrying identity numbers.
 
-One gap remains, recorded rather than glossed: `notifications/{uid}` stays writable by any
-authenticated user, because one party notifies the other and no rule can distinguish a
-real sender from a forged one without a server in the path.
+Gaps remain, recorded rather than glossed. `notifications/{uid}` stays writable by the
+owner, an administrator, or any approved driver, because one party notifies the other and
+no rule can distinguish a real sender from a forged one without a server in the path. The
+fare on a ride is asserted by the client and can only be bounded, not recomputed. A rating
+is not tied to a completed ride. `RULES.md` lists the full set alongside the rules
+themselves.
 
 Secrets live in `.env`, which is gitignored; `.env.example` records which keys exist
 without their values. `google-services.json` is gitignored too. The build reads `.env`
@@ -335,7 +362,7 @@ No payment data is collected anywhere, which removes that category of risk entir
 
 ```
 Gradle 8.11.1 (wrapper committed)   AGP 8.7.3   Kotlin 2.1.0   JDK 17
-compileSdk 35   targetSdk 34   minSdk 24
+compileSdk 35   targetSdk 35   minSdk 24
 compose-bom 2024.12.01
 ```
 
@@ -351,7 +378,10 @@ Release signing follows the same shape. `build.gradle.kts` reads `RELEASE_STORE_
 `RELEASE_STORE_PASSWORD`, `RELEASE_KEY_ALIAS` and `RELEASE_KEY_PASSWORD` from `.env`, and
 only registers a `release` signing config when all four are present and the keystore file
 actually exists. When they are not, the release build type falls back to the debug config
-and a `whenReady` hook logs a warning naming the missing variables. The alternative —
+and a configuration-time check of `gradle.startParameter.taskNames` logs a warning naming
+the missing variables. The task-graph callback would be the obvious place for it, but its
+Groovy `Closure` overload is the one Kotlin picks, so reading the requested task names
+keeps this to plain Kotlin. The alternative —
 failing the build outright — would stop a fresh clone from compiling at all, and the
 alternative to that, signing silently with the debug key, is how an undistributable APK
 gets handed to testers.
