@@ -13,13 +13,9 @@ data class Ride(
     val acceptedAt: String = "",
     val startedAt: String = "",
     val completedAt: String = "",
-    val estimatedDuration: Int = 0, // in minutes
-    val actualDuration: Int = 0,
     val estimatedFare: Double = 0.0,
+    /** What the driver reported collecting. Cash, so it can differ from the quote. */
     val actualFare: Double = 0.0,
-    val paymentMethod: PaymentMethod = PaymentMethod.CASH,
-    val paymentStatus: PaymentStatus = PaymentStatus.PENDING,
-    val route: List<Location> = emptyList(),
     val passengerCount: Int = 1,
     /**
      * How the party splits across the two columns of the posted sheet. A
@@ -80,21 +76,6 @@ enum class RideStatus {
     NO_SHOW
 }
 
-enum class PaymentMethod {
-    CASH,
-    CARD,
-    GCash,
-    PAYMAYA
-}
-
-enum class PaymentStatus {
-    PENDING,
-    PROCESSING,
-    COMPLETED,
-    FAILED,
-    REFUNDED
-}
-
 data class RideRequest(
     val id: String = "",
     val passengerId: String = "",
@@ -112,21 +93,3 @@ data class RideRequest(
     val notes: String = "",
     val preferredDriverId: String? = null
 )
-
-data class RideOffer(
-    val id: String = "",
-    val rideRequestId: String = "",
-    val driverId: String = "",
-    val offeredAt: String = "",
-    val estimatedPickupTime: Int = 0, // in seconds
-    val estimatedFare: Double = 0.0,
-    val status: OfferStatus = OfferStatus.PENDING
-)
-
-enum class OfferStatus {
-    PENDING,
-    ACCEPTED,
-    REJECTED,
-    EXPIRED
-}
-

@@ -73,6 +73,7 @@ import com.tpc.trikride.utils.ReverseGeocoder
 import com.tpc.trikride.viewmodels.PassengerViewModel
 import com.tpc.trikride.viewmodels.SupportViewModel
 import kotlinx.coroutines.launch
+import java.util.Locale
 
 private enum class PassengerTab { HOME, HISTORY, SUPPORT, PROFILE }
 
@@ -144,7 +145,13 @@ fun PassengerHomeScreen(
                             onRate = { stars -> viewModel.rateRide(completedRide!!, stars) },
                             onBackHome = { completedRide = null; lastActive = null }
                         )
-                        active != null -> RideTrackingContent(active, driverLocation, assignedDriver)
+                        active != null -> RideTrackingContent(
+                            ride = active,
+                            driverLocation = driverLocation,
+                            driver = assignedDriver,
+                            canCancel = viewModel.mayCancel(active),
+                            onCancel = { viewModel.cancelRide(active) }
+                        )
                         pendingRequest != null -> SearchingContent(onCancel = viewModel::cancelPendingRequest)
                         showBooking -> BookingContent(
                             error = error,
@@ -370,7 +377,7 @@ private fun RideRow(ride: Ride) {
                 )
             }
             Text(
-                "P%.2f".format(ride.estimatedFare),
+                "P%.2f".format(Locale.US, ride.estimatedFare),
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.primary
@@ -524,7 +531,7 @@ private fun BookingContent(
         // No fare is shown at all until a destination is chosen, which is the
         // moment someone assumes the minimum is the price.
         if (destination == null) {
-            val minimum = "₱%.0f".format(FareEngine.minimumFor(fareConfig, FareType.REGULAR))
+            val minimum = "₱%.0f".format(Locale.US, FareEngine.minimumFor(fareConfig, FareType.REGULAR))
             Text(
                 "The fare depends on where you are going. $minimum is the minimum, " +
                     "not a flat rate, and longer trips cost more. Choose a destination " +
@@ -676,13 +683,13 @@ private fun BookingContent(
                     if (quote.regularCount > 0) {
                         FareLine(
                             "Regular × ${quote.regularCount}",
-                            "₱%.2f".format(quote.regularRate * quote.regularCount)
+                            "₱%.2f".format(Locale.US, quote.regularRate * quote.regularCount)
                         )
                     }
                     if (quote.discountedCount > 0) {
                         FareLine(
                             "Senior / PWD / student × ${quote.discountedCount}",
-                            "₱%.2f".format(quote.discountedRate * quote.discountedCount)
+                            "₱%.2f".format(Locale.US, quote.discountedRate * quote.discountedCount)
                         )
                     }
                     if (quote.minimumApplied) {
@@ -697,7 +704,7 @@ private fun BookingContent(
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
                         Text("Total", fontWeight = FontWeight.Bold)
-                        Text("₱%.2f".format(quote.total), style = MaterialTheme.typography.titleLarge,
+                        Text("₱%.2f".format(Locale.US, quote.total), style = MaterialTheme.typography.titleLarge,
                             fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
                     }
                     Spacer(modifier = Modifier.height(6.dp))
@@ -711,15 +718,17 @@ private fun BookingContent(
             Spacer(modifier = Modifier.height(16.dp))
         }
 
+        var submitting by remember { mutableStateOf(false) }
         PrimaryButton(
-            text = "Find a Driver",
+            text = if (submitting) "Sending…" else "Find a Driver",
             onClick = {
-                if (from != null && to != null) {
+                if (from != null && to != null && !submitting) {
+                    submitting = true
                     val luggage = if (selectedLuggage.isEmpty()) "None" else selectedLuggage.joinToString(", ")
                     onConfirm(from, to, regularCount, discountedCount, luggage, notes)
                 }
             },
-            enabled = valid
+            enabled = valid && !submitting
         )
         Spacer(modifier = Modifier.height(16.dp))
     }
@@ -1032,9 +1041,9 @@ private fun DestinationFinder(
                                 if (nearest != null && awayKm != null) {
                                     Spacer(modifier = Modifier.height(4.dp))
                                     Text(
-                                        "%s from the pin · ₱%.0f regular, ₱%.0f discounted".format(
-                                            if (awayKm < 1.0) "%.0f m".format(awayKm * 1000)
-                                            else "%.1f km".format(awayKm),
+                                        "%s from the pin · ₱%.0f regular, ₱%.0f discounted".format(Locale.US, 
+                                            if (awayKm < 1.0) "%.0f m".format(Locale.US, awayKm * 1000)
+                                            else "%.1f km".format(Locale.US, awayKm),
                                             FareEngine.rateFor(nearest, FareType.REGULAR),
                                             FareEngine.rateFor(nearest, FareType.DISCOUNTED)
                                         ),
@@ -1138,8 +1147,8 @@ private fun StopPicker(
                     stops.maxOfOrNull { FareEngine.rateFor(it, FareType.REGULAR) }
                 }
                 val note = if (showFares) {
-                    val floor = "₱%.0f".format(minimumFare)
-                    val ceiling = highest?.let { " and rise to ₱%.0f".format(it) }.orEmpty()
+                    val floor = "₱%.0f".format(Locale.US, minimumFare)
+                    val ceiling = highest?.let { " and rise to ₱%.0f".format(Locale.US, it) }.orEmpty()
                     "Fares start at $floor$ceiling, depending on how far you are going. " +
                         "$floor is the least a ride can cost, not the usual price."
                 } else {
@@ -1221,7 +1230,7 @@ private fun StopPicker(
                                 }
                                 if (showFares) {
                                     Text(
-                                        "₱%.0f / ₱%.0f".format(
+                                        "₱%.0f / ₱%.0f".format(Locale.US, 
                                             FareEngine.rateFor(stop, FareType.REGULAR),
                                             FareEngine.rateFor(stop, FareType.DISCOUNTED)
                                         ),
@@ -1322,9 +1331,12 @@ private fun SearchingContent(onCancel: () -> Unit) {
 private fun RideTrackingContent(
     ride: Ride,
     driverLocation: Location?,
-    driver: com.tpc.trikride.models.Driver?
+    driver: com.tpc.trikride.models.Driver?,
+    canCancel: Boolean,
+    onCancel: () -> Unit
 ) {
     val context = LocalContext.current
+    var confirmingCancel by remember { mutableStateOf(false) }
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -1370,7 +1382,7 @@ private fun RideTrackingContent(
                         // Real numbers or nothing. A driver nobody has rated
                         // yet says so, rather than borrowing someone's score.
                         val score = driver?.takeIf { it.ratingCount > 0 }
-                            ?.let { " %.1f".format(it.rating) } ?: " Not yet rated"
+                            ?.let { " %.1f".format(Locale.US, it.rating) } ?: " Not yet rated"
                         val tricycle = driver?.tricycleNumber
                             ?.takeIf { it.isNotBlank() }
                             ?.let { "  •  Tricycle $it" }.orEmpty()
@@ -1441,7 +1453,48 @@ private fun RideTrackingContent(
         TimelineRow("Driver on the way", step >= 2)
         TimelineRow("Driver Arrived", step >= 3)
         TimelineRow("Ride Started", step >= 4)
+
+        // A ride could not be called off at all, so a driver who accepted and
+        // never arrived left this screen in front of the passenger for good,
+        // with no way back to booking. Withdrawing stops at the point the ride
+        // actually starts — after that they are in the tricycle.
+        if (canCancel) {
+            Spacer(modifier = Modifier.height(20.dp))
+            SecondaryButton(
+                text = "Cancel this ride",
+                onClick = { confirmingCancel = true }
+            )
+            Spacer(modifier = Modifier.height(6.dp))
+            Text(
+                "Only until the ride starts. Tell the driver if you can — they may " +
+                    "already be on their way.",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
         Spacer(modifier = Modifier.height(24.dp))
+    }
+
+    if (confirmingCancel) {
+        AlertDialog(
+            onDismissRequest = { confirmingCancel = false },
+            title = { Text("Cancel this ride?") },
+            text = {
+                Text(
+                    "Your driver is told and the ride is closed. You can book again " +
+                        "straight away. Nothing is charged — the fare is paid in cash at " +
+                        "the end of a ride that happens."
+                )
+            },
+            confirmButton = {
+                TextButton(onClick = { confirmingCancel = false; onCancel() }) {
+                    Text("Cancel the ride", color = MaterialTheme.colorScheme.error)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { confirmingCancel = false }) { Text("Keep it") }
+            }
+        )
     }
 }
 
@@ -1520,13 +1573,12 @@ private fun RideCompleteContent(
 
         SectionCard {
             Column {
-                SummaryRow("Fare", "₱%.2f".format(ride.estimatedFare))
+                SummaryRow("Fare", "₱%.2f".format(Locale.US, ride.estimatedFare))
                 HorizontalDivider(modifier = Modifier.padding(vertical = 10.dp))
                 SummaryRow("Passengers", "${ride.passengerCount}")
                 HorizontalDivider(modifier = Modifier.padding(vertical = 10.dp))
                 SummaryRow("Luggage", ride.luggage)
                 HorizontalDivider(modifier = Modifier.padding(vertical = 10.dp))
-                SummaryRow("Estimated Duration", "${ride.estimatedDuration} min")
                 HorizontalDivider(modifier = Modifier.padding(vertical = 10.dp))
                 SummaryRow("Payment Method", "Cash")
                 HorizontalDivider(modifier = Modifier.padding(vertical = 10.dp))

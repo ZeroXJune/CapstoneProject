@@ -49,13 +49,6 @@ data class Driver(
     val hasLicenceImage: Boolean = false
 )
 
-data class Passenger(
-    val userId: String = "",
-    val savedLocations: List<SavedLocation> = emptyList(),
-    val emergencyContacts: List<String> = emptyList(),
-    val preferredPaymentMethod: String = ""
-)
-
 enum class VerificationStatus {
     PENDING,
     APPROVED,
@@ -83,14 +76,6 @@ data class DriverDocument(
     val uploadedAt: String = "",
     val consentedAt: String = "",
     val reviewedAt: String = ""
-)
-
-data class SavedLocation(
-    val id: String = "",
-    val label: String = "",
-    val latitude: Double = 0.0,
-    val longitude: Double = 0.0,
-    val address: String = ""
 )
 
 data class Location(

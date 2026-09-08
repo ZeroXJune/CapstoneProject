@@ -55,6 +55,7 @@ fun SettingsScreen(
     viewModel: ProfileViewModel = viewModel(),
     extraContent: @Composable () -> Unit = {}
 ) {
+    val context = androidx.compose.ui.platform.LocalContext.current
     LaunchedEffect(userId) { viewModel.bind(userId) }
     val state by viewModel.state.collectAsState()
     val pickPhoto: (android.graphics.Bitmap) -> Unit = { image -> viewModel.uploadPhoto(image) }
@@ -168,7 +169,7 @@ fun SettingsScreen(
             Spacer(modifier = Modifier.width(14.dp))
             Text("Dark Mode", style = MaterialTheme.typography.bodyLarge,
                 modifier = Modifier.weight(1f))
-            Switch(checked = isDark, onCheckedChange = { ThemeState.darkModeOverride = it })
+            Switch(checked = isDark, onCheckedChange = { ThemeState.set(context, it) })
         }
 
         GroupTitle("Legal & About")

@@ -39,7 +39,8 @@ class AuthRepository(
         userType: UserType
     ): String {
         val result = auth.createUserWithEmailAndPassword(email.trim(), password).await()
-        val uid = result.user?.uid ?: error("Registration failed")
+        val created = result.user ?: error("Registration failed")
+        val uid = created.uid
         val user = User(
             id = uid,
             email = email.trim(),
@@ -55,7 +56,17 @@ class AuthRepository(
             acceptedLegalVersion = Constants.LEGAL_VERSION,
             acceptedLegalAt = System.currentTimeMillis().toString()
         )
-        database.getReference("users").child(uid).setValue(user).await()
+        try {
+            database.getReference("users").child(uid).setValue(user).await()
+        } catch (e: Exception) {
+            // The account exists in Auth but has no profile, and the two writes
+            // are not atomic. Left alone, the user cannot register again — the
+            // address is taken — and signing in gives them an account with no
+            // name, no telephone number and no recorded consent, which no
+            // driver can then ring. Undo the half that succeeded.
+            runCatching { created.delete().await() }
+            throw e
+        }
         return uid
     }
 

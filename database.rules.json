@@ -46,9 +46,11 @@
     "driverRatings": {
       "$driverId": {
         ".read": "auth != null",
-        "$raterId": {
-          ".write": "auth != null && $raterId === auth.uid",
-          ".validate": "newData.isNumber() && newData.val() >= 1 && newData.val() <= 5"
+        "$rideId": {
+          ".write": "auth != null && root.child('rides').child($rideId).child('passengerId').val() === auth.uid && root.child('rides').child($rideId).child('driverId').val() === $driverId && root.child('rides').child($rideId).child('status').val() === 'COMPLETED'",
+          ".validate": "newData.hasChildren(['stars', 'raterId']) || (newData.isNumber() && newData.val() >= 1 && newData.val() <= 5)",
+          "stars": { ".validate": "newData.isNumber() && newData.val() >= 1 && newData.val() <= 5" },
+          "raterId": { ".validate": "newData.val() === auth.uid" }
         }
       }
     },
@@ -64,7 +66,8 @@
       }
     },
     "rideRequests": {
-      ".read": "auth != null && (root.child('drivers').child(auth.uid).child('verificationStatus').val() === 'APPROVED' || root.child('users').child(auth.uid).child('userType').val() === 'ADMIN')",
+      ".read": "auth != null && (root.child('drivers').child(auth.uid).child('verificationStatus').val() === 'APPROVED' || root.child('users').child(auth.uid).child('userType').val() === 'ADMIN' || (query.orderByChild === 'passengerId' && query.equalTo === auth.uid))",
+      ".indexOn": ["passengerId"],
       "$requestId": {
         ".read": "auth != null && data.child('passengerId').val() === auth.uid",
         ".write": "auth != null && ((!data.exists() && newData.child('passengerId').val() === auth.uid) || (data.exists() && (data.child('passengerId').val() === auth.uid || root.child('drivers').child(auth.uid).child('verificationStatus').val() === 'APPROVED')))",
@@ -90,6 +93,15 @@
           ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 10000 && (!data.exists() || newData.val() === data.val())"
         },
         "notes": { ".validate": "newData.isString() && newData.val().length <= 500" },
+        "status": {
+          ".write": "auth != null && (data.parent().child('driverId').val() === auth.uid || (data.parent().child('passengerId').val() === auth.uid && newData.val() === 'CANCELLED' && (data.val() === 'ACCEPTED' || data.val() === 'DRIVER_ARRIVING' || data.val() === 'DRIVER_ARRIVED')))"
+        },
+        "completedAt": {
+          ".write": "auth != null && (data.parent().child('driverId').val() === auth.uid || data.parent().child('passengerId').val() === auth.uid)"
+        },
+        "actualFare": {
+          ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 10000"
+        },
         "passengerName": {
           ".write": "auth != null && data.parent().child('passengerId').val() === auth.uid",
           ".validate": "newData.isString() && newData.val().length <= 120"

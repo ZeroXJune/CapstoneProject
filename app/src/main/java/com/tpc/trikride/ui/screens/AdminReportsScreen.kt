@@ -60,6 +60,7 @@ import com.tpc.trikride.utils.ReportPeriod
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import java.util.Locale
 
 /** Which of the three reports the admin is exporting. */
 private enum class ReportKind(val slug: String, val title: String, val blurb: String) {
@@ -232,8 +233,8 @@ fun AdminReportsContent(
                     SummaryLine("Cancelled or no-show", "${summary.cancelled}")
                     SummaryLine("Still open", "${summary.inProgress}")
                     HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
-                    SummaryLine("Gross fares", "P%.2f".format(summary.grossFares), strong = true)
-                    SummaryLine("Average completed fare", "P%.2f".format(summary.averageFare))
+                    SummaryLine("Gross fares", "P%.2f".format(Locale.US, summary.grossFares), strong = true)
+                    SummaryLine("Average completed fare", "P%.2f".format(Locale.US, summary.averageFare))
                     HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
                     SummaryLine("Passengers served", "${summary.uniquePassengers}")
                     SummaryLine("Drivers with a ride", "${summary.activeDrivers}")

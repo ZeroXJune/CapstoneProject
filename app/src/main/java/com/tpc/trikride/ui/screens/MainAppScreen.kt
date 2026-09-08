@@ -33,6 +33,7 @@ import com.tpc.trikride.ui.components.PrimaryButton
 import com.tpc.trikride.ui.components.SectionCard
 import com.tpc.trikride.ui.components.TrikTextField
 import com.tpc.trikride.utils.AuthPrefs
+import com.tpc.trikride.utils.BirthDate
 import com.tpc.trikride.utils.PasswordRules
 import com.tpc.trikride.viewmodels.AuthViewModel
 import com.tpc.trikride.viewmodels.ConsentViewModel
@@ -113,6 +114,8 @@ fun MainAppScreen(
                 isSaving = consent.isSaving,
                 error = consent.error,
                 onAccept = { consentViewModel.accept(uid, type) },
+                unreadable = consent.unreadable,
+                onRetry = { consentViewModel.retry(uid, type) },
                 onDecline = {
                     consentViewModel.reset()
                     authViewModel.signOut()
@@ -175,7 +178,7 @@ fun MainAppScreen(
             error = state.error,
             onSelect = { type ->
                 val reg = pendingReg
-                if (reg != null) {
+                if (reg != null && !state.isLoading) {
                     authViewModel.register(
                         reg.fullName, reg.birthDate,
                         reg.email, reg.phone, reg.password, type
@@ -342,7 +345,9 @@ private fun RegisterScreen(
             onDismissRequest = { showDatePicker = false },
             confirmButton = {
                 TextButton(onClick = {
-                    datePickerState.selectedDateMillis?.let { birthDate = formatBirthdate(it) }
+                    datePickerState.selectedDateMillis?.let {
+                        birthDate = BirthDate.fromPickerUtc(it)
+                    }
                     showDatePicker = false
                 }) { Text("OK") }
             },
@@ -356,8 +361,12 @@ private fun RegisterScreen(
 
     val passwordsMatch = password.isNotBlank() && password == confirm
     val strong = PasswordRules.isStrong(password)
+    // The picker used to accept 2090 and 1850 alike, and birthdate is the only
+    // basis the system has for a senior's entitlement.
+    val birthDateProblem = if (birthDate.isBlank()) null else BirthDate.reject(birthDate)
     val canSubmit = !isLoading && fullName.isNotBlank() && email.isNotBlank() &&
-        phone.isNotBlank() && birthDate.isNotBlank() && passwordsMatch && strong && accepted
+        phone.isNotBlank() && birthDate.isNotBlank() && birthDateProblem == null &&
+        passwordsMatch && strong && accepted
 
     Column(
         modifier = Modifier
@@ -386,9 +395,14 @@ private fun RegisterScreen(
         Spacer(modifier = Modifier.height(14.dp))
         DateField(
             label = "Birthdate",
-            value = birthDate,
+            value = if (birthDate.isBlank()) "" else BirthDate.display(birthDate),
             onClick = { showDatePicker = true }
         )
+        birthDateProblem?.let {
+            Spacer(modifier = Modifier.height(6.dp))
+            Text(it, style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.error)
+        }
         Spacer(modifier = Modifier.height(14.dp))
         TrikTextField(email, { email = it }, "Email", Icons.Filled.Email, keyboardType = KeyboardType.Email)
         Spacer(modifier = Modifier.height(14.dp))
@@ -600,11 +614,6 @@ private fun DateField(label: String, value: String, onClick: () -> Unit) {
             else MaterialTheme.colorScheme.onSurface
         )
     }
-}
-
-private fun formatBirthdate(millis: Long): String {
-    val sdf = java.text.SimpleDateFormat("MMM d, yyyy", java.util.Locale.getDefault())
-    return sdf.format(java.util.Date(millis))
 }
 
 @Composable

@@ -189,8 +189,12 @@ class AuthViewModel(
             msg.contains("password is invalid", ignoreCase = true) ||
                 msg.contains("credential is incorrect", ignoreCase = true) ->
                 "Incorrect email or password."
+            // Deliberately the same answer as a wrong password. The reset flow
+            // already refuses to say whether an address is registered, and
+            // answering it here turned the sign-in form into a way of finding
+            // out who has an account.
             msg.contains("no user record", ignoreCase = true) ->
-                "No account found with that email."
+                "Incorrect email or password."
             msg.contains("email address is already in use", ignoreCase = true) ->
                 "That email is already registered."
             msg.contains("badly formatted", ignoreCase = true) ->
@@ -199,7 +203,14 @@ class AuthViewModel(
                 "Password must be at least 6 characters."
             msg.contains("network error", ignoreCase = true) ->
                 "Network error. Check your connection and try again."
-            else -> msg
+            msg.contains("blocked all requests", ignoreCase = true) ||
+                msg.contains("too many", ignoreCase = true) ->
+                "Too many attempts from this device. Wait a few minutes and try again."
+            // Anything unrecognised is shown as itself, not as raw SDK text.
+            // "An internal error has occurred. [ CONFIGURATION_NOT_FOUND ]"
+            // tells a user nothing and tells everyone else about the project's
+            // configuration.
+            else -> "Something went wrong. Please try again."
         }
     }
 }

@@ -33,6 +33,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.tpc.trikride.ui.components.PrimaryButton
+import com.tpc.trikride.ui.components.SecondaryButton
 import com.tpc.trikride.ui.components.SectionCard
 
 /**
@@ -50,6 +51,9 @@ fun ConsentScreen(
     isSaving: Boolean,
     error: String?,
     onAccept: () -> Unit,
+    /** Shown only when the record could not be read, rather than not accepted. */
+    unreadable: Boolean = false,
+    onRetry: (() -> Unit)? = null,
     onDecline: () -> Unit
 ) {
     val documents = remember(includeLegal, includeDriverAgreement) {
@@ -173,6 +177,14 @@ fun ConsentScreen(
             onClick = onAccept,
             enabled = allChecked && !isSaving
         )
+        if (unreadable && onRetry != null) {
+            Spacer(modifier = Modifier.height(8.dp))
+            SecondaryButton(
+                text = "Try again",
+                onClick = onRetry,
+                enabled = !isSaving
+            )
+        }
         Spacer(modifier = Modifier.height(8.dp))
         Row(
             modifier = Modifier.fillMaxWidth(),

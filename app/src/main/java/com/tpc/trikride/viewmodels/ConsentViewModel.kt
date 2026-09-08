@@ -30,7 +30,14 @@ class ConsentViewModel(
         /** The driver agreement is outstanding; only ever true for drivers. */
         val needsDriverAgreement: Boolean = false,
         val isSaving: Boolean = false,
-        val error: String? = null
+        val error: String? = null,
+        /**
+         * The record could not be read, so we do not know what was accepted.
+         * Distinct from "has not accepted": accepting writes to the node that
+         * just failed to read, so offering only Accept put the user in a loop
+         * whose one exit was signing out.
+         */
+        val unreadable: Boolean = false
     ) {
         val needsConsent: Boolean get() = needsLegal || needsDriverAgreement
     }
@@ -44,6 +51,16 @@ class ConsentViewModel(
         val key = userId to userType
         if (checkedFor == key) return
         checkedFor = key
+        run(userId, userType)
+    }
+
+    /** Re-runs a check that failed, without signing the user out. */
+    fun retry(userId: String, userType: UserType) {
+        checkedFor = userId to userType
+        run(userId, userType)
+    }
+
+    private fun run(userId: String, userType: UserType) {
 
         viewModelScope.launch {
             _state.value = ConsentUiState(isChecking = true)
@@ -58,11 +75,16 @@ class ConsentViewModel(
             } catch (e: Exception) {
                 // If the record cannot be read we ask again rather than let the
                 // user through on an assumption about what they agreed to.
+                // Fail closed on what was accepted, but say that this is a
+                // failure to read rather than a failure to agree, so the screen
+                // can offer to try again.
                 _state.value = ConsentUiState(
                     isChecking = false,
                     needsLegal = true,
                     needsDriverAgreement = userType == UserType.DRIVER,
-                    error = e.message
+                    unreadable = true,
+                    error = "Could not check what this account has agreed to. " +
+                        "Check your connection and try again."
                 )
             }
         }

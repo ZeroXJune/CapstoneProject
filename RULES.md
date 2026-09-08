@@ -141,3 +141,39 @@ matches the note it carries.
 The underlying shape is still wrong: the complaint update and the notification are two
 writes reported as one outcome. Wrapping the notify call the way `AdminViewModel`
 already does for verification decisions would fix it properly.
+
+## Cancelling a ride
+
+`rides/$rideId` is the driver's to write, which is right for the status
+progression and wrong for the one case the lifecycle never had: a ride that is
+not going to finish. The passenger can now write `status`, but only the value
+`CANCELLED`, and only while the ride is `ACCEPTED`, `DRIVER_ARRIVING` or
+`DRIVER_ARRIVED` — once they are in the tricycle it is between them and the
+driver. The driver keeps the whole progression, including `CANCELLED` and
+`NO_SHOW`, because a breakdown does not wait for a convenient status.
+
+`completedAt` is writable by either party, since either can be the one who ends
+the ride, and `actualFare` is bounded like every other money field.
+
+## Ratings finally check the ride
+
+Keying a rating by the rater meant a rule could only ask "are you writing under
+your own uid". Keying it by ride lets it ask the question that matters: the
+writer must be the passenger named on that ride, the driver must be the one
+named on it, and the ride must have completed. Ratings by an account that never
+travelled with the driver — H-13 — are refused at the database rather than
+merely absent from the interface.
+
+The value shape is accepted either as a bare number, which is what ratings
+written before this change look like, or as `{stars, raterId}`. `getRatingsFlow`
+reads both, so a driver's history is not erased by the upgrade.
+
+## A passenger reading their own request
+
+Recovering a pending request on launch needs the passenger to ask
+`rideRequests` a scoped question, and the collection was readable only by an
+approved driver or an administrator — the per-request rule underneath is no help
+to a client that does not yet know the id. The collection read now also admits
+`orderByChild('passengerId').equalTo(<own uid>)`, the same shape `rides` and
+`complaints` use, with the matching `.indexOn`. It grants a passenger their own
+requests and nothing wider.

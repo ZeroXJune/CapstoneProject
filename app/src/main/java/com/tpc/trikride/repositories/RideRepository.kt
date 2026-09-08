@@ -61,6 +61,15 @@ class RideRepository(
         firebase.removeRideRequest(requestId)
     }
 
+    /**
+     * This passenger's own request, if one is still open and unexpired.
+     *
+     * Read on bind so that reopening the app finds a search already running
+     * rather than offering to start a second one.
+     */
+    suspend fun myOpenRequest(passengerId: String): RideRequest? =
+        firebase.findOpenRequestFor(passengerId)
+
     fun passengerActiveRides(passengerId: String): Flow<List<Ride>> =
         firebase.getActiveRidesFlow(passengerId)
 
@@ -81,12 +90,21 @@ class RideRepository(
      * Driver accepts a request: converts it into a Ride and removes the open request
      * so other drivers no longer see it.
      */
+    /**
+     * Driver accepts a request: claims it, converts it into a Ride, and removes
+     * the open request so other drivers no longer see it.
+     *
+     * Returns null when another driver got there first. The claim is a
+     * transaction on the request node, so exactly one caller proceeds however
+     * many tap Accept in the same second.
+     */
     suspend fun acceptRequest(
         driverId: String,
         request: RideRequest,
         driverName: String = "",
         driverPhone: String = ""
-    ): Ride {
+    ): Ride? {
+        if (!firebase.claimRideRequest(request.id, driverId)) return null
         // Destinations come from the posted fare table, which carries no
         // coordinates, so the ride keeps the price the passenger already agreed
         // to rather than recomputing anything from a distance.
@@ -115,6 +133,9 @@ class RideRepository(
         return ride
     }
 
+    /** Clears requests whose five minutes are up. */
+    suspend fun purgeExpiredRequests() = firebase.purgeExpiredRideRequests()
+
     /**
      * Puts the passenger's own name and number on the ride so the driver can
      * reach them. Written by the passenger rather than copied from the request,
@@ -137,7 +158,7 @@ class RideRepository(
      */
     suspend fun rateRide(ride: Ride, stars: Int) {
         if (ride.driverId.isBlank() || ride.passengerId.isBlank()) return
-        firebase.submitRating(ride.driverId, ride.passengerId, stars.coerceIn(1, 5))
+        firebase.submitRating(ride.driverId, ride.id, ride.passengerId, stars.coerceIn(1, 5))
     }
 
     /** The natural next status in the ride lifecycle, or null if the ride is finished. */
@@ -148,4 +169,44 @@ class RideRepository(
         RideStatus.IN_PROGRESS -> RideStatus.COMPLETED
         else -> null
     }
+
+    /**
+     * Ends a ride that is not going to finish normally.
+     *
+     * The lifecycle only ever moved forwards, so a passenger who did not turn
+     * up or a tricycle that broke down left a ride nobody could close: it stayed
+     * in both parties' active lists for good, the driver could not reach their
+     * online switch, and the passenger could not book again. CANCELLED and
+     * NO_SHOW were in the enum, filtered on in six places and written by
+     * nothing.
+     */
+    suspend fun cancelRide(rideId: String) =
+        firebase.updateRideStatus(rideId, RideStatus.CANCELLED)
+
+    /** The passenger never arrived. Only meaningful once the driver is there. */
+    suspend fun markNoShow(rideId: String) =
+        firebase.updateRideStatus(rideId, RideStatus.NO_SHOW)
+
+    /** What the driver says was actually collected, which is cash and can differ. */
+    suspend fun recordActualFare(rideId: String, amount: Double) =
+        firebase.recordActualFare(rideId, amount)
+
+    /**
+     * Whether this ride can still be called off, and by whom.
+     *
+     * A passenger may withdraw until the ride is under way; after that they are
+     * in the tricycle and it is between them and the driver. A driver may stop
+     * at any point up to completion, because a breakdown does not wait for a
+     * convenient status.
+     */
+    fun passengerMayCancel(status: RideStatus): Boolean = status in setOf(
+        RideStatus.REQUESTED, RideStatus.SEARCHING, RideStatus.ACCEPTED,
+        RideStatus.DRIVER_ARRIVING, RideStatus.DRIVER_ARRIVED
+    )
+
+    fun driverMayCancel(status: RideStatus): Boolean =
+        status !in setOf(RideStatus.COMPLETED, RideStatus.CANCELLED, RideStatus.NO_SHOW)
+
+    fun driverMayMarkNoShow(status: RideStatus): Boolean =
+        status == RideStatus.DRIVER_ARRIVED
 }

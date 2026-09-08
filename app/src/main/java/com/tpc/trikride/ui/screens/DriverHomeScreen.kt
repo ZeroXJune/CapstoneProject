@@ -23,6 +23,7 @@ import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.SupportAgent
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -56,6 +57,7 @@ import androidx.compose.material.icons.filled.DateRange
 import com.tpc.trikride.utils.LocationProvider
 import com.tpc.trikride.viewmodels.DriverViewModel
 import com.tpc.trikride.viewmodels.SupportViewModel
+import java.util.Locale
 
 private enum class DriverTab { DASHBOARD, REQUESTS, HISTORY, SUPPORT, PROFILE }
 
@@ -80,6 +82,7 @@ fun DriverHomeScreen(
     val licenceDoc by viewModel.licenceDoc.collectAsState()
     val uploadingLicence by viewModel.uploadingLicence.collectAsState()
     val licenceMessage by viewModel.licenceMessage.collectAsState()
+    val accepting by viewModel.accepting.collectAsState()
 
     // Publish position only while online, and only while this screen exists.
     // Going offline or leaving the app stops it; there is no background service.
@@ -175,7 +178,14 @@ fun DriverHomeScreen(
                 DriverTab.DASHBOARD -> {
                     val active = activeRides.firstOrNull()
                     if (active != null) {
-                        ActiveRideContent(ride = active, onAdvance = { viewModel.advanceRide(active) })
+                        ActiveRideContent(
+                            ride = active,
+                            canCancel = viewModel.mayCancel(active),
+                            canMarkNoShow = viewModel.mayMarkNoShow(active),
+                            onAdvance = { viewModel.advanceRide(active) },
+                            onCancel = { viewModel.cancelRide(active) },
+                            onNoShow = { viewModel.cancelRide(active, noShow = true) }
+                        )
                     } else {
                         DriverDashboard(
                             driver = profile,
@@ -195,7 +205,9 @@ fun DriverHomeScreen(
                 DriverTab.REQUESTS -> RequestsContent(
                     isOnline = profile.isAvailable,
                     requests = openRequests,
-                    onAccept = viewModel::acceptRequest
+                    accepting = accepting,
+                    onAccept = viewModel::acceptRequest,
+                    onPurgeExpired = viewModel::purgeExpiredRequests
                 )
                 DriverTab.HISTORY -> DriverHistoryContent(viewModel)
                 DriverTab.SUPPORT -> SupportPanel(
@@ -330,7 +342,7 @@ private fun DriverDashboard(
                         Icon(Icons.Filled.Star, contentDescription = null,
                             tint = RatingColor, modifier = Modifier.size(16.dp))
                         Text(
-                            " %.1f  •  Tricycle #%s".format(driver.rating, driver.tricycleNumber),
+                            " %.1f  •  Tricycle #%s".format(Locale.US, driver.rating, driver.tricycleNumber),
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -371,7 +383,7 @@ private fun DriverDashboard(
                     // rather than left saying something untrue.
                     Text("Total Earned", style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    Text("₱%.2f".format(earnings), style = MaterialTheme.typography.headlineSmall,
+                    Text("₱%.2f".format(Locale.US, earnings), style = MaterialTheme.typography.headlineSmall,
                         fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
                 }
             }
@@ -428,7 +440,7 @@ private fun DriverHistoryContent(viewModel: DriverViewModel) {
                     Column {
                         Text("Total Earned", style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant)
-                        Text("₱%.2f".format(earnings),
+                        Text("₱%.2f".format(Locale.US, earnings),
                             style = MaterialTheme.typography.headlineSmall,
                             fontWeight = FontWeight.Bold,
                             color = MaterialTheme.colorScheme.primary)
@@ -462,7 +474,7 @@ private fun DriverHistoryContent(viewModel: DriverViewModel) {
                                     style = MaterialTheme.typography.bodySmall,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant)
                             }
-                            Text("₱%.2f".format(ride.estimatedFare),
+                            Text("₱%.2f".format(Locale.US, ride.estimatedFare),
                                 style = MaterialTheme.typography.titleMedium,
                                 fontWeight = FontWeight.Bold,
                                 color = MaterialTheme.colorScheme.primary)
@@ -490,10 +502,11 @@ private fun StatCard(label: String, value: String, modifier: Modifier = Modifier
 private fun RequestsContent(
     isOnline: Boolean,
     requests: List<RideRequest>,
-    onAccept: (RideRequest) -> Unit
+    accepting: Boolean,
+    onAccept: (RideRequest) -> Unit,
+    onPurgeExpired: () -> Unit
 ) {
-    val declined = remember { mutableStateListOf<String>() }
-    val visible = requests.filter { it.id !in declined }
+    val declined = rememberSaveable { mutableStateListOf<String>() }
 
     // Ticking clock for the countdown timers.
     val nowMs by produceState(initialValue = System.currentTimeMillis()) {
@@ -502,6 +515,18 @@ private fun RequestsContent(
             delay(1000)
         }
     }
+
+    // Expiry was applied when the node changed and never again, so a card sat
+    // at "0s" with Accept still live and a driver could take a request the
+    // passenger stopped waiting on twenty minutes earlier.
+    val visible = requests.filter {
+        it.id !in declined && (it.expiresAt.toLongOrNull() ?: 0L) > nowMs
+    }
+
+    // Nothing deleted an expired request, so the node grew for good and every
+    // approved driver downloaded all of it. Sweeping while a driver is looking
+    // at this tab is the cheapest place to do it.
+    LaunchedEffect(Unit) { onPurgeExpired() }
 
     Column(
         modifier = Modifier
@@ -530,6 +555,7 @@ private fun RequestsContent(
                 RequestCard(
                     request = request,
                     remainingSeconds = remaining,
+                    accepting = accepting,
                     onAccept = { onAccept(request) },
                     onDecline = { declined.add(request.id) }
                 )
@@ -543,6 +569,7 @@ private fun RequestsContent(
 private fun RequestCard(
     request: RideRequest,
     remainingSeconds: Long,
+    accepting: Boolean,
     onAccept: () -> Unit,
     onDecline: () -> Unit
 ) {
@@ -576,7 +603,7 @@ private fun RequestCard(
                 Column {
                     Text("Estimated Fare", style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    Text("₱%.2f".format(fare), style = MaterialTheme.typography.titleMedium,
+                    Text("₱%.2f".format(Locale.US, fare), style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
                 }
                 Column(horizontalAlignment = Alignment.End) {
@@ -621,19 +648,29 @@ private fun RequestCard(
                 ) { Text("Decline") }
                 Button(
                     onClick = onAccept,
+                    // One tap, one ride. Two taps used to make two.
+                    enabled = !accepting,
                     shape = RoundedCornerShape(14.dp),
                     modifier = Modifier
                         .weight(1f)
                         .height(48.dp)
-                ) { Text("Accept") }
+                ) { Text(if (accepting) "Accepting…" else "Accept") }
             }
         }
     }
 }
 
 @Composable
-private fun ActiveRideContent(ride: Ride, onAdvance: () -> Unit) {
+private fun ActiveRideContent(
+    ride: Ride,
+    canCancel: Boolean,
+    canMarkNoShow: Boolean,
+    onAdvance: () -> Unit,
+    onCancel: () -> Unit,
+    onNoShow: () -> Unit
+) {
     val context = LocalContext.current
+    var confirming by remember { mutableStateOf<String?>(null) }
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -668,7 +705,7 @@ private fun ActiveRideContent(ride: Ride, onAdvance: () -> Unit) {
                         fontWeight = FontWeight.Bold
                     )
                     Text(
-                        "Fare ₱%.2f  •  %s".format(ride.estimatedFare, ride.partyLabel),
+                        "Fare ₱%.2f  •  %s".format(Locale.US, ride.estimatedFare, ride.partyLabel),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -719,6 +756,63 @@ private fun ActiveRideContent(ride: Ride, onAdvance: () -> Unit) {
         if (actionLabel != null) {
             PrimaryButton(text = actionLabel, onClick = onAdvance)
         }
+
+        // Before this there was no way out of a ride that was not going to
+        // finish. The ride stayed in both parties' active lists for good, and
+        // this screen replaced the dashboard, so the driver could not even
+        // reach their own online switch.
+        if (canMarkNoShow || canCancel) {
+            Spacer(modifier = Modifier.height(10.dp))
+            Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                if (canMarkNoShow) {
+                    OutlinedButton(
+                        onClick = { confirming = "no-show" },
+                        shape = RoundedCornerShape(14.dp),
+                        colors = ButtonDefaults.outlinedButtonColors(contentColor = ErrorColor),
+                        modifier = Modifier.weight(1f)
+                    ) { Text("Passenger no-show") }
+                }
+                if (canCancel) {
+                    OutlinedButton(
+                        onClick = { confirming = "cancel" },
+                        shape = RoundedCornerShape(14.dp),
+                        colors = ButtonDefaults.outlinedButtonColors(contentColor = ErrorColor),
+                        modifier = Modifier.weight(1f)
+                    ) { Text("Cancel ride") }
+                }
+            }
+        }
+        Spacer(modifier = Modifier.height(16.dp))
+    }
+
+    confirming?.let { kind ->
+        val noShow = kind == "no-show"
+        AlertDialog(
+            onDismissRequest = { confirming = null },
+            title = { Text(if (noShow) "Report a no-show?" else "Cancel this ride?") },
+            text = {
+                Text(
+                    if (noShow) {
+                        "Say that you waited at the pickup point and the passenger did " +
+                            "not appear. They are told, the ride is closed, and you go " +
+                            "back online."
+                    } else {
+                        "The ride is closed and the passenger is told they can book " +
+                            "again. Use this for a breakdown or anything else that stops " +
+                            "you finishing."
+                    }
+                )
+            },
+            confirmButton = {
+                TextButton(onClick = {
+                    confirming = null
+                    if (noShow) onNoShow() else onCancel()
+                }) { Text(if (noShow) "Report it" else "Cancel the ride", color = ErrorColor) }
+            },
+            dismissButton = {
+                TextButton(onClick = { confirming = null }) { Text("Keep going") }
+            }
+        )
     }
 }
 
@@ -738,7 +832,7 @@ private fun DriverCredentialsCard(driver: Driver, licence: DriverDocument?) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Icon(Icons.Filled.Star, contentDescription = null, tint = RatingColor,
                         modifier = Modifier.size(18.dp))
-                    Text(" %.1f  •  ${driver.totalRides} trips".format(driver.rating),
+                    Text(" %.1f  •  ${driver.totalRides} trips".format(Locale.US, driver.rating),
                         color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
                 HorizontalDivider(modifier = Modifier.padding(vertical = 10.dp))

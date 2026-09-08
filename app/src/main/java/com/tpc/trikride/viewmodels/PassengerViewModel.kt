@@ -104,6 +104,15 @@ class PassengerViewModel(
             kotlinx.coroutines.delay(600)
             _loadingHistory.value = false
         }
+        // A request outlives the process that made it. Held only in memory, a
+        // force-close left the passenger on a dashboard with no sign of the
+        // search that was still running server-side, so they booked again and
+        // two drivers could each take one.
+        viewModelScope.launch {
+            runCatching { rideRepository.myOpenRequest(userId) }
+                .getOrNull()
+                ?.let { _pendingRequest.value = it }
+        }
     }
 
     /** Firebase streams are already live; this just clears any stale error. */
@@ -111,6 +120,10 @@ class PassengerViewModel(
         _errorMessage.value = null
         _loadingHistory.value = false
     }
+
+    /** True while a request is being written, so a second tap cannot send one. */
+    private val _booking = MutableStateFlow(false)
+    val booking: StateFlow<Boolean> = _booking
 
     fun requestRide(
         pickup: Location,
@@ -121,12 +134,14 @@ class PassengerViewModel(
         notes: String = ""
     ) {
         val id = passengerId.value ?: return
+        if (_booking.value || _pendingRequest.value != null) return
         val quote = FareEngine.quote(fareConfig.value, destination, regularCount, discountedCount)
         val dropoff = Location(address = destination.label)
         // Kept for records covering a party that is all one kind; a mixed party
         // is described by the two counts, not by this.
         val fareType = if (regularCount > 0) FareType.REGULAR else FareType.DISCOUNTED
         viewModelScope.launch {
+            _booking.value = true
             try {
                 _pendingRequest.value = rideRepository.requestRide(
                     passengerId = id,
@@ -144,9 +159,31 @@ class PassengerViewModel(
                 _errorMessage.value = null
             } catch (e: Exception) {
                 _errorMessage.value = e.message ?: "Failed to request ride"
+            } finally {
+                _booking.value = false
             }
         }
     }
+
+    /**
+     * Withdraws a ride a driver has already accepted.
+     *
+     * Allowed until the ride is under way; after that the passenger is aboard
+     * and it is the driver's to end. Before this there was no way to close a
+     * ride at all, so a driver who accepted and never arrived left the
+     * passenger's home tab showing a tracking screen for good.
+     */
+    fun cancelRide(ride: Ride) {
+        viewModelScope.launch {
+            try {
+                rideRepository.cancelRide(ride.id)
+            } catch (e: Exception) {
+                _errorMessage.value = e.message ?: "Could not cancel that ride"
+            }
+        }
+    }
+
+    fun mayCancel(ride: Ride): Boolean = rideRepository.passengerMayCancel(ride.status)
 
     fun cancelPendingRequest() {
         val request = _pendingRequest.value ?: return

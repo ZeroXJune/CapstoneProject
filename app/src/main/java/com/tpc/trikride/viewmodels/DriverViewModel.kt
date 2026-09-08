@@ -260,20 +260,33 @@ class DriverViewModel(
         }
     }
 
+    /** True while an accept is in flight, so a second tap cannot start another. */
+    private val _accepting = MutableStateFlow(false)
+    val accepting: StateFlow<Boolean> = _accepting
+
     fun acceptRequest(request: RideRequest) {
         val id = driverId.value ?: return
+        if (_accepting.value) return
         viewModelScope.launch {
+            _accepting.value = true
             try {
                 // The passenger has no other way to learn who is coming:
                 // users/{uid} is private, so the name and number travel with
                 // the ride or not at all.
                 val me = runCatching { authRepository.loadUser(id) }.getOrNull()
-                rideRepository.acceptRequest(
+                val ride = rideRepository.acceptRequest(
                     driverId = id,
                     request = request,
                     driverName = me?.firstName.orEmpty(),
                     driverPhone = me?.phoneNumber.orEmpty()
                 )
+                if (ride == null) {
+                    // Another driver claimed it first. Not an error worth
+                    // dressing up — it is the normal outcome of two people
+                    // reaching for the same request.
+                    _errorMessage.value = "Another driver took that one."
+                    return@launch
+                }
                 // Busy with a passenger, so hide from other matching until done.
                 driverRepository.setAvailability(id, false)
                 supportRepository.notify(
@@ -284,8 +297,48 @@ class DriverViewModel(
                 )
             } catch (e: Exception) {
                 _errorMessage.value = e.message ?: "Failed to accept request"
+            } finally {
+                _accepting.value = false
             }
         }
+    }
+
+    /**
+     * Ends a ride that is not going to finish, and puts the driver back on the
+     * road. Availability is restored because it was taken away on accept, and a
+     * ride that ends badly should not leave them invisible.
+     */
+    fun cancelRide(ride: Ride, noShow: Boolean = false) {
+        val id = driverId.value ?: return
+        viewModelScope.launch {
+            try {
+                if (noShow) rideRepository.markNoShow(ride.id)
+                else rideRepository.cancelRide(ride.id)
+                driverRepository.setAvailability(id, true)
+                supportRepository.notify(
+                    userId = ride.passengerId,
+                    title = if (noShow) "Your driver reported a no-show" else "Your ride was cancelled",
+                    message = if (noShow) {
+                        "The driver waited at the pickup point and could not find you."
+                    } else {
+                        "The driver could not complete your ride to " +
+                            "${ride.dropoffLocation.address}. You can book again."
+                    },
+                    type = NotificationType.RIDE
+                )
+            } catch (e: Exception) {
+                _errorMessage.value = e.message ?: "Failed to end the ride"
+            }
+        }
+    }
+
+    fun mayCancel(ride: Ride): Boolean = rideRepository.driverMayCancel(ride.status)
+
+    fun mayMarkNoShow(ride: Ride): Boolean = rideRepository.driverMayMarkNoShow(ride.status)
+
+    /** Clears requests whose five minutes are up, so the node does not grow forever. */
+    fun purgeExpiredRequests() {
+        viewModelScope.launch { runCatching { rideRepository.purgeExpiredRequests() } }
     }
 
     /** Moves a ride to its next lifecycle stage (arriving → arrived → in progress → completed). */
@@ -304,6 +357,11 @@ class DriverViewModel(
                 if (next == com.tpc.trikride.models.RideStatus.COMPLETED) {
                     driverRepository.setAvailability(id, true)
                     driverRepository.recordCompletedRide(id)
+                    // Cash changes hands off the app, so what was quoted is the
+                    // best record the system has of what was taken. Writing it
+                    // fills the Actual fare column, which every report read and
+                    // nothing ever wrote.
+                    runCatching { rideRepository.recordActualFare(ride.id, ride.estimatedFare) }
                 }
             } catch (e: Exception) {
                 _errorMessage.value = e.message ?: "Failed to update ride"

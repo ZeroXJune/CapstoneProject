@@ -145,12 +145,109 @@ class FirebaseService {
         database.getReference("rideRequests").child(requestId).removeValue().await()
     }
 
+    /**
+     * Claims an open request for one driver, and says whether the claim won.
+     *
+     * Accepting used to be "write a ride, then delete the request" — two
+     * independent writes with nothing between them, so two drivers who tapped
+     * Accept before either write landed both created a ride for one booking and
+     * the passenger tracked whichever the listener handed back first. The
+     * transaction is the resolution: the first caller writes `claimedBy` and
+     * every later one aborts, so exactly one driver goes on to create the ride.
+     */
+    suspend fun claimRideRequest(requestId: String, driverId: String): Boolean =
+        suspendCancellableCoroutine { cont ->
+            database.getReference("rideRequests").child(requestId)
+                .runTransaction(object : Transaction.Handler {
+                    override fun doTransaction(current: MutableData): Transaction.Result {
+                        // Gone already: another driver accepted and cleaned up.
+                        if (current.getValue() == null) return Transaction.abort()
+                        val claimed = current.child("claimedBy").getValue(String::class.java)
+                        if (!claimed.isNullOrBlank() && claimed != driverId) {
+                            return Transaction.abort()
+                        }
+                        current.child("claimedBy").value = driverId
+                        return Transaction.success(current)
+                    }
+
+                    override fun onComplete(
+                        error: DatabaseError?,
+                        committed: Boolean,
+                        snapshot: DataSnapshot?
+                    ) {
+                        if (!cont.isActive) return
+                        if (error != null) cont.resumeWithException(error.toException())
+                        else cont.resume(committed)
+                    }
+                })
+        }
+
+    /**
+     * Deletes requests that have run out of time.
+     *
+     * Nothing removed them before: the open-requests flow filtered expired ones
+     * after downloading them, so every request ever made stayed in the node and
+     * every approved driver pulled the lot — pickup coordinates and free-text
+     * notes included — on every change. A passenger who force-closed the app
+     * mid-search left theirs there permanently.
+     */
+    /** The one unexpired request this passenger has open, if any. */
+    suspend fun findOpenRequestFor(
+        passengerId: String,
+        now: Long = System.currentTimeMillis()
+    ): RideRequest? {
+        val snapshot = database.getReference("rideRequests")
+            .orderByChild("passengerId").equalTo(passengerId).get().await()
+        return snapshot.children
+            .mapNotNull { it.getValue(RideRequest::class.java) }
+            .firstOrNull { (it.expiresAt.toLongOrNull() ?: 0L) > now }
+    }
+
+    suspend fun purgeExpiredRideRequests(now: Long = System.currentTimeMillis()) {
+        val root = database.getReference("rideRequests")
+        val snapshot = root.get().await()
+        val dead = snapshot.children.mapNotNull { child ->
+            val request = child.getValue(RideRequest::class.java) ?: return@mapNotNull null
+            child.key?.takeIf { (request.expiresAt.toLongOrNull() ?: Long.MAX_VALUE) <= now }
+        }
+        if (dead.isEmpty()) return
+        root.updateChildren(dead.associateWith { null as Any? }).await()
+    }
+
     suspend fun createRide(ride: Ride) {
         database.getReference("rides").child(ride.id).setValue(ride).await()
     }
 
+    /**
+     * Moves a ride to [status] and stamps the timestamp that goes with it.
+     *
+     * `startedAt` and `completedAt` are on the record and were never written by
+     * anything, so the Started and Completed columns of every exported report
+     * were blank. A ride that ends — completed, cancelled or a no-show — stamps
+     * `completedAt`, because that is the moment it stopped being live and it is
+     * what the reports measure duration against.
+     */
     suspend fun updateRideStatus(rideId: String, status: RideStatus) {
-        database.getReference("rides").child(rideId).child("status").setValue(status).await()
+        val now = System.currentTimeMillis().toString()
+        val updates = mutableMapOf<String, Any?>("status" to status.name)
+        when (status) {
+            RideStatus.IN_PROGRESS -> updates["startedAt"] = now
+            RideStatus.COMPLETED, RideStatus.CANCELLED, RideStatus.NO_SHOW ->
+                updates["completedAt"] = now
+            else -> Unit
+        }
+        database.getReference("rides").child(rideId).updateChildren(updates).await()
+    }
+
+    /**
+     * Records what the driver says was actually collected.
+     *
+     * Cash changes hands off the app, so the quoted fare and the fare taken can
+     * differ. `actualFare` was read by every report and written by nothing,
+     * which is why the Actual fare column was a column of zeroes.
+     */
+    suspend fun recordActualFare(rideId: String, amount: Double) {
+        database.getReference("rides").child(rideId).child("actualFare").setValue(amount).await()
     }
 
     /**
@@ -270,16 +367,38 @@ class FirebaseService {
     // writable only by the driver, so a passenger cannot be the one to update
     // the average there — see `publishRating`.
 
-    suspend fun submitRating(driverId: String, raterId: String, stars: Int) {
-        database.getReference("driverRatings").child(driverId).child(raterId)
-            .setValue(stars).await()
+    /**
+     * One rating per ride.
+     *
+     * The key used to be the rater, which meant a passenger held exactly one
+     * opinion of a driver however many times they travelled: a second ride with
+     * the same driver silently replaced the first. Keying by ride records each
+     * journey separately, and it is the shape a rule can check — a ride names
+     * both parties and carries the status, so the rules can require that the
+     * writer was the passenger on it and that it actually completed.
+     */
+    suspend fun submitRating(driverId: String, rideId: String, raterId: String, stars: Int) {
+        database.getReference("driverRatings").child(driverId).child(rideId)
+            .setValue(mapOf("stars" to stars, "raterId" to raterId)).await()
     }
 
-    /** Every rating a driver has been given. */
+    /**
+     * Every rating a driver has been given.
+     *
+     * Reads both shapes. Ratings written before they were keyed by ride are a
+     * bare number under the rater's uid; ones written since are an object with
+     * the stars and the rater on it. Dropping the old ones would erase a
+     * driver's history the first time they opened the new build.
+     */
     fun getRatingsFlow(driverId: String): Flow<List<Int>> = callbackFlow {
         val listener = object : ValueEventListener {
             override fun onDataChange(snapshot: DataSnapshot) {
-                trySend(snapshot.children.mapNotNull { it.getValue(Int::class.java) })
+                trySend(
+                    snapshot.children.mapNotNull { child ->
+                        child.getValue(Int::class.java)
+                            ?: child.child("stars").getValue(Int::class.java)
+                    }
+                )
             }
 
             override fun onCancelled(error: DatabaseError) {

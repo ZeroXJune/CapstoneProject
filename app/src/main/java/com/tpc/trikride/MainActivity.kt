@@ -24,6 +24,10 @@ class MainActivity : ComponentActivity() {
         // both things that should not outlive the action that made them.
         CacheCleanup.sweep(cacheDir)
 
+        // Before the first frame, so the chosen theme does not flash the other
+        // one on the way in.
+        ThemeState.load(this)
+
         setContent {
             // Follow the system theme unless the user has overridden it in Settings.
             val darkTheme = ThemeState.darkModeOverride ?: isSystemInDarkTheme()

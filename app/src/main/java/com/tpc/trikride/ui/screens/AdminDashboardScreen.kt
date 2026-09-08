@@ -306,6 +306,19 @@ private fun ComplaintCard(
                 )
                 Spacer(modifier = Modifier.height(10.dp))
                 Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                    if (complaint.status == ComplaintStatus.RESOLVED) {
+                        // Nothing could set OPEN, so a report closed in error
+                        // stayed closed and the "reopened" message in
+                        // SupportRepository was unreachable.
+                        OutlinedButton(
+                            onClick = {
+                                onUpdate(complaint, ComplaintStatus.OPEN, note.trim())
+                                expanded = false
+                            },
+                            shape = RoundedCornerShape(14.dp),
+                            modifier = Modifier.weight(1f)
+                        ) { Text("Reopen") }
+                    }
                     OutlinedButton(
                         onClick = {
                             onUpdate(complaint, ComplaintStatus.IN_REVIEW, note.trim())
@@ -731,7 +744,7 @@ private fun LiveMonitorContent(drivers: List<Driver>, rides: List<Ride>) {
                     color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
         } else {
-            rides.sortedByDescending { it.requestedAt }.take(15).forEach { ride ->
+            rides.sortedByDescending { it.requestedAt.toLongOrNull() ?: 0L }.take(15).forEach { ride ->
                 SectionCard {
                     Column {
                         Row(
