@@ -36,6 +36,9 @@ import com.tpc.trikride.viewmodels.SupportViewModel
  * use the Support tab, and the admin screen has always shown who filed what, so
  * the form only ever being on the passenger's side was an oversight.
  */
+/** Matches the ceiling the database rules enforce on a complaint. */
+private const val MAX_DESCRIPTION_LENGTH = 2000
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SupportPanel(
@@ -111,8 +114,13 @@ fun SupportPanel(
                     Spacer(modifier = Modifier.height(12.dp))
                     OutlinedTextField(
                         value = description,
-                        onValueChange = { description = it },
+                        onValueChange = {
+                            if (it.length <= MAX_DESCRIPTION_LENGTH) description = it
+                        },
                         label = { Text("Describe your concern") },
+                        supportingText = {
+                            Text("${description.length} / $MAX_DESCRIPTION_LENGTH")
+                        },
                         shape = RoundedCornerShape(14.dp),
                         modifier = Modifier.fillMaxWidth(),
                         minLines = 3

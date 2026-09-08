@@ -5,12 +5,16 @@ import com.google.firebase.database.DataSnapshot
 import com.google.firebase.database.DatabaseError
 import com.google.firebase.database.FirebaseDatabase
 import com.google.firebase.database.MutableData
+import com.google.firebase.database.Query
 import com.google.firebase.database.Transaction
 import com.google.firebase.database.ValueEventListener
 import com.tpc.trikride.models.*
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
+import kotlinx.coroutines.flow.flowOn
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
@@ -23,6 +27,37 @@ class FirebaseService {
         addOnSuccessListener { cont.resume(it) }
         addOnFailureListener { cont.resumeWithException(it) }
     }
+
+    /**
+     * A Firebase query as a flow of snapshots.
+     *
+     * Every listener in this class used to deserialise inside `onDataChange`,
+     * which Firebase calls on the main thread. For the administrator's feeds
+     * that meant reflectively mapping every ride, user and complaint in the
+     * database onto data classes on the frame that received them, on every
+     * change anyone made. Emitting the snapshot and mapping it downstream with
+     * `flowOn` moves that work off the UI thread; a DataSnapshot is immutable,
+     * so it is safe to read from another one.
+     */
+    private fun snapshots(query: Query): Flow<DataSnapshot> = callbackFlow {
+        val listener = object : ValueEventListener {
+            override fun onDataChange(snapshot: DataSnapshot) {
+                trySend(snapshot)
+            }
+
+            override fun onCancelled(error: DatabaseError) {
+                close(error.toException())
+            }
+        }
+        query.addValueEventListener(listener)
+        awaitClose { query.removeEventListener(listener) }
+    }
+
+    /** Maps each snapshot's children off the main thread. */
+    private fun <T : Any> children(query: Query, type: Class<T>): Flow<List<T>> =
+        snapshots(query)
+            .map { snap -> snap.children.mapNotNull { it.getValue(type) } }
+            .flowOn(Dispatchers.Default)
 
     // Driver Operations
     suspend fun registerDriver(userId: String, driver: Driver) {
@@ -48,61 +83,16 @@ class FirebaseService {
     }
 
     /** All registered drivers, regardless of availability (admin view). */
-    fun getAllDriversFlow(): Flow<List<Driver>> = callbackFlow {
-        val listener = object : ValueEventListener {
-            override fun onDataChange(snapshot: DataSnapshot) {
-                val drivers = snapshot.children.mapNotNull { it.getValue(Driver::class.java) }
-                trySend(drivers)
-            }
-
-            override fun onCancelled(error: DatabaseError) {
-                close(error.toException())
-            }
-        }
-
-        val ref = database.getReference("drivers")
-        ref.addValueEventListener(listener)
-
-        awaitClose { ref.removeEventListener(listener) }
-    }
+    fun getAllDriversFlow(): Flow<List<Driver>> =
+        children(database.getReference("drivers"), Driver::class.java)
 
     /** All users (admin view — used to resolve driver names). */
-    fun getAllUsersFlow(): Flow<List<User>> = callbackFlow {
-        val listener = object : ValueEventListener {
-            override fun onDataChange(snapshot: DataSnapshot) {
-                val users = snapshot.children.mapNotNull { it.getValue(User::class.java) }
-                trySend(users)
-            }
+    fun getAllUsersFlow(): Flow<List<User>> =
+        children(database.getReference("users"), User::class.java)
 
-            override fun onCancelled(error: DatabaseError) {
-                close(error.toException())
-            }
-        }
-
-        val ref = database.getReference("users")
-        ref.addValueEventListener(listener)
-
-        awaitClose { ref.removeEventListener(listener) }
-    }
-
-    /** All rides across the system (admin monitoring). */
-    fun getAllRidesFlow(): Flow<List<Ride>> = callbackFlow {
-        val listener = object : ValueEventListener {
-            override fun onDataChange(snapshot: DataSnapshot) {
-                val rides = snapshot.children.mapNotNull { it.getValue(Ride::class.java) }
-                trySend(rides)
-            }
-
-            override fun onCancelled(error: DatabaseError) {
-                close(error.toException())
-            }
-        }
-
-        val ref = database.getReference("rides")
-        ref.addValueEventListener(listener)
-
-        awaitClose { ref.removeEventListener(listener) }
-    }
+    /** All rides across the system (admin monitoring and the exported reports). */
+    fun getAllRidesFlow(): Flow<List<Ride>> =
+        children(database.getReference("rides"), Ride::class.java)
 
     suspend fun updateDriverLocation(driverId: String, location: Location) {
         database.getReference("drivers").child(driverId).child("currentLocation").setValue(location).await()
@@ -121,25 +111,12 @@ class FirebaseService {
         database.getReference("rideRequests").child(rideRequest.id).setValue(rideRequest).await()
     }
 
-    fun getOpenRideRequestsFlow(): Flow<List<RideRequest>> = callbackFlow {
-        val listener = object : ValueEventListener {
-            override fun onDataChange(snapshot: DataSnapshot) {
+    fun getOpenRideRequestsFlow(): Flow<List<RideRequest>> =
+        children(database.getReference("rideRequests"), RideRequest::class.java)
+            .map { requests ->
                 val now = System.currentTimeMillis()
-                val requests = snapshot.children.mapNotNull { it.getValue(RideRequest::class.java) }
-                    .filter { (it.expiresAt.toLongOrNull() ?: Long.MAX_VALUE) > now }
-                trySend(requests)
+                requests.filter { (it.expiresAt.toLongOrNull() ?: Long.MAX_VALUE) > now }
             }
-
-            override fun onCancelled(error: DatabaseError) {
-                close(error.toException())
-            }
-        }
-
-        val ref = database.getReference("rideRequests")
-        ref.addValueEventListener(listener)
-
-        awaitClose { ref.removeEventListener(listener) }
-    }
 
     suspend fun removeRideRequest(requestId: String) {
         database.getReference("rideRequests").child(requestId).removeValue().await()
@@ -263,101 +240,32 @@ class FirebaseService {
         ref.child("passengerPhone").setValue(phone).await()
     }
 
-    fun getActiveRidesFlow(passengerId: String): Flow<List<Ride>> = callbackFlow {
-        val terminalStatuses = setOf(RideStatus.COMPLETED, RideStatus.CANCELLED, RideStatus.NO_SHOW)
-        val listener = object : ValueEventListener {
-            override fun onDataChange(snapshot: DataSnapshot) {
-                val rides = snapshot.children.mapNotNull { it.getValue(Ride::class.java) }
-                    .filter { it.status !in terminalStatuses }
-                trySend(rides)
-            }
+    // Scoped at the source rather than after the download: the rule on /rides
+    // requires this exact constraint, so the client cannot ask for anyone
+    // else's rides.
+    fun getActiveRidesFlow(passengerId: String): Flow<List<Ride>> =
+        children(
+            database.getReference("rides").orderByChild("passengerId").equalTo(passengerId),
+            Ride::class.java
+        ).map { rides -> rides.filter { it.status !in TERMINAL } }
 
-            override fun onCancelled(error: DatabaseError) {
-                close(error.toException())
-            }
-        }
+    fun getDriverActiveRidesFlow(driverId: String): Flow<List<Ride>> =
+        children(
+            database.getReference("rides").orderByChild("driverId").equalTo(driverId),
+            Ride::class.java
+        ).map { rides -> rides.filter { it.status !in TERMINAL } }
 
-        // Scoped at the source rather than after the download: the rule
-        // on /rides requires this exact constraint, so the client
-        // cannot ask for anyone else's rides.
-        val ref = database.getReference("rides")
-            .orderByChild("passengerId").equalTo(passengerId)
-        ref.addValueEventListener(listener)
+    fun getPassengerRideHistoryFlow(passengerId: String): Flow<List<Ride>> =
+        children(
+            database.getReference("rides").orderByChild("passengerId").equalTo(passengerId),
+            Ride::class.java
+        ).map { rides -> rides.filter { it.status in TERMINAL }.newestFirst() }
 
-        awaitClose { ref.removeEventListener(listener) }
-    }
-
-    fun getDriverActiveRidesFlow(driverId: String): Flow<List<Ride>> = callbackFlow {
-        val terminalStatuses = setOf(RideStatus.COMPLETED, RideStatus.CANCELLED, RideStatus.NO_SHOW)
-        val listener = object : ValueEventListener {
-            override fun onDataChange(snapshot: DataSnapshot) {
-                val rides = snapshot.children.mapNotNull { it.getValue(Ride::class.java) }
-                    .filter { it.status !in terminalStatuses }
-                trySend(rides)
-            }
-
-            override fun onCancelled(error: DatabaseError) {
-                close(error.toException())
-            }
-        }
-
-        // Scoped at the source rather than after the download: the rule
-        // on /rides requires this exact constraint, so the client
-        // cannot ask for anyone else's rides.
-        val ref = database.getReference("rides")
-            .orderByChild("driverId").equalTo(driverId)
-        ref.addValueEventListener(listener)
-
-        awaitClose { ref.removeEventListener(listener) }
-    }
-
-    fun getPassengerRideHistoryFlow(passengerId: String): Flow<List<Ride>> = callbackFlow {
-        val finished = setOf(RideStatus.COMPLETED, RideStatus.CANCELLED, RideStatus.NO_SHOW)
-        val listener = object : ValueEventListener {
-            override fun onDataChange(snapshot: DataSnapshot) {
-                trySend(
-                    snapshot.children.mapNotNull { it.getValue(Ride::class.java) }
-                        .filter { it.status in finished }
-                        .sortedByDescending { it.requestedAt.toLongOrNull() ?: 0L }
-                )
-            }
-
-            override fun onCancelled(error: DatabaseError) {
-                close(error.toException())
-            }
-        }
-        // Scoped at the source rather than after the download: the rule
-        // on /rides requires this exact constraint, so the client
-        // cannot ask for anyone else's rides.
-        val ref = database.getReference("rides")
-            .orderByChild("passengerId").equalTo(passengerId)
-        ref.addValueEventListener(listener)
-        awaitClose { ref.removeEventListener(listener) }
-    }
-
-    fun getDriverRideHistoryFlow(driverId: String): Flow<List<Ride>> = callbackFlow {
-        val finished = setOf(RideStatus.COMPLETED, RideStatus.CANCELLED, RideStatus.NO_SHOW)
-        val listener = object : ValueEventListener {
-            override fun onDataChange(snapshot: DataSnapshot) {
-                trySend(
-                    snapshot.children.mapNotNull { it.getValue(Ride::class.java) }
-                        .filter { it.status in finished }
-                        .sortedByDescending { it.requestedAt.toLongOrNull() ?: 0L }
-                )
-            }
-
-            override fun onCancelled(error: DatabaseError) {
-                close(error.toException())
-            }
-        }
-        // Scoped at the source rather than after the download: the rule
-        // on /rides requires this exact constraint, so the client
-        // cannot ask for anyone else's rides.
-        val ref = database.getReference("rides")
-            .orderByChild("driverId").equalTo(driverId)
-        ref.addValueEventListener(listener)
-        awaitClose { ref.removeEventListener(listener) }
-    }
+    fun getDriverRideHistoryFlow(driverId: String): Flow<List<Ride>> =
+        children(
+            database.getReference("rides").orderByChild("driverId").equalTo(driverId),
+            Ride::class.java
+        ).map { rides -> rides.filter { it.status in TERMINAL }.newestFirst() }
 
     // Ratings
     //
@@ -381,6 +289,12 @@ class FirebaseService {
         database.getReference("driverRatings").child(driverId).child(rideId)
             .setValue(mapOf("stars" to stars, "raterId" to raterId)).await()
     }
+
+    /** A ride that has finished, one way or another. */
+    private val TERMINAL = setOf(RideStatus.COMPLETED, RideStatus.CANCELLED, RideStatus.NO_SHOW)
+
+    private fun List<Ride>.newestFirst(): List<Ride> =
+        sortedByDescending { it.requestedAt.toLongOrNull() ?: 0L }
 
     /**
      * Every rating a driver has been given.
@@ -453,38 +367,16 @@ class FirebaseService {
         database.getReference("complaints").child(complaint.id).setValue(complaint).await()
     }
 
-    fun getAllComplaintsFlow(): Flow<List<Complaint>> = callbackFlow {
-        val listener = object : ValueEventListener {
-            override fun onDataChange(snapshot: DataSnapshot) {
-                trySend(snapshot.children.mapNotNull { it.getValue(Complaint::class.java) })
-            }
+    fun getAllComplaintsFlow(): Flow<List<Complaint>> =
+        children(database.getReference("complaints"), Complaint::class.java)
 
-            override fun onCancelled(error: DatabaseError) {
-                close(error.toException())
-            }
-        }
-        val ref = database.getReference("complaints")
-        ref.addValueEventListener(listener)
-        awaitClose { ref.removeEventListener(listener) }
-    }
-
-    fun getUserComplaintsFlow(userId: String): Flow<List<Complaint>> = callbackFlow {
-        val listener = object : ValueEventListener {
-            override fun onDataChange(snapshot: DataSnapshot) {
-                trySend(snapshot.children.mapNotNull { it.getValue(Complaint::class.java) })
-            }
-
-            override fun onCancelled(error: DatabaseError) {
-                close(error.toException())
-            }
-        }
+    fun getUserComplaintsFlow(userId: String): Flow<List<Complaint>> =
         // Scoped at the source: the rule on /complaints requires this
         // constraint, so nobody can read what somebody else reported.
-        val ref = database.getReference("complaints")
-            .orderByChild("reporterId").equalTo(userId)
-        ref.addValueEventListener(listener)
-        awaitClose { ref.removeEventListener(listener) }
-    }
+        children(
+            database.getReference("complaints").orderByChild("reporterId").equalTo(userId),
+            Complaint::class.java
+        )
 
     suspend fun updateComplaintStatus(id: String, status: ComplaintStatus, note: String) {
         val updates = mutableMapOf<String, Any?>(
@@ -505,20 +397,8 @@ class FirebaseService {
             .setValue(notification).await()
     }
 
-    fun getNotificationsFlow(userId: String): Flow<List<AppNotification>> = callbackFlow {
-        val listener = object : ValueEventListener {
-            override fun onDataChange(snapshot: DataSnapshot) {
-                trySend(snapshot.children.mapNotNull { it.getValue(AppNotification::class.java) })
-            }
-
-            override fun onCancelled(error: DatabaseError) {
-                close(error.toException())
-            }
-        }
-        val ref = database.getReference("notifications").child(userId)
-        ref.addValueEventListener(listener)
-        awaitClose { ref.removeEventListener(listener) }
-    }
+    fun getNotificationsFlow(userId: String): Flow<List<AppNotification>> =
+        children(database.getReference("notifications").child(userId), AppNotification::class.java)
 
     suspend fun markNotificationRead(userId: String, id: String) {
         database.getReference("notifications").child(userId).child(id)
@@ -557,23 +437,10 @@ class FirebaseService {
     }
 
     // Fare Stops (the posted per-destination rate table)
-    fun getFareStopsFlow(): Flow<List<FareStop>> = callbackFlow {
-        val listener = object : ValueEventListener {
-            override fun onDataChange(snapshot: DataSnapshot) {
-                val stops = snapshot.children.mapNotNull { it.getValue(FareStop::class.java) }
-                trySend(stops)
-            }
-
-            override fun onCancelled(error: DatabaseError) {
-                close(error.toException())
-            }
-        }
-
-        val ref = database.getReference("config").child("fareStops")
-        ref.addValueEventListener(listener)
-
-        awaitClose { ref.removeEventListener(listener) }
-    }
+    fun getFareStopsFlow(): Flow<List<FareStop>> =
+        // 240 rows through reflection is the largest single deserialisation the
+        // passenger's app does, and it happens while they are choosing a stop.
+        children(database.getReference("config").child("fareStops"), FareStop::class.java)
 
     suspend fun saveFareStop(stop: FareStop) {
         database.getReference("config").child("fareStops").child(stop.id).setValue(stop).await()

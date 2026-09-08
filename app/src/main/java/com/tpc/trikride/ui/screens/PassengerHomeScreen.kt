@@ -386,6 +386,9 @@ private fun RideRow(ride: Ride) {
     }
 }
 
+/** Matches the ceiling the database rules enforce on a ride note. */
+private const val MAX_NOTE_LENGTH = 500
+
 private val LUGGAGE_OPTIONS = listOf(
     "Backpack", "Large Bag", "Shopping Bags", "Box / Package", "Market Goods"
 )
@@ -656,8 +659,11 @@ private fun BookingContent(
 
         OutlinedTextField(
             value = notes,
-            onValueChange = { notes = it },
+            // Capped where the user can see it. The database refuses anything
+            // longer, and a rejected write is a worse way to learn about a limit.
+            onValueChange = { if (it.length <= MAX_NOTE_LENGTH) notes = it },
             label = { Text("Notes for driver (optional)") },
+            supportingText = { Text("${notes.length} / $MAX_NOTE_LENGTH") },
             shape = RoundedCornerShape(14.dp),
             modifier = Modifier.fillMaxWidth()
         )

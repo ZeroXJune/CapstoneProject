@@ -196,13 +196,19 @@ dependencies {
 val buildingRelease = gradle.startParameter.taskNames.any {
     it.contains("release", ignoreCase = true)
 }
+// A warning scrolls past in a long build, and the output is an APK that looks
+// exactly like a real one. Refusing to produce it is the only version of this
+// that cannot end with a debug-signed build in a tester's hands. Debug builds
+// are unaffected: the check only fires for a release task.
 if (buildingRelease && !hasReleaseKeystore) {
-    logger.warn(
+    throw GradleException(
         "\n=====================================================================\n" +
-            "  No release keystore configured. This release build is signed with\n" +
-            "  the debug key and MUST NOT be distributed.\n" +
+            "  No release keystore configured, so this build would be signed with\n" +
+            "  the debug key and could never be updated once installed.\n" +
             "  Set RELEASE_STORE_FILE, RELEASE_STORE_PASSWORD, RELEASE_KEY_ALIAS\n" +
             "  and RELEASE_KEY_PASSWORD in .env — see .env.example.\n" +
+            "  To build the app without signing it, use a debug task instead:\n" +
+            "      ./gradlew assembleDebug\n" +
             "====================================================================="
     )
 }

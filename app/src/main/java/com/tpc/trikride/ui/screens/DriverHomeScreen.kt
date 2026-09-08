@@ -627,9 +627,9 @@ private fun RequestCard(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                Text("👥 ${request.passengerCount} passenger(s)",
+                Text(pluralPassengers(request.passengerCount),
                     style = MaterialTheme.typography.bodySmall)
-                Text("🧳 ${request.luggage}", style = MaterialTheme.typography.bodySmall,
+                Text("Luggage: ${request.luggage}", style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
             if (request.notes.isNotBlank()) {
@@ -730,8 +730,8 @@ private fun ActiveRideContent(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
-                    Text("👥 ${ride.passengerCount} passenger(s)", style = MaterialTheme.typography.bodyMedium)
-                    Text("🧳 ${ride.luggage}", style = MaterialTheme.typography.bodyMedium,
+                    Text(pluralPassengers(ride.passengerCount), style = MaterialTheme.typography.bodyMedium)
+                    Text("Luggage: ${ride.luggage}", style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
                 if (ride.notes.isNotBlank()) {
@@ -996,6 +996,15 @@ private fun NavigationHandoff(ride: Ride) {
         }
     }
 }
+
+/**
+ * "1 passenger" / "3 passengers".
+ *
+ * The emoji these replace carried the meaning — a screen reader announces 👥 as
+ * "busts in silhouette" and reads "passenger(s)" literally.
+ */
+private fun pluralPassengers(count: Int): String =
+    if (count == 1) "1 passenger" else "$count passengers"
 
 private fun statusLabel(status: RideStatus): String = when (status) {
     RideStatus.ACCEPTED -> "Accepted"
