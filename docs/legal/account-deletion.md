@@ -18,7 +18,7 @@ right record.
 - Your profile: name, email, phone number, date of birth, and profile photo.
 - For drivers: license number and expiry, the license photograph, tricycle number, and
   verification status.
-- Saved locations and emergency contacts.
+- Notifications the app has sent you.
 - Your account's sign-in credentials, so nobody can sign in to it again.
 
 ## What is kept, and why
