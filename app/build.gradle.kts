@@ -55,15 +55,14 @@ val hasReleaseKeystore = keystoreFile != null &&
 
 android {
     namespace = "com.tpc.trikride"
-    compileSdk = 35
+    compileSdk = 36
 
     defaultConfig {
         applicationId = "com.tpc.trikride"
         minSdk = 24
-        // Matches compileSdk. Raising it further means Android 16, which needs a
-        // newer Android Gradle Plugin than 8.7.3 — worth doing only if the app is
-        // ever published to Play, which enforces a recent target every August.
-        targetSdk = 35
+        // Matches compileSdk. Play stopped accepting new-app submissions
+        // below API 36 (Android 16) on 31 August 2026.
+        targetSdk = 36
         versionCode = 1
         versionName = "1.0.0"
 
