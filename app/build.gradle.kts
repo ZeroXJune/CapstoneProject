@@ -157,7 +157,6 @@ dependencies {
     implementation("com.google.firebase:firebase-database-ktx")
     implementation("com.google.firebase:firebase-auth-ktx")
     implementation("com.google.firebase:firebase-messaging-ktx")
-    implementation("com.google.firebase:firebase-analytics-ktx")
 
     // Two renderers. Google Maps is used when MAPS_API_KEY is set; osmdroid
     // draws OpenStreetMap tiles when it is not, so the app still shows a map on
