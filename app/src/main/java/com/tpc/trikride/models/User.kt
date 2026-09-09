@@ -1,5 +1,7 @@
 package com.tpc.trikride.models
 
+import com.google.firebase.database.PropertyName
+
 data class User(
     val id: String = "",
     val email: String = "",
@@ -32,6 +34,11 @@ data class Driver(
     val userId: String = "",
     val tricycleNumber: String = "",
     val verificationStatus: VerificationStatus = VerificationStatus.PENDING,
+    // Kotlin compiles this getter as isAvailable() with no "get" prefix, which
+    // Firebase's bean-name reflection would otherwise read back as the
+    // property "available" — silently missing the "isAvailable" field this
+    // app actually writes and leaving every driver stuck reading as offline.
+    @get:PropertyName("isAvailable")
     val isAvailable: Boolean = false,
     val currentLocation: Location? = null,
     val rating: Double = 0.0,
