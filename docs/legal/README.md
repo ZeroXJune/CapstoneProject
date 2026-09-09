@@ -9,6 +9,10 @@ The four documents a TrikRide user agrees to, as issued:
 | [Safety and Community Guidelines](safety-and-community-guidelines.md) | 28 July 2026 | Everyone, at sign-up |
 | [Driver Agreement](driver-agreement.md) | 16 August 2026 | Drivers, after choosing a driver account |
 
+[Account and Data Deletion](account-deletion.md) is a fifth page, published for the same
+reason as the four above but not tied to sign-up: it is the page Google Play's listing
+links to, and it has to work for someone who no longer has the app installed.
+
 These are copies for reading and for printing. The text the app actually shows lives in
 `app/src/main/java/com/tpc/trikride/ui/screens/LegalScreen.kt`, and that is the copy of
 record — it is what a user reads before ticking the box, so if the two ever disagree, the
