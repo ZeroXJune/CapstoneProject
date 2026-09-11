@@ -2185,8 +2185,11 @@ Appendix F; all sixty-one frequency distributions, all sixty-one weighted means,
 thirteen category means, all three overall means and every rank reconcile exactly with
 the returns.
 
-Two departures from the supplied sheets are recorded, both of them corrections of the
-verbal label rather than of any number, and both explained in section G.4.
+Six verbal labels on the supplied sheets do not follow the interpretation legend
+printed at the head of those same sheets, and are corrected here. No number is
+altered. Two of the six change what is reported, and all six are set out in section
+G.4. The workbooks as supplied and as corrected are both retained with the project
+files, alongside the script that derives the second from the first.
 
 [[PB]]
 
