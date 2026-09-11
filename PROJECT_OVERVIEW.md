@@ -188,11 +188,12 @@ also `docs/user-manual.md`, so it can be handed out on its own. They are also in
 `LegalScreen.kt` by `docs/legal/sync.py`, which with `--check` reports whether the two
 have drifted.
 
-Appendix I does not print the source. Nearly fourteen thousand lines across 57 files
-would add roughly three hundred pages to every bound copy, which the budget will not carry.
-It gives the clone URL, a walk-through for retrieving the code with Git or as a ZIP, a note
-on the two credential files that are not in the repository, and the fare engine as a
-representative extract.
+Appendix I prints the source in full: every Kotlin file across the application and its
+tests, the manifest, the Gradle scripts and the database security rules, ordered so that
+each layer appears before the one that uses it. That is a little over fifteen thousand
+lines and adds several hundred pages to a bound copy, which is a printing decision rather
+than a technical one. Only the two credential files are withheld — `google-services.json`
+and `.env` — with `.env.example` recording which keys the second one needs.
 
 Fourteen figures are generated from text in `docs/figures/`: research flow, conceptual
 framework, system architecture, context diagram, DFD level 1, ERD, use case, activity,

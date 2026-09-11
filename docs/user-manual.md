@@ -13,23 +13,19 @@ documentation.
 
 ## Part 1 — Installing the app
 
-TrikRide is not on the Play Store. It is distributed as an installation file, an APK,
-which you receive from the administrator by link or by direct transfer.
+TrikRide is on Google Play. Install it the way you would install any other app.
 
-1. **Get the file.** Download it, or accept it from the administrator. It arrives in your
-   Downloads folder.
-2. **Allow the installation.** Tap the file. Android will refuse the first time and offer
-   a settings screen: turn on **Allow from this source** for whichever app you are
-   installing from, usually Files or Chrome. Go back and tap the file again. This is
-   normal for an app distributed outside the store and only has to be done once.
-3. **Install.** Tap Install, then Open.
-4. **Permissions.** The app asks for location the first time you use a screen that needs
+1. **Open the Play Store** and search for **TrikRide**, or tap the link the administrator
+   gives you.
+2. **Tap Install**, then **Open** when it finishes.
+3. **Permissions.** The app asks for location the first time you use a screen that needs
    it, and for the camera the first time you take a photograph. Both can be declined:
    without location you can still book by choosing your pickup from the list, and without
    the camera you can still choose a photograph from your gallery.
 
-An update is installed the same way, over the top of the existing app. Your account and
-your history are on the server, not on the phone, so nothing is lost.
+Updates arrive through Google Play like any other app, so there is nothing to do to stay
+on the current version. Your account and your history are held on the server rather than
+on the phone, so nothing is lost when the app updates or is installed again.
 
 ---
 
