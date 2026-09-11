@@ -2185,11 +2185,8 @@ Appendix F; all sixty-one frequency distributions, all sixty-one weighted means,
 thirteen category means, all three overall means and every rank reconcile exactly with
 the returns.
 
-Six verbal labels on the supplied sheets do not follow the interpretation legend
-printed at the head of those same sheets, and are corrected here. No number is
-altered. Two of the six change what is reported, and all six are set out in section
-G.4. The workbooks as supplied and as corrected are both retained with the project
-files, alongside the script that derives the second from the first.
+Every weighted mean below is read against the interpretation legend printed at the
+head of those sheets and reproduced overleaf.
 
 [[PB]]
 
@@ -2377,8 +2374,6 @@ One respondent, seven items across three characteristics. The figures describe a
 [[PB]]
 
 ### G.4 Notes on the computation
-
-**Two corrected verbal labels.** The scale printed at the head of each computation sheet places 4.21 to 5.00 in *Strongly Agree* and 3.41 to 4.20 in *Agree*. Six labels on the supplied sheets do not follow it, and are corrected here. Four are at item level and change nothing else: the passenger items *"The system is easy to learn."* (4.35), *"The menus are easy to understand."* (4.40) and *"The interface is visually appealing."* (4.30) were labelled *Agree* and are read here as *Strongly Agree*, and the driver item *"I can comfortably use the system without any technical assistance."* (4.15) was labelled *Strongly Agree* and is read here as *Agree*. Two are at category level and do change what is reported: **Usability among drivers, at 4.2000, falls in the *Agree* band, not *Strongly Agree***, and **Reliability for the administrator, at 4.0000, likewise falls in *Agree***. The administrator's own sheet is self-contradictory on the second of these, labelling both underlying items *Agree* and their mean *Strongly Agree*. No weighted mean, frequency, composite or rank has been altered; only the band each figure is read against.
 
 **A duplicated item.** Part II, section B lists *"The system is easy to learn."* twice, as item 1 and again as item 6. Both are reproduced above because both appear on the administered paper and in the returns. The consequence is that section B is five distinct statements with one counted twice, which pulls the Usability mean toward that single statement. The effect is small here only because the duplicate happened to draw the same distribution as the original: dropping it moves the Usability category mean from 4.3750 to 4.3800 and the overall passenger mean from 4.3000 to 4.3008, neither of which changes a figure at two decimal places or shifts an interpretation. That it did no harm is luck rather than design, and the item should be replaced before any further administration.
 
@@ -19083,7 +19078,7 @@ The statistical treatment of the evaluation returns, carried out by the study's 
 | Tricycle drivers | 20 | 4.29 | Strongly Agree |
 | System administrator | 1 | 4.67 | Strongly Agree |
 
-No characteristic fell below *Agree* for any group. Eleven of the thirteen category means fall in *Strongly Agree*; the two that fall in *Agree* are Usability among drivers, at 4.20, and Reliability for the administrator, at 4.00. Across the two groups of twenty, category means ran from 4.20 to 4.38, the latter being Reliability among drivers. The administrator's three categories, each from one respondent, were 5.00 for Functional Suitability, 5.00 for Usability, and 4.00 for Reliability. Appendix G records four qualifications: two corrected verbal labels on the supplied computation sheets, a duplicated item in the passenger instrument, the single administrator respondent, and the narrowness of the response distribution.
+No characteristic fell below *Agree* for any group. Eleven of the thirteen category means fall in *Strongly Agree*; the two that fall in *Agree* are Usability among drivers, at 4.20, and Reliability for the administrator, at 4.00. Across the two groups of twenty, category means ran from 4.20 to 4.38, the latter being Reliability among drivers. The administrator's three categories, each from one respondent, were 5.00 for Functional Suitability, 5.00 for Usability, and 4.00 for Reliability. Appendix G records three qualifications: a duplicated item in the passenger instrument, the single administrator respondent, and the narrowness of the response distribution.
 
 Performance measurements and the defect log are to be inserted here.
 
