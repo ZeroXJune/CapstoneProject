@@ -1248,7 +1248,7 @@ The application is distributed to users as a signed release package. The signing
 
 The keystore is the single artefact of this project that cannot be regenerated. Android will not accept an update signed by a different key, so a lost keystore means every existing installation has to be removed and replaced under a new package name. It is therefore kept in two locations independent of any one researcher's computer, and is excluded from the repository.
 
-The application is distributed through the **Google Play Store**. Users install it and receive updates the same way they do for any other application on their handset, which removes the need to permit installation from outside the store and the support burden that goes with it. The installation instructions in the user manual, reproduced in Appendix H, are correspondingly short.
+The application is distributed through the **Google Play Store**. Users install it and receive updates the same way they do for any other application on their handset, which removes the need to permit installation from outside the store and the support burden that goes with it. The installation instructions in the user manual, reproduced in Appendix I, are correspondingly short.
 
 Distribution through the store also carries the signing arrangement described above: because Play will only accept an update signed by the same key, the keystore discipline is what keeps the published application updatable.
 
@@ -1330,7 +1330,7 @@ Either format may be saved to a location chosen by the administrator through the
 
 ### Screenshots
 
-System screenshots are presented in Appendix G.
+System screenshots are presented in Appendix H.
 
 [[PB]]
 
@@ -1426,7 +1426,6 @@ Zhang, L., Li, Y., & Chen, X. (2021). Development of mobile ride-hailing platfor
 # APPENDICES
 
 ## Appendix A — Research Instruments
-
 The instruments used in this study are the needs assessment questionnaire, administered before development to document the problems in the current arrangement, and the system evaluation questionnaire, administered after a period of use to evaluate the developed system. The evaluation questionnaire is reproduced in full as Appendix C. The needs assessment questionnaire is reproduced below.
 
 **NEEDS ASSESSMENT QUESTIONNAIRE**
@@ -1476,7 +1475,6 @@ For drivers — How many years have you been driving a tricycle in Talibon? ____
 [[PB]]
 
 ## Appendix B — Letter of Permission
-
 *[Two letters are required and are to be inserted here as signed copies.]*
 
 **Letter 1 — To the College President, Talibon Polytechnic College**, requesting permission to conduct the study within the institution, to administer the needs assessment and evaluation questionnaires to students, and to deploy the application to student respondents for the evaluation period.
@@ -1484,7 +1482,6 @@ For drivers — How many years have you been driving a tricycle in Talibon? ____
 **Letter 2 — To the President, Federation of Tricycle Operators and Drivers Association of Talibon**, requesting permission to conduct the study among member drivers, to administer the questionnaires, to deploy the application to driver respondents, and to reproduce the association's published fare schedule within the application.
 
 ## Appendix C — Survey Questionnaire
-
 **SYSTEM EVALUATION QUESTIONNAIRE**
 
 *A Smart Tricycle Ride and Driver Onboarding System for Talibon Polytechnic College*
@@ -1619,289 +1616,7 @@ Sex: Male ☐  Female ☐    Age: _________
 
 [[PB]]
 
-## Appendix D — Legal Documents Presented In-App
-
-Four documents are carried inside the application and are readable at any time from the
-profile screen. The Terms and Conditions, the Privacy Policy and the Safety and Community
-Guidelines must each be accepted before the service becomes available; the Driver
-Agreement is presented to a driver after they choose a driver account. Acceptance is
-recorded against a version string, so that a revision asks every existing user again on
-their next launch.
-
-They are reproduced below as issued. The text held in the application is the copy of
-record, since it is what a user reads before agreeing; its source is
-`app/src/main/java/com/tpc/trikride/ui/screens/LegalScreen.kt`, and Markdown copies
-generated from it are in `docs/legal/`; the strings themselves appear in Appendix I.
-
-[[PB]]
-
-### D.1 Terms and Conditions
-
-*Effective Date: July 28, 2026*
-
-By creating an account or using TrikRide, you agree to comply with these Terms and Conditions.
-
-**1. Eligibility**
-
-Users must be:
-- Registered students, faculty, or authorized personnel of the participating institution.
-- Registered and approved drivers for driver accounts.
-
-**2. Account Registration**
-
-Users agree to:
-- Provide accurate and complete information.
-- Maintain only one active account unless otherwise authorized.
-- Keep login credentials confidential.
-- Notify the administrator immediately if they suspect unauthorized access to their account.
-
-**3. Ride Booking**
-
-Passengers agree to:
-- Enter accurate pickup and destination locations.
-- Be present at the designated pickup point on time.
-- Treat drivers and fellow passengers with courtesy and respect.
-
-Drivers agree to:
-- Maintain valid registration and any required permits.
-- Arrive at pickup locations promptly whenever possible.
-- Provide safe, respectful, and professional service.
-- Follow all applicable traffic laws and institutional policies.
-
-**4. Prohibited Activities**
-
-Users shall not:
-- Create fake or fraudulent accounts.
-- Impersonate another person.
-- Submit false booking requests.
-- Harass, threaten, or discriminate against other users.
-- Attempt unauthorized access to the system.
-- Use the application for illegal or unlawful activities.
-
-Violations may result in temporary suspension or permanent removal from the TrikRide platform.
-
-**5. Limitation of Liability**
-
-TrikRide is a ride scheduling and driver matching platform. While we strive to provide reliable service, we cannot guarantee uninterrupted availability and are not responsible for delays caused by traffic, weather, vehicle issues, or other circumstances beyond our reasonable control.
-
-**6. Account Suspension**
-
-The system administrator reserves the right to suspend or terminate accounts found to be in violation of these Terms and Conditions.
-
-**7. Intellectual Property**
-
-All application content, including the TrikRide name, logo, interface design, graphics, source code, and documentation, is owned by the TrikRide development team unless otherwise stated. Unauthorized reproduction or distribution is prohibited.
-
-**8. Amendments**
-
-These Terms and Conditions may be updated from time to time. Continued use of TrikRide after changes are published constitutes acceptance of the updated Terms.
-
-**9. Governing Rules**
-
-These Terms shall be governed by applicable Philippine laws and the policies of the participating educational institution.
-
-**10. Acceptance**
-
-By registering and using TrikRide, you confirm that you have read, understood, and agreed to these Terms and Conditions and the Privacy Policy.
-
-[[PB]]
-
-### D.2 Privacy Policy
-
-*Effective Date: August 16, 2026*
-
-**1. Information We Collect**
-
-We collect the information you provide during registration (name, email, phone number, date of birth, and — for drivers — license and tricycle details), an optional profile photo, and information generated while using the app (ride requests, pickup/destination, ride history, and any concerns you report).
-
-Drivers are also asked for a photograph of their driver's license. Under the Data Privacy Act of 2012 (Republic Act No. 10173) a license is sensitive personal information, so it is treated separately from everything else in this policy and is covered by section 9 below. You are asked to agree to it specifically at the moment you send it, not merely by accepting this policy.
-
-**2. How We Use Information**
-
-Your information is used to create your account, match passengers with drivers, price rides, support driver verification, and improve the service.
-
-**3. Location**
-
-Location is used to show pickup/destination and, for drivers, availability. Location is only used while you are using the relevant features of the app.
-
-**4. Data Storage**
-
-Account, ride, and profile photo data are stored in Google Firebase. A profile photo is reduced to a small thumbnail before it is stored. Communications with the server are encrypted in transit. TrikRide does not collect card, bank, or any other payment details; fares are paid in cash directly to the driver.
-
-**5. Sharing**
-
-A passenger's ride details are shared with the assigned driver (and vice versa) to complete the ride. Administrators can view driver records and ride logs to operate and monitor the service. We do not sell your personal information.
-
-**6. Your Choices**
-
-You can edit your profile details and sign out at any time. You may request account concerns or corrections through the Support feature.
-
-**7. Children**
-
-The service is intended for members of the college community and is not directed at children under 13.
-
-**8. Contact**
-
-For privacy questions, contact the TrikRide support hotline listed in the app.
-
-**9. Driver's License Photographs**
-
-This section applies only to drivers, and only to the photograph of the license itself.
-
-Purpose. The photograph is used for one thing: to confirm that the person applying to carry passengers holds the license they say they hold, and to check it again when that license expires. It is not used for anything else.
-
-Who can see it. You, and a TrikRide administrator. It is never shown to passengers, never attached to a ride, and never included in any exported report.
-
-How long we keep it. If your application is refused, the photograph is deleted at the moment of that decision. If you are approved, it is kept while your account is active, because it is needed again at renewal and if a concern about a ride is ever disputed. Withdrawing an approval already given is not the same as refusing an application and does not delete the photograph, for that same reason. It is deleted with your account.
-
-Your control. You may remove the photograph yourself at any time from your driver profile. Removing it means you cannot be approved to carry passengers until you provide another one.
-
-How it is stored. Separately from your account record, so that ordinary use of the app never reads it, and reduced in size before it is stored. Communications are encrypted in transit.
-
-[[PB]]
-
-### D.3 Safety and Community Guidelines
-
-*Effective Date: July 28, 2026*
-
-**Our Commitment**
-
-TrikRide is committed to providing a safe, respectful, and reliable transportation environment for students, drivers, faculty, and staff.
-
-**Respect Everyone**
-
-- Treat all users with courtesy and professionalism.
-- Avoid abusive, offensive, discriminatory, or threatening language.
-- Respect personal space and privacy.
-
-**Safe Riding**
-
-- Wait at the designated pickup location.
-- Verify the driver's identity before boarding.
-- Follow the driver's safety instructions during the trip.
-- Remain seated while the vehicle is moving.
-- Do not distract the driver while driving.
-
-**Driver Responsibilities**
-
-Drivers are expected to:
-- Drive safely and obey all traffic laws.
-- Maintain a roadworthy and clean vehicle.
-- Arrive at pickup locations as promptly as possible.
-- Treat every passenger fairly and respectfully.
-- Never operate a vehicle while under the influence of alcohol or illegal drugs.
-
-**Passenger Responsibilities**
-
-Passengers are expected to:
-- Arrive on time for scheduled pickups.
-- Respect the driver's vehicle and property.
-- Avoid behavior that may endanger others.
-- Report emergencies or unsafe situations immediately.
-
-**Prohibited Conduct**
-
-The following are strictly prohibited:
-- Violence or physical assault.
-- Sexual harassment or misconduct.
-- Bullying, intimidation, or discrimination.
-- Possession or use of illegal drugs.
-- Carrying dangerous weapons or prohibited items.
-- Vandalism or intentional damage to vehicles.
-- Providing false information or fake bookings.
-
-**Reporting Safety Concerns**
-
-Users are encouraged to report:
-- Unsafe driving.
-- Harassment or inappropriate behavior.
-- Fake accounts or fraudulent activities.
-- Vehicle safety issues.
-- Lost belongings.
-
-Reports will be reviewed by authorized administrators, and appropriate action may be taken. Use the Support tab to file a report.
-
-**Account Enforcement**
-
-Violations of these Community Guidelines may result in:
-- Warning notices.
-- Temporary account suspension.
-- Permanent account removal.
-- Referral to school authorities or law enforcement when necessary.
-
-By using TrikRide, all users agree to help maintain a safe, respectful, and welcoming community.
-
-[[PB]]
-
-### D.4 Driver Agreement
-
-*Effective Date: August 16, 2026*
-
-This Driver Agreement establishes the responsibilities and expectations for all drivers using the TrikRide platform.
-
-**Driver Eligibility**
-
-To become a TrikRide driver, you must:
-- Be at least 18 years old.
-- Possess a valid driver's license appropriate for the vehicle operated.
-- Operate a legally registered tricycle or authorized vehicle.
-- Submit a legible photograph of that license for verification, and keep a current one on file.
-- Complete the registration and verification process required by TrikRide.
-
-**Your License Photograph**
-
-The photograph you submit is checked by an administrator against the license details you entered, and again when the license expires. Only you and an administrator can view it; it is never shown to passengers. If your application is refused it is deleted immediately. If you are approved it is kept while your account is active and deleted with the account; that remains so if your approval is later withdrawn, since the reason for withdrawing it may itself need to be evidenced. You may remove it yourself at any time, though you cannot carry passengers without one on file. Section 9 of the Privacy Policy sets this out in full.
-
-TrikRide checks that a document was presented and that it matches what you entered. It does not and cannot confirm with the Land Transportation Office that a license is current or has not been suspended. Driving on a valid license remains your responsibility, and submitting a false or altered document ends your access to the platform.
-
-**Driver Responsibilities**
-
-Drivers agree to:
-- Provide accurate personal and vehicle information.
-- Keep account information updated.
-- Drive safely and comply with all traffic laws.
-- Treat all passengers respectfully and without discrimination.
-- Arrive at pickup locations as promptly as possible.
-- Notify passengers through the app if delays occur.
-- Maintain a clean and safe vehicle.
-
-**Professional Conduct**
-
-Drivers shall:
-- Wear appropriate attire while providing transportation services.
-- Avoid abusive or inappropriate language.
-- Respect passenger privacy.
-- Never ask for personal information unrelated to the ride.
-
-**Safety Requirements**
-
-Drivers shall never:
-- Drive while under the influence of alcohol or illegal drugs.
-- Allow unauthorized persons to operate their registered vehicle.
-- Accept bookings using another driver's account.
-- Endanger passengers through reckless driving.
-
-**Account Suspension or Termination**
-
-TrikRide may suspend or terminate a driver's account for:
-- Repeated complaints.
-- Unsafe driving practices.
-- Fraudulent activity.
-- Submission of false documents.
-- Violation of this Agreement or applicable laws.
-
-**Limitation of Responsibility**
-
-Drivers acknowledge that TrikRide functions as a ride scheduling and matching platform. Drivers remain responsible for complying with all traffic regulations and for the safe operation of their vehicles.
-
-**Agreement**
-
-By registering as a TrikRide driver, you confirm that you have read, understood, and agreed to abide by this Driver Agreement.
-
-[[PB]]
-
-## Appendix E — Interview Guide
-
+## Appendix D — Interview Guide
 Semi-structured interviews are to be conducted with officers of the drivers' association and with a subset of driver-respondents, to obtain context that a rating scale cannot capture.
 
 **For officers of the Federation of Tricycle Operators and Drivers Association of Talibon**
@@ -1926,12 +1641,518 @@ Semi-structured interviews are to be conducted with officers of the drivers' ass
 2. Before this study, did you know there was an official fare schedule?
 3. What would make you go back to hailing at the roadside instead of using the application?
 
-## Appendix F — Evaluation Forms
-
+## Appendix E — Evaluation Forms
 The evaluation form administered to respondents is the System Evaluation Questionnaire reproduced as Appendix C. The content validation form completed by the research adviser and subject matter experts, and the pilot test feedback form, are to be inserted here as signed copies.
 
-## Appendix G — System Screenshots
+## Appendix F — Raw Data
+The responses exactly as they were entered, one row per questionnaire. Item columns carry the weight the respondent ticked, 1 to 5; a blank means the respondent skipped that item and it is excluded from that item's mean rather than counted as a zero. No cell was blank in this administration. Names were optional and none were given, so the respondent number is the only identifier.
 
+Forty-one questionnaires were returned: twenty from student passengers, twenty from tricycle drivers, and one from the system administrator.
+
+[[PB]]
+
+### F.1 Student passengers — respondent profile
+
+| No. | Age | Gender | Course | Year level | Frequency of tricycle use | Average rides per week |
+|:---|---:|:---|:---|:---|:---|:---|
+| 1 | 18 | Female | BSAIS | 2nd Year | Sometimes | 1 – 5 |
+| 2 | 20 | Female | BSA | 3rd Year | Sometimes | 11 – 15 |
+| 3 | 19 | Female | BSAIS | 2nd Year | Sometimes | 1 – 5 |
+| 4 | 19 | Female | BSAIS | 2nd Year | Often | 1 – 5 |
+| 5 | 18 | Female | BECED | 2nd Year | Rarely | 1 – 5 |
+| 6 | 18 | Male | BECED | 1st Year | Rarely | 1 – 5 |
+| 7 | 19 | Female | BECED | 2nd Year | Every Day | 1 – 5 |
+| 8 | 21 | Male | BSIS | 3rd Year | Rarely | 1 – 5 |
+| 9 | 20 | Male | BSIS | 3rd Year | Every Day | 16 - 20 |
+| 10 | 19 | Male | BSIS | 3rd Year | Rarely | 1 – 5 |
+| 11 | 22 | Male | BSIS | 3rd Year | Sometimes | 1 – 5 |
+| 12 | 21 | Male | BSIS | 3rd Year | Rarely | 1 – 5 |
+| 13 | 20 | Female | BSIS | 3rd Year | Sometimes | 1 – 5 |
+| 14 | 19 | Male | BSIS | 3rd Year | Sometimes | 6 – 10 |
+| 15 | 21 | Female | BSIS | 3rd Year | Sometimes | 1 – 5 |
+| 16 | 20 | Female | BSIS | 3rd Year | Sometimes | 1 – 5 |
+| 17 | 20 | Female | BSIS | 3rd Year | Every Day | 11 – 15 |
+| 18 | 21 | Female | BSIS | 3rd Year | Rarely | 1 – 5 |
+| 19 | 20 | Male | BSIS | 3rd Year | Rarely | 1 – 5 |
+| 20 | 19 | Female | BSAIS | 2nd Year | Every Day | 6 – 10 |
+
+### F.2 Student passengers — item responses
+
+**A. Functional Suitability**
+
+| No. | A1 | A2 | A3 | A4 | A5 | A6 | A7 | A8 |
+|:---|---:|---:|---:|---:|---:|---:|---:|---:|
+| 1 | 5 | 4 | 5 | 5 | 5 | 4 | 4 | 4 |
+| 2 | 4 | 4 | 5 | 5 | 5 | 5 | 5 | 5 |
+| 3 | 5 | 4 | 4 | 4 | 5 | 4 | 4 | 4 |
+| 4 | 4 | 4 | 4 | 4 | 3 | 4 | 4 | 4 |
+| 5 | 4 | 4 | 5 | 4 | 4 | 4 | 4 | 4 |
+| 6 | 4 | 4 | 3 | 4 | 4 | 4 | 4 | 4 |
+| 7 | 4 | 4 | 5 | 3 | 4 | 4 | 4 | 4 |
+| 8 | 4 | 4 | 4 | 4 | 5 | 4 | 4 | 5 |
+| 9 | 4 | 4 | 4 | 3 | 4 | 4 | 4 | 4 |
+| 10 | 3 | 4 | 4 | 4 | 4 | 5 | 4 | 4 |
+| 11 | 4 | 4 | 5 | 4 | 5 | 4 | 4 | 4 |
+| 12 | 4 | 4 | 5 | 4 | 5 | 4 | 5 | 5 |
+| 13 | 4 | 4 | 5 | 5 | 4 | 4 | 5 | 4 |
+| 14 | 4 | 5 | 5 | 4 | 5 | 4 | 4 | 4 |
+| 15 | 4 | 4 | 4 | 4 | 4 | 4 | 4 | 4 |
+| 16 | 4 | 4 | 4 | 4 | 4 | 5 | 4 | 4 |
+| 17 | 4 | 4 | 5 | 4 | 4 | 5 | 4 | 4 |
+| 18 | 5 | 4 | 4 | 4 | 4 | 4 | 4 | 4 |
+| 19 | 4 | 4 | 4 | 4 | 5 | 4 | 5 | 5 |
+| 20 | 4 | 4 | 5 | 5 | 5 | 5 | 5 | 4 |
+
+**B. Usability**
+
+| No. | B1 | B2 | B3 | B4 | B5 | B6 |
+|:---|---:|---:|---:|---:|---:|---:|
+| 1 | 5 | 5 | 5 | 5 | 5 | 5 |
+| 2 | 4 | 4 | 5 | 5 | 5 | 4 |
+| 3 | 4 | 4 | 4 | 4 | 4 | 4 |
+| 4 | 4 | 4 | 4 | 4 | 4 | 4 |
+| 5 | 4 | 4 | 4 | 4 | 4 | 4 |
+| 6 | 5 | 4 | 4 | 3 | 4 | 4 |
+| 7 | 5 | 5 | 4 | 5 | 5 | 4 |
+| 8 | 5 | 5 | 4 | 5 | 4 | 5 |
+| 9 | 4 | 5 | 4 | 4 | 4 | 4 |
+| 10 | 4 | 4 | 4 | 4 | 5 | 4 |
+| 11 | 4 | 5 | 5 | 4 | 5 | 4 |
+| 12 | 4 | 4 | 4 | 4 | 4 | 4 |
+| 13 | 4 | 4 | 4 | 4 | 4 | 4 |
+| 14 | 4 | 5 | 5 | 5 | 5 | 5 |
+| 15 | 4 | 4 | 4 | 4 | 4 | 4 |
+| 16 | 4 | 4 | 5 | 4 | 5 | 4 |
+| 17 | 5 | 4 | 4 | 5 | 4 | 5 |
+| 18 | 5 | 5 | 5 | 4 | 5 | 5 |
+| 19 | 5 | 5 | 5 | 5 | 5 | 5 |
+| 20 | 4 | 4 | 5 | 4 | 4 | 5 |
+
+**C. Efficiency**
+
+| No. | C1 | C2 | C3 | C4 | C5 |
+|:---|---:|---:|---:|---:|---:|
+| 1 | 4 | 4 | 4 | 5 | 5 |
+| 2 | 4 | 4 | 3 | 3 | 4 |
+| 3 | 4 | 4 | 4 | 4 | 4 |
+| 4 | 5 | 4 | 4 | 4 | 5 |
+| 5 | 4 | 4 | 4 | 4 | 4 |
+| 6 | 4 | 4 | 4 | 4 | 4 |
+| 7 | 5 | 4 | 4 | 5 | 5 |
+| 8 | 5 | 5 | 4 | 5 | 4 |
+| 9 | 4 | 4 | 4 | 4 | 4 |
+| 10 | 4 | 4 | 3 | 4 | 4 |
+| 11 | 4 | 4 | 4 | 5 | 5 |
+| 12 | 4 | 4 | 4 | 4 | 4 |
+| 13 | 5 | 5 | 5 | 4 | 4 |
+| 14 | 5 | 4 | 4 | 5 | 5 |
+| 15 | 4 | 4 | 4 | 4 | 4 |
+| 16 | 4 | 4 | 4 | 4 | 4 |
+| 17 | 4 | 5 | 4 | 4 | 4 |
+| 18 | 4 | 4 | 5 | 5 | 5 |
+| 19 | 5 | 5 | 5 | 5 | 5 |
+| 20 | 4 | 4 | 4 | 4 | 5 |
+
+**D. Reliability**
+
+| No. | D1 | D2 | D3 | D4 | D5 |
+|:---|---:|---:|---:|---:|---:|
+| 1 | 4 | 5 | 4 | 4 | 4 |
+| 2 | 5 | 4 | 4 | 4 | 5 |
+| 3 | 4 | 4 | 4 | 4 | 4 |
+| 4 | 4 | 5 | 4 | 4 | 4 |
+| 5 | 4 | 4 | 4 | 4 | 4 |
+| 6 | 4 | 4 | 4 | 4 | 4 |
+| 7 | 5 | 4 | 5 | 5 | 5 |
+| 8 | 5 | 5 | 4 | 5 | 4 |
+| 9 | 4 | 4 | 4 | 4 | 4 |
+| 10 | 5 | 5 | 4 | 4 | 5 |
+| 11 | 5 | 4 | 5 | 4 | 4 |
+| 12 | 4 | 4 | 4 | 4 | 4 |
+| 13 | 4 | 4 | 4 | 4 | 4 |
+| 14 | 5 | 4 | 4 | 5 | 4 |
+| 15 | 4 | 4 | 4 | 4 | 5 |
+| 16 | 4 | 4 | 4 | 4 | 4 |
+| 17 | 4 | 4 | 5 | 4 | 4 |
+| 18 | 5 | 4 | 4 | 4 | 5 |
+| 19 | 5 | 4 | 5 | 4 | 5 |
+| 20 | 4 | 4 | 5 | 4 | 4 |
+
+**E. Security**
+
+| No. | E1 | E2 | E3 | E4 | E5 |
+|:---|---:|---:|---:|---:|---:|
+| 1 | 5 | 5 | 5 | 5 | 5 |
+| 2 | 4 | 4 | 3 | 3 | 4 |
+| 3 | 4 | 4 | 4 | 4 | 4 |
+| 4 | 4 | 5 | 5 | 5 | 5 |
+| 5 | 4 | 4 | 4 | 4 | 4 |
+| 6 | 4 | 4 | 4 | 4 | 4 |
+| 7 | 4 | 4 | 5 | 5 | 4 |
+| 8 | 5 | 5 | 4 | 4 | 5 |
+| 9 | 4 | 4 | 4 | 5 | 4 |
+| 10 | 4 | 4 | 5 | 4 | 4 |
+| 11 | 4 | 5 | 4 | 5 | 5 |
+| 12 | 4 | 4 | 4 | 4 | 4 |
+| 13 | 4 | 4 | 4 | 4 | 4 |
+| 14 | 5 | 5 | 4 | 5 | 4 |
+| 15 | 5 | 5 | 4 | 4 | 5 |
+| 16 | 4 | 4 | 4 | 3 | 4 |
+| 17 | 5 | 4 | 4 | 5 | 5 |
+| 18 | 5 | 5 | 5 | 5 | 4 |
+| 19 | 5 | 5 | 5 | 5 | 5 |
+| 20 | 4 | 4 | 4 | 4 | 4 |
+
+**F. Overall Satisfaction**
+
+| No. | F1 | F2 | F3 | F4 | F5 |
+|:---|---:|---:|---:|---:|---:|
+| 1 | 5 | 5 | 5 | 5 | 5 |
+| 2 | 5 | 5 | 5 | 5 | 5 |
+| 3 | 5 | 5 | 5 | 5 | 5 |
+| 4 | 4 | 4 | 4 | 5 | 4 |
+| 5 | 4 | 4 | 4 | 4 | 4 |
+| 6 | 4 | 4 | 4 | 4 | 4 |
+| 7 | 5 | 4 | 4 | 4 | 4 |
+| 8 | 5 | 4 | 4 | 5 | 5 |
+| 9 | 4 | 4 | 4 | 4 | 4 |
+| 10 | 4 | 4 | 4 | 5 | 5 |
+| 11 | 4 | 5 | 5 | 4 | 4 |
+| 12 | 4 | 4 | 4 | 4 | 4 |
+| 13 | 4 | 4 | 4 | 4 | 4 |
+| 14 | 5 | 5 | 4 | 5 | 5 |
+| 15 | 4 | 4 | 4 | 5 | 4 |
+| 16 | 4 | 4 | 4 | 4 | 4 |
+| 17 | 4 | 4 | 5 | 4 | 4 |
+| 18 | 5 | 5 | 5 | 5 | 4 |
+| 19 | 5 | 4 | 4 | 4 | 4 |
+| 20 | 4 | 4 | 4 | 4 | 4 |
+
+[[PB]]
+
+### F.3 Tricycle drivers — respondent profile
+
+| No. | Age | Gender | Years driving | Owns smartphone | Internet access | Average trips per day |
+|:---|---:|:---|:---|:---|:---|:---|
+| 1 | 50 | Male | More than 10 years | Yes | Yes | 21 or more |
+| 2 | 41 | Male | 7 - 10 years | Yes | Yes | 11 – 15 |
+| 3 | 58 | Male | More than 10 years | Yes | Yes | 6 – 10 |
+| 4 | 45 | Male | 7 - 10 years | Yes | Yes | 6 – 10 |
+| 5 | 64 | Male | More than 10 years | Yes | Yes | 1 – 5 |
+| 6 | 54 | Male | More than 10 years | Yes | Yes | 6 – 10 |
+| 7 | 48 | Male | More than 10 years | Yes | Yes | 6 – 10 |
+| 8 | 45 | Male | 1 - 3 years | Yes | Yes | 1 – 5 |
+| 9 | 68 | Male | More than 10 years | Yes | Yes | 1 – 5 |
+| 10 | 56 | Male | More than 10 years | Yes | Yes | 1 – 5 |
+| 11 | 45 | Male | 7 - 10 years | Yes | Yes | 1 – 5 |
+| 12 | 67 | Male | More than 10 years | Yes | Yes | 1 – 5 |
+| 13 | 42 | Male | More than 10 years | Yes | Yes | 6 – 10 |
+| 14 | 50 | Male | More than 10 years | Yes | Yes | 1 – 5 |
+| 15 | 60 | Male | More than 10 years | Yes | Yes | 6 – 10 |
+| 16 | 59 | Male | Less than 1 year | Yes | Yes | 6 – 10 |
+| 17 | 67 | Male | More than 10 years | Yes | Yes | 1 – 5 |
+| 18 | 56 | Male | 4 - 6 years | Yes | Yes | 6 – 10 |
+| 19 | 38 | Male | 7 - 10 years | Yes | Yes | 1 – 5 |
+| 20 | 52 | Male | More than 10 years | Yes | Yes | 6 – 10 |
+
+### F.4 Tricycle drivers — item responses
+
+**A. Usability**
+
+| No. | A1 | A2 | A3 | A4 | A5 |
+|:---|---:|---:|---:|---:|---:|
+| 1 | 4 | 4 | 5 | 4 | 5 |
+| 2 | 3 | 3 | 4 | 4 | 4 |
+| 3 | 4 | 4 | 4 | 4 | 4 |
+| 4 | 5 | 4 | 5 | 4 | 3 |
+| 5 | 5 | 4 | 4 | 4 | 4 |
+| 6 | 5 | 5 | 5 | 5 | 5 |
+| 7 | 4 | 4 | 4 | 4 | 4 |
+| 8 | 5 | 4 | 4 | 4 | 4 |
+| 9 | 5 | 4 | 5 | 4 | 4 |
+| 10 | 5 | 4 | 4 | 4 | 4 |
+| 11 | 4 | 4 | 4 | 4 | 4 |
+| 12 | 4 | 4 | 4 | 4 | 4 |
+| 13 | 4 | 4 | 5 | 4 | 5 |
+| 14 | 4 | 4 | 4 | 4 | 5 |
+| 15 | 4 | 4 | 4 | 3 | 3 |
+| 16 | 4 | 5 | 4 | 5 | 4 |
+| 17 | 4 | 4 | 4 | 4 | 4 |
+| 18 | 4 | 4 | 4 | 4 | 4 |
+| 19 | 5 | 5 | 5 | 5 | 5 |
+| 20 | 5 | 4 | 4 | 4 | 4 |
+
+**B. Functionality**
+
+| No. | B1 | B2 | B3 | B4 | B5 |
+|:---|---:|---:|---:|---:|---:|
+| 1 | 5 | 5 | 4 | 5 | 4 |
+| 2 | 4 | 3 | 4 | 4 | 5 |
+| 3 | 4 | 5 | 4 | 4 | 5 |
+| 4 | 5 | 5 | 5 | 4 | 5 |
+| 5 | 4 | 4 | 4 | 4 | 4 |
+| 6 | 5 | 5 | 5 | 5 | 5 |
+| 7 | 4 | 4 | 4 | 4 | 4 |
+| 8 | 4 | 4 | 4 | 4 | 4 |
+| 9 | 4 | 5 | 5 | 4 | 3 |
+| 10 | 4 | 4 | 4 | 3 | 4 |
+| 11 | 4 | 4 | 4 | 4 | 4 |
+| 12 | 4 | 4 | 4 | 4 | 4 |
+| 13 | 4 | 4 | 5 | 4 | 5 |
+| 14 | 5 | 5 | 4 | 4 | 3 |
+| 15 | 4 | 4 | 4 | 5 | 5 |
+| 16 | 5 | 5 | 4 | 5 | 5 |
+| 17 | 4 | 4 | 4 | 4 | 4 |
+| 18 | 4 | 4 | 4 | 4 | 4 |
+| 19 | 5 | 5 | 5 | 5 | 5 |
+| 20 | 4 | 4 | 4 | 4 | 4 |
+
+**C. Efficiency**
+
+| No. | C1 | C2 | C3 | C4 | C5 |
+|:---|---:|---:|---:|---:|---:|
+| 1 | 5 | 4 | 5 | 4 | 5 |
+| 2 | 4 | 5 | 4 | 5 | 4 |
+| 3 | 4 | 4 | 4 | 5 | 4 |
+| 4 | 5 | 4 | 4 | 5 | 4 |
+| 5 | 4 | 4 | 4 | 4 | 4 |
+| 6 | 5 | 5 | 5 | 5 | 5 |
+| 7 | 4 | 4 | 4 | 4 | 4 |
+| 8 | 4 | 4 | 4 | 5 | 5 |
+| 9 | 4 | 5 | 4 | 4 | 3 |
+| 10 | 4 | 4 | 4 | 4 | 5 |
+| 11 | 4 | 4 | 4 | 4 | 4 |
+| 12 | 4 | 4 | 4 | 4 | 4 |
+| 13 | 4 | 5 | 5 | 5 | 4 |
+| 14 | 5 | 5 | 4 | 4 | 5 |
+| 15 | 4 | 4 | 3 | 3 | 5 |
+| 16 | 4 | 5 | 4 | 4 | 4 |
+| 17 | 4 | 4 | 4 | 4 | 4 |
+| 18 | 4 | 4 | 4 | 4 | 4 |
+| 19 | 5 | 5 | 5 | 5 | 5 |
+| 20 | 4 | 4 | 4 | 5 | 4 |
+
+**D. Reliability**
+
+| No. | D1 | D2 | D3 | D4 | D5 |
+|:---|---:|---:|---:|---:|---:|
+| 1 | 4 | 5 | 4 | 5 | 5 |
+| 2 | 5 | 4 | 5 | 3 | 5 |
+| 3 | 5 | 4 | 4 | 5 | 4 |
+| 4 | 5 | 5 | 4 | 4 | 5 |
+| 5 | 4 | 4 | 4 | 4 | 5 |
+| 6 | 5 | 5 | 5 | 5 | 5 |
+| 7 | 4 | 4 | 4 | 4 | 4 |
+| 8 | 5 | 5 | 4 | 4 | 5 |
+| 9 | 4 | 4 | 5 | 4 | 5 |
+| 10 | 5 | 4 | 4 | 4 | 4 |
+| 11 | 4 | 4 | 4 | 4 | 4 |
+| 12 | 4 | 4 | 4 | 4 | 5 |
+| 13 | 4 | 4 | 4 | 5 | 4 |
+| 14 | 5 | 4 | 4 | 4 | 4 |
+| 15 | 5 | 4 | 4 | 5 | 4 |
+| 16 | 5 | 5 | 5 | 4 | 4 |
+| 17 | 4 | 4 | 4 | 4 | 4 |
+| 18 | 4 | 4 | 4 | 4 | 4 |
+| 19 | 5 | 5 | 5 | 5 | 5 |
+| 20 | 4 | 5 | 5 | 5 | 4 |
+
+### F.5 System administrator — profile and item responses
+
+| No. | Age | Gender | A1 | A2 | A3 | B1 | B2 | C1 | C2 |
+|:---|---:|:---|---:|---:|---:|---:|---:|---:|---:|
+| 1 | 22 | Male | 5 | 5 | 5 | 5 | 5 | 4 | 4 |
+
+## Appendix G — Statistical Computation
+[[PB]]
+
+
+Each item was scored on the five-point scale printed on the questionnaire. The weighted mean of an item is the sum of the weights given to it divided by the number of respondents who answered it:
+
+$$\bar{x} = \frac{\sum_{i=1}^{5} w_i f_i}{N}$$
+
+where $w_i$ is the weight, 5 down to 1; $f_i$ the number of respondents who chose it; and $N$ the number who answered the item. Each resulting mean is read against the same scale.
+
+| Weight | Weighted mean | Response |
+|---:|:---|:---|
+| 5 | 4.21 – 5.00 | Strongly Agree |
+| 4 | 3.41 – 4.20 | Agree |
+| 3 | 2.61 – 3.40 | Neutral |
+| 2 | 1.81 – 2.60 | Disagree |
+| 1 | 1.00 – 1.80 | Strongly Disagree |
+
+A category mean is the mean of the item means within that category. The overall weighted mean is the mean of the category means, so that each quality characteristic counts equally regardless of how many items measure it. Averaging every item equally instead gives 4.2956 for the passengers against 4.3000 by category, and leaves the driver figure at 4.2850 either way, so the choice does not affect any interpretation here.
+
+[[PB]]
+
+### G.1 Student passengers
+
+Twenty respondents, thirty-four items across six characteristics.
+
+**A. Functional Suitability**
+
+| # | Indicator | 5 | 4 | 3 | 2 | 1 | N | WM | Interpretation |
+|:---|:---|---:|---:|---:|---:|---:|---:|---:|:---|
+| 1 | The ride booking feature works as expected. | 3 | 16 | 1 | 0 | 0 | 20 | 4.10 | Agree |
+| 2 | I receive timely notifications about my ride status. | 1 | 19 | 0 | 0 | 0 | 20 | 4.05 | Agree |
+| 3 | The system accurately matches me with an available driver. | 10 | 9 | 1 | 0 | 0 | 20 | 4.45 | Strongly Agree |
+| 4 | I can view the status of my booking in real time. | 4 | 14 | 2 | 0 | 0 | 20 | 4.10 | Agree |
+| 5 | The system performs all its intended functions correctly. | 9 | 10 | 1 | 0 | 0 | 20 | 4.40 | Strongly Agree |
+| 6 | The fare displayed is accurate. | 5 | 15 | 0 | 0 | 0 | 20 | 4.25 | Strongly Agree |
+| 7 | Driver information is correctly displayed. | 5 | 15 | 0 | 0 | 0 | 20 | 4.25 | Strongly Agree |
+| 8 | Ride history is properly recorded. | 4 | 16 | 0 | 0 | 0 | 20 | 4.20 | Agree |
+| | **Category mean — A. Functional Suitability** | | | | | | | **4.22** | **Strongly Agree** |
+
+**B. Usability**
+
+| # | Indicator | 5 | 4 | 3 | 2 | 1 | N | WM | Interpretation |
+|:---|:---|---:|---:|---:|---:|---:|---:|---:|:---|
+| 1 | The system is easy to learn. | 7 | 13 | 0 | 0 | 0 | 20 | 4.35 | Strongly Agree |
+| 2 | The menus are easy to understand. | 8 | 12 | 0 | 0 | 0 | 20 | 4.40 | Strongly Agree |
+| 3 | Icons and buttons are properly labeled. | 8 | 12 | 0 | 0 | 0 | 20 | 4.40 | Strongly Agree |
+| 4 | The interface is visually appealing. | 7 | 12 | 1 | 0 | 0 | 20 | 4.30 | Strongly Agree |
+| 5 | I can complete my tasks without confusion. | 9 | 11 | 0 | 0 | 0 | 20 | 4.45 | Strongly Agree |
+| 6 | The system is easy to learn. | 7 | 13 | 0 | 0 | 0 | 20 | 4.35 | Strongly Agree |
+| | **Category mean — B. Usability** | | | | | | | **4.38** | **Strongly Agree** |
+
+**C. Efficiency**
+
+| # | Indicator | 5 | 4 | 3 | 2 | 1 | N | WM | Interpretation |
+|:---|:---|---:|---:|---:|---:|---:|---:|---:|:---|
+| 1 | The application loads quickly. | 6 | 14 | 0 | 0 | 0 | 20 | 4.30 | Strongly Agree |
+| 2 | Booking requests are processed immediately. | 4 | 16 | 0 | 0 | 0 | 20 | 4.20 | Agree |
+| 3 | Notifications arrive without delay. | 3 | 15 | 2 | 0 | 0 | 20 | 4.05 | Agree |
+| 4 | The system performs smoothly. | 7 | 12 | 1 | 0 | 0 | 20 | 4.30 | Strongly Agree |
+| 5 | The application consumes minimal mobile resources. | 8 | 12 | 0 | 0 | 0 | 20 | 4.40 | Strongly Agree |
+| | **Category mean — C. Efficiency** | | | | | | | **4.25** | **Strongly Agree** |
+
+**D. Reliability**
+
+| # | Indicator | 5 | 4 | 3 | 2 | 1 | N | WM | Interpretation |
+|:---|:---|---:|---:|---:|---:|---:|---:|---:|:---|
+| 1 | The system recovers properly after connection interruptions. | 8 | 12 | 0 | 0 | 0 | 20 | 4.40 | Strongly Agree |
+| 2 | I can depend on the system to connect me with a driver when needed. | 4 | 16 | 0 | 0 | 0 | 20 | 4.20 | Agree |
+| 3 | The system maintains accurate and up-to-date information. | 5 | 15 | 0 | 0 | 0 | 20 | 4.25 | Strongly Agree |
+| 4 | The system performs well even during peak hours. | 3 | 17 | 0 | 0 | 0 | 20 | 4.15 | Agree |
+| 5 | I trust the system to provide a safe and reliable ride booking experience. | 6 | 14 | 0 | 0 | 0 | 20 | 4.30 | Strongly Agree |
+| | **Category mean — D. Reliability** | | | | | | | **4.26** | **Strongly Agree** |
+
+**E. Security**
+
+| # | Indicator | 5 | 4 | 3 | 2 | 1 | N | WM | Interpretation |
+|:---|:---|---:|---:|---:|---:|---:|---:|---:|:---|
+| 1 | I feel that my personal information is protected. | 7 | 13 | 0 | 0 | 0 | 20 | 4.35 | Strongly Agree |
+| 2 | The login process is secure. | 8 | 12 | 0 | 0 | 0 | 20 | 4.40 | Strongly Agree |
+| 3 | Only authorized users can access their accounts. | 6 | 13 | 1 | 0 | 0 | 20 | 4.25 | Strongly Agree |
+| 4 | Driver information is securely stored. | 9 | 9 | 2 | 0 | 0 | 20 | 4.35 | Strongly Agree |
+| 5 | I trust the system to protect my data. | 7 | 13 | 0 | 0 | 0 | 20 | 4.35 | Strongly Agree |
+| | **Category mean — E. Security** | | | | | | | **4.34** | **Strongly Agree** |
+
+**F. Overall Satisfaction**
+
+| # | Indicator | 5 | 4 | 3 | 2 | 1 | N | WM | Interpretation |
+|:---|:---|---:|---:|---:|---:|---:|---:|---:|:---|
+| 1 | I am satisfied with the overall performance of the system. | 8 | 12 | 0 | 0 | 0 | 20 | 4.40 | Strongly Agree |
+| 2 | I would recommend this system to others. | 6 | 14 | 0 | 0 | 0 | 20 | 4.30 | Strongly Agree |
+| 3 | I intend to continue using the system. | 6 | 14 | 0 | 0 | 0 | 20 | 4.30 | Strongly Agree |
+| 4 | The system meets my expectations. | 9 | 11 | 0 | 0 | 0 | 20 | 4.45 | Strongly Agree |
+| 5 | Overall, I rate the system as effective. | 6 | 14 | 0 | 0 | 0 | 20 | 4.30 | Strongly Agree |
+| | **Category mean — F. Overall Satisfaction** | | | | | | | **4.35** | **Strongly Agree** |
+
+**Overall weighted mean — 4.30, Strongly Agree**
+
+[[PB]]
+
+### G.2 Tricycle drivers
+
+Twenty respondents, twenty items across four characteristics.
+
+**A. Usability**
+
+| # | Indicator | 5 | 4 | 3 | 2 | 1 | N | WM | Interpretation |
+|:---|:---|---:|---:|---:|---:|---:|---:|---:|:---|
+| 1 | The system is easy to navigate and use. | 8 | 11 | 1 | 0 | 0 | 20 | 4.35 | Strongly Agree |
+| 2 | The interface is clean and visually understandable. | 3 | 16 | 1 | 0 | 0 | 20 | 4.10 | Agree |
+| 3 | I was able to register and set up my account without difficulty. | 6 | 14 | 0 | 0 | 0 | 20 | 4.30 | Strongly Agree |
+| 4 | The instructions and labels in the system are clear and easy to understand. | 3 | 16 | 1 | 0 | 0 | 20 | 4.10 | Agree |
+| 5 | I can comfortably use the system without any technical assistance. | 5 | 13 | 2 | 0 | 0 | 20 | 4.15 | Agree |
+| | **Category mean — A. Usability** | | | | | | | **4.20** | **Agree** |
+
+**B. Functionality**
+
+| # | Indicator | 5 | 4 | 3 | 2 | 1 | N | WM | Interpretation |
+|:---|:---|---:|---:|---:|---:|---:|---:|---:|:---|
+| 1 | The ride request feature works as expected. | 6 | 14 | 0 | 0 | 0 | 20 | 4.30 | Strongly Agree |
+| 2 | I receive timely notifications about incoming ride requests. | 8 | 11 | 1 | 0 | 0 | 20 | 4.35 | Strongly Agree |
+| 3 | The system accurately shows my availability status to passengers. | 5 | 15 | 0 | 0 | 0 | 20 | 4.25 | Strongly Agree |
+| 4 | I can manage and track my rides through the system in real time. | 5 | 14 | 1 | 0 | 0 | 20 | 4.20 | Agree |
+| 5 | The system performs all its intended functions correctly. | 8 | 10 | 2 | 0 | 0 | 20 | 4.30 | Strongly Agree |
+| | **Category mean — B. Functionality** | | | | | | | **4.28** | **Strongly Agree** |
+
+**C. Efficiency**
+
+| # | Indicator | 5 | 4 | 3 | 2 | 1 | N | WM | Interpretation |
+|:---|:---|---:|---:|---:|---:|---:|---:|---:|:---|
+| 1 | The system reduces my idle time waiting for passengers. | 5 | 15 | 0 | 0 | 0 | 20 | 4.25 | Strongly Agree |
+| 2 | Managing ride requests through the system is faster than the manual process. | 7 | 13 | 0 | 0 | 0 | 20 | 4.35 | Strongly Agree |
+| 3 | The system responds quickly to my inputs and actions. | 4 | 15 | 1 | 0 | 0 | 20 | 4.15 | Agree |
+| 4 | The system helps me serve more passengers throughout the day. | 8 | 11 | 1 | 0 | 0 | 20 | 4.35 | Strongly Agree |
+| 5 | Overall, the system improves my daily work experience as a driver. | 7 | 12 | 1 | 0 | 0 | 20 | 4.30 | Strongly Agree |
+| | **Category mean — C. Efficiency** | | | | | | | **4.28** | **Strongly Agree** |
+
+**D. Reliability**
+
+| # | Indicator | 5 | 4 | 3 | 2 | 1 | N | WM | Interpretation |
+|:---|:---|---:|---:|---:|---:|---:|---:|---:|:---|
+| 1 | The system works consistently without errors or crashes. | 10 | 10 | 0 | 0 | 0 | 20 | 4.50 | Strongly Agree |
+| 2 | I can depend on the system to deliver ride requests accurately. | 7 | 13 | 0 | 0 | 0 | 20 | 4.35 | Strongly Agree |
+| 3 | The system maintains accurate and up-to-date information. | 6 | 14 | 0 | 0 | 0 | 20 | 4.30 | Strongly Agree |
+| 4 | The system performs well even during busy hours. | 7 | 12 | 1 | 0 | 0 | 20 | 4.30 | Strongly Agree |
+| 5 | I trust the system to support my work as a registered driver. | 9 | 11 | 0 | 0 | 0 | 20 | 4.45 | Strongly Agree |
+| | **Category mean — D. Reliability** | | | | | | | **4.38** | **Strongly Agree** |
+
+**Overall weighted mean — 4.29, Strongly Agree**
+
+### G.3 System administrator
+
+One respondent, seven items across three characteristics.
+
+**A. Functional Suitability**
+
+| # | Indicator | 5 | 4 | 3 | 2 | 1 | N | WM | Interpretation |
+|:---|:---|---:|---:|---:|---:|---:|---:|---:|:---|
+| 1 | I can approve driver applications. | 1 | 0 | 0 | 0 | 0 | 1 | 5.00 | Strongly Agree |
+| 2 | I can monitor ride activities. | 1 | 0 | 0 | 0 | 0 | 1 | 5.00 | Strongly Agree |
+| 3 | I can manage user accounts. | 1 | 0 | 0 | 0 | 0 | 1 | 5.00 | Strongly Agree |
+| | **Category mean — A. Functional Suitability** | | | | | | | **5.00** | **Strongly Agree** |
+
+**B. Usability**
+
+| # | Indicator | 5 | 4 | 3 | 2 | 1 | N | WM | Interpretation |
+|:---|:---|---:|---:|---:|---:|---:|---:|---:|:---|
+| 1 | The dashboard is easy to use. | 1 | 0 | 0 | 0 | 0 | 1 | 5.00 | Strongly Agree |
+| 2 | Reports are easy to generate. | 1 | 0 | 0 | 0 | 0 | 1 | 5.00 | Strongly Agree |
+| | **Category mean — B. Usability** | | | | | | | **5.00** | **Strongly Agree** |
+
+**C. Reliability**
+
+| # | Indicator | 5 | 4 | 3 | 2 | 1 | N | WM | Interpretation |
+|:---|:---|---:|---:|---:|---:|---:|---:|---:|:---|
+| 1 | Records are accurate. | 0 | 1 | 0 | 0 | 0 | 1 | 4.00 | Agree |
+| 2 | Data updates correctly. | 0 | 1 | 0 | 0 | 0 | 1 | 4.00 | Agree |
+| | **Category mean — C. Reliability** | | | | | | | **4.00** | **Agree** |
+
+**Overall weighted mean — 4.67, Strongly Agree**
+
+### G.4 Notes on the computation
+
+**A duplicated item.** Part II, section B lists *"The system is easy to learn."* twice, as item 1 and again as item 6. Both are reproduced above because both appear on the administered paper and in the returns. The consequence is that section B is five distinct statements with one counted twice, which pulls the Usability mean toward that single statement. The effect is small here only because the duplicate happened to draw the same distribution as the original: dropping it moves the Usability category mean from 4.3750 to 4.3800 and the overall passenger mean from 4.3000 to 4.3008, neither of which changes a figure at two decimal places or shifts an interpretation. That it did no harm is luck rather than design, and the item should be replaced before any further administration.
+
+**One administrator.** The administrator instrument was answered by a single respondent, which is total enumeration of that role rather than a sample. Its means describe one person's assessment and are reported for completeness; no inference beyond that is available from N = 1.
+
+**Distribution of responses.** No respondent selected 1 or 2 on any of the sixty-one items, and item means run from 4.05 to 4.50 — a range of 0.45 across the whole instrument. A distribution this narrow and this uniformly positive is consistent with genuine approval, and equally with acquiescence bias and with respondents who knew the researchers. The returns alone cannot distinguish between these, and the limitation is recorded here rather than left for the reader to infer.
+
+## Appendix H — System Screenshots
 *[Screenshots are to be captured from the running application and inserted here. The following set is recommended, covering every module in Table 15.]*
 
 1. Onboarding carousel, first and final slides
@@ -1963,12 +2184,11 @@ The evaluation form administered to respondents is the System Evaluation Questio
 27. Profile screen with a photograph set
 28. Dark theme, any two screens
 
-## Appendix H — User Manual
-
+## Appendix I — User Manual
 The manual issued with the application, covering all three kinds of account. It is written
 to be read in parts: a passenger needs Part 1 and Part 2 and nothing else. Part 5 lists the
 problems encountered during development and testing, and what to do about each. Screenshots
-of every screen it describes are in Appendix G.
+of every screen it describes are in Appendix H.
 
 The same text is kept in the repository as `docs/user-manual.md`, so that it can be issued
 on its own without the rest of this document.
@@ -2398,8 +2618,7 @@ app.
 
 [[PB]]
 
-## Appendix I — Source Code
-
+## Appendix J — Source Code
 The complete source of the system is reproduced here, in the order in which the layers depend on one another: the manifest and entry point first, then the data models, the single service that reaches the database, the repositories that sit between it and the ViewModels, the ViewModels themselves, the utilities, and finally the interface. The unit tests and the build configuration follow.
 
 Two files required to build the project are deliberately not reproduced and are not held in version control, because they carry credentials: `google-services.json`, the Firebase configuration downloaded from the project console, and `.env`, which holds the Maps key, the support contact details and the release signing passwords. A committed `.env.example` records which keys are required without their values. The database security rules in Section I.11 are reproduced because they are the whole of the system's access control — the application speaks to Firebase directly, with no server in between, so anything those rules permit is permitted.
@@ -18580,8 +18799,7 @@ include(":app")
 }
 ```
 
-## Appendix J — Database Schema
-
+## Appendix K — Database Schema
 The structure of the Realtime Database is documented in Table 8 and illustrated in Figure 11. The security rules governing access are reproduced below in outline.
 
 | Node | Read | Write |
@@ -18597,8 +18815,7 @@ The structure of the Realtime Database is documented in Table 8 and illustrated 
 | `driverDocuments/{uid}` | The driver and administrators only | The driver, and administrators in order to delete on refusal |
 | `driverRatings/{uid}` | All authenticated users | Each rating only by the passenger who gave it, and only as a value from one to five |
 
-## Appendix K — Test Cases
-
+## Appendix L — Test Cases
 The test cases executed in this study are documented in Tables 11 through 14 in Section 4.5, covering unit testing, integration testing, system testing, and security testing. The user acceptance test tasks are as follows.
 
 | ID | Role | Task given to the respondent | Success criterion |
@@ -18616,14 +18833,25 @@ The test cases executed in this study are documented in Tables 11 through 14 in 
 | UAT-11 | Administrator | Correct a fare that reads incorrectly | The entry is found by search, edited, and saved |
 | UAT-12 | Administrator | Produce last month's ride report | The period is selected and the report is exported in both formats |
 
-## Appendix L — Test Results
+## Appendix M — Test Results
 
-The results of unit, integration, system, and security testing are recorded in Tables 11 through 14. User acceptance test results, performance measurements, and the defect log are to be inserted here following the evaluation period.
+The results of unit, integration, system, and security testing are recorded in Tables 11 through 14.
+
+User acceptance testing was carried out with forty-one respondents — twenty student passengers, twenty tricycle drivers, and the system administrator. The returns are reproduced in full in Appendix F and the computation of every figure in Appendix G. In summary, the passengers rated the system 4.30, the drivers 4.29, and the administrator 4.67, each interpreted as *Strongly Agree* on the scale printed on the questionnaire.
+
+| Respondent group | N | Overall weighted mean | Interpretation |
+|:---|---:|---:|:---|
+| Student passengers | 20 | 4.30 | Strongly Agree |
+| Tricycle drivers | 20 | 4.29 | Strongly Agree |
+| System administrator | 1 | 4.67 | Strongly Agree |
+
+No characteristic fell below *Agree* for any group. Across the two groups of twenty, category means ran from 4.20 — Usability among drivers — to 4.38, Reliability among drivers. The administrator's three categories, each from one respondent, were 5.00 for Functional Suitability, 5.00 for Usability and 4.00 for Reliability, the last of these the lowest single category figure in the evaluation. Appendix G records three qualifications on these figures: a duplicated item in the passenger instrument, the single administrator respondent, and the narrowness of the response distribution.
+
+Performance measurements and the defect log are to be inserted here.
 
 *[The defect log should record, for each defect found: an identifier, the module, a description, the severity, the date found, the resolution, and the date resolved.]*
 
-## Appendix M — Sample Reports
-
+## Appendix N — Sample Reports
 *[Exported files are to be inserted here as printed extracts. The following three are produced by the system, each in both of the formats described in section 4.8.]*
 
 **Sample 1 — Ride activity report** for a selected month: the summary page carrying the headline figures and the four charts, followed by a representative extract of the per-ride rows.
@@ -18640,20 +18868,17 @@ Driver, Driver email, Pickup, Destination, Passengers, Luggage, Status,
 Estimated fare, Actual fare, Notes
 ```
 
-## Appendix N — Documentation of Data Gathering
-
+## Appendix O — Documentation of Data Gathering
 *[Photographs and records of the data gathering activities are to be inserted here, with the consent of those pictured.]*
 
 The following should be documented: the needs assessment administration to students and to drivers; the meeting with officers of the drivers' association; the photographs of the posted FeTODAT fare sheet from which the fare table was transcribed; the driver orientation session; the evaluation period; and the administration of the evaluation questionnaire.
 
-## Appendix O — Gantt Chart
-
+## Appendix P — Gantt Chart
 ![Figure 14. Gantt Chart of Project Activities](figures/fig14_gantt.png){width=6.0in}
 
 [[PB]]
 
-## Appendix P — Researchers' Biodata
-
+## Appendix Q — Researchers' Biodata
 ### CURRICULUM VITAE
 
 **ALBER JUNE M. MUMAR**
@@ -18747,3 +18972,283 @@ Email Address: mardygonzaga@gmail.com
 |:---|:---|
 | Secondary | San Jose National High School, San Jose, Talibon, Bohol |
 | Elementary | Garcia Park Elementary School, San Carlos, Talibon, Bohol |
+
+## Appendix R — Legal Documents Presented In-App
+Four documents are carried inside the application and are readable at any time from the
+profile screen. The Terms and Conditions, the Privacy Policy and the Safety and Community
+Guidelines must each be accepted before the service becomes available; the Driver
+Agreement is presented to a driver after they choose a driver account. Acceptance is
+recorded against a version string, so that a revision asks every existing user again on
+their next launch.
+
+They are reproduced below as issued. The text held in the application is the copy of
+record, since it is what a user reads before agreeing; its source is
+`app/src/main/java/com/tpc/trikride/ui/screens/LegalScreen.kt`, and Markdown copies
+generated from it are in `docs/legal/`; the strings themselves appear in Appendix J.
+
+[[PB]]
+
+### D.1 Terms and Conditions
+
+*Effective Date: July 28, 2026*
+
+By creating an account or using TrikRide, you agree to comply with these Terms and Conditions.
+
+**1. Eligibility**
+
+Users must be:
+- Registered students, faculty, or authorized personnel of the participating institution.
+- Registered and approved drivers for driver accounts.
+
+**2. Account Registration**
+
+Users agree to:
+- Provide accurate and complete information.
+- Maintain only one active account unless otherwise authorized.
+- Keep login credentials confidential.
+- Notify the administrator immediately if they suspect unauthorized access to their account.
+
+**3. Ride Booking**
+
+Passengers agree to:
+- Enter accurate pickup and destination locations.
+- Be present at the designated pickup point on time.
+- Treat drivers and fellow passengers with courtesy and respect.
+
+Drivers agree to:
+- Maintain valid registration and any required permits.
+- Arrive at pickup locations promptly whenever possible.
+- Provide safe, respectful, and professional service.
+- Follow all applicable traffic laws and institutional policies.
+
+**4. Prohibited Activities**
+
+Users shall not:
+- Create fake or fraudulent accounts.
+- Impersonate another person.
+- Submit false booking requests.
+- Harass, threaten, or discriminate against other users.
+- Attempt unauthorized access to the system.
+- Use the application for illegal or unlawful activities.
+
+Violations may result in temporary suspension or permanent removal from the TrikRide platform.
+
+**5. Limitation of Liability**
+
+TrikRide is a ride scheduling and driver matching platform. While we strive to provide reliable service, we cannot guarantee uninterrupted availability and are not responsible for delays caused by traffic, weather, vehicle issues, or other circumstances beyond our reasonable control.
+
+**6. Account Suspension**
+
+The system administrator reserves the right to suspend or terminate accounts found to be in violation of these Terms and Conditions.
+
+**7. Intellectual Property**
+
+All application content, including the TrikRide name, logo, interface design, graphics, source code, and documentation, is owned by the TrikRide development team unless otherwise stated. Unauthorized reproduction or distribution is prohibited.
+
+**8. Amendments**
+
+These Terms and Conditions may be updated from time to time. Continued use of TrikRide after changes are published constitutes acceptance of the updated Terms.
+
+**9. Governing Rules**
+
+These Terms shall be governed by applicable Philippine laws and the policies of the participating educational institution.
+
+**10. Acceptance**
+
+By registering and using TrikRide, you confirm that you have read, understood, and agreed to these Terms and Conditions and the Privacy Policy.
+
+[[PB]]
+
+### D.2 Privacy Policy
+
+*Effective Date: August 16, 2026*
+
+**1. Information We Collect**
+
+We collect the information you provide during registration (name, email, phone number, date of birth, and — for drivers — license and tricycle details), an optional profile photo, and information generated while using the app (ride requests, pickup/destination, ride history, and any concerns you report).
+
+Drivers are also asked for a photograph of their driver's license. Under the Data Privacy Act of 2012 (Republic Act No. 10173) a license is sensitive personal information, so it is treated separately from everything else in this policy and is covered by section 9 below. You are asked to agree to it specifically at the moment you send it, not merely by accepting this policy.
+
+**2. How We Use Information**
+
+Your information is used to create your account, match passengers with drivers, price rides, support driver verification, and improve the service.
+
+**3. Location**
+
+Location is used to show pickup/destination and, for drivers, availability. Location is only used while you are using the relevant features of the app.
+
+**4. Data Storage**
+
+Account, ride, and profile photo data are stored in Google Firebase. A profile photo is reduced to a small thumbnail before it is stored. Communications with the server are encrypted in transit. TrikRide does not collect card, bank, or any other payment details; fares are paid in cash directly to the driver.
+
+**5. Sharing**
+
+A passenger's ride details are shared with the assigned driver (and vice versa) to complete the ride. Administrators can view driver records and ride logs to operate and monitor the service. We do not sell your personal information.
+
+**6. Your Choices**
+
+You can edit your profile details and sign out at any time. You may request account concerns or corrections through the Support feature.
+
+**7. Children**
+
+The service is intended for members of the college community and is not directed at children under 13.
+
+**8. Contact**
+
+For privacy questions, contact the TrikRide support hotline listed in the app.
+
+**9. Driver's License Photographs**
+
+This section applies only to drivers, and only to the photograph of the license itself.
+
+Purpose. The photograph is used for one thing: to confirm that the person applying to carry passengers holds the license they say they hold, and to check it again when that license expires. It is not used for anything else.
+
+Who can see it. You, and a TrikRide administrator. It is never shown to passengers, never attached to a ride, and never included in any exported report.
+
+How long we keep it. If your application is refused, the photograph is deleted at the moment of that decision. If you are approved, it is kept while your account is active, because it is needed again at renewal and if a concern about a ride is ever disputed. Withdrawing an approval already given is not the same as refusing an application and does not delete the photograph, for that same reason. It is deleted with your account.
+
+Your control. You may remove the photograph yourself at any time from your driver profile. Removing it means you cannot be approved to carry passengers until you provide another one.
+
+How it is stored. Separately from your account record, so that ordinary use of the app never reads it, and reduced in size before it is stored. Communications are encrypted in transit.
+
+[[PB]]
+
+### D.3 Safety and Community Guidelines
+
+*Effective Date: July 28, 2026*
+
+**Our Commitment**
+
+TrikRide is committed to providing a safe, respectful, and reliable transportation environment for students, drivers, faculty, and staff.
+
+**Respect Everyone**
+
+- Treat all users with courtesy and professionalism.
+- Avoid abusive, offensive, discriminatory, or threatening language.
+- Respect personal space and privacy.
+
+**Safe Riding**
+
+- Wait at the designated pickup location.
+- Verify the driver's identity before boarding.
+- Follow the driver's safety instructions during the trip.
+- Remain seated while the vehicle is moving.
+- Do not distract the driver while driving.
+
+**Driver Responsibilities**
+
+Drivers are expected to:
+- Drive safely and obey all traffic laws.
+- Maintain a roadworthy and clean vehicle.
+- Arrive at pickup locations as promptly as possible.
+- Treat every passenger fairly and respectfully.
+- Never operate a vehicle while under the influence of alcohol or illegal drugs.
+
+**Passenger Responsibilities**
+
+Passengers are expected to:
+- Arrive on time for scheduled pickups.
+- Respect the driver's vehicle and property.
+- Avoid behavior that may endanger others.
+- Report emergencies or unsafe situations immediately.
+
+**Prohibited Conduct**
+
+The following are strictly prohibited:
+- Violence or physical assault.
+- Sexual harassment or misconduct.
+- Bullying, intimidation, or discrimination.
+- Possession or use of illegal drugs.
+- Carrying dangerous weapons or prohibited items.
+- Vandalism or intentional damage to vehicles.
+- Providing false information or fake bookings.
+
+**Reporting Safety Concerns**
+
+Users are encouraged to report:
+- Unsafe driving.
+- Harassment or inappropriate behavior.
+- Fake accounts or fraudulent activities.
+- Vehicle safety issues.
+- Lost belongings.
+
+Reports will be reviewed by authorized administrators, and appropriate action may be taken. Use the Support tab to file a report.
+
+**Account Enforcement**
+
+Violations of these Community Guidelines may result in:
+- Warning notices.
+- Temporary account suspension.
+- Permanent account removal.
+- Referral to school authorities or law enforcement when necessary.
+
+By using TrikRide, all users agree to help maintain a safe, respectful, and welcoming community.
+
+[[PB]]
+
+### D.4 Driver Agreement
+
+*Effective Date: August 16, 2026*
+
+This Driver Agreement establishes the responsibilities and expectations for all drivers using the TrikRide platform.
+
+**Driver Eligibility**
+
+To become a TrikRide driver, you must:
+- Be at least 18 years old.
+- Possess a valid driver's license appropriate for the vehicle operated.
+- Operate a legally registered tricycle or authorized vehicle.
+- Submit a legible photograph of that license for verification, and keep a current one on file.
+- Complete the registration and verification process required by TrikRide.
+
+**Your License Photograph**
+
+The photograph you submit is checked by an administrator against the license details you entered, and again when the license expires. Only you and an administrator can view it; it is never shown to passengers. If your application is refused it is deleted immediately. If you are approved it is kept while your account is active and deleted with the account; that remains so if your approval is later withdrawn, since the reason for withdrawing it may itself need to be evidenced. You may remove it yourself at any time, though you cannot carry passengers without one on file. Section 9 of the Privacy Policy sets this out in full.
+
+TrikRide checks that a document was presented and that it matches what you entered. It does not and cannot confirm with the Land Transportation Office that a license is current or has not been suspended. Driving on a valid license remains your responsibility, and submitting a false or altered document ends your access to the platform.
+
+**Driver Responsibilities**
+
+Drivers agree to:
+- Provide accurate personal and vehicle information.
+- Keep account information updated.
+- Drive safely and comply with all traffic laws.
+- Treat all passengers respectfully and without discrimination.
+- Arrive at pickup locations as promptly as possible.
+- Notify passengers through the app if delays occur.
+- Maintain a clean and safe vehicle.
+
+**Professional Conduct**
+
+Drivers shall:
+- Wear appropriate attire while providing transportation services.
+- Avoid abusive or inappropriate language.
+- Respect passenger privacy.
+- Never ask for personal information unrelated to the ride.
+
+**Safety Requirements**
+
+Drivers shall never:
+- Drive while under the influence of alcohol or illegal drugs.
+- Allow unauthorized persons to operate their registered vehicle.
+- Accept bookings using another driver's account.
+- Endanger passengers through reckless driving.
+
+**Account Suspension or Termination**
+
+TrikRide may suspend or terminate a driver's account for:
+- Repeated complaints.
+- Unsafe driving practices.
+- Fraudulent activity.
+- Submission of false documents.
+- Violation of this Agreement or applicable laws.
+
+**Limitation of Responsibility**
+
+Drivers acknowledge that TrikRide functions as a ride scheduling and matching platform. Drivers remain responsible for complying with all traffic regulations and for the safe operation of their vehicles.
+
+**Agreement**
+
+By registering as a TrikRide driver, you confirm that you have read, understood, and agreed to abide by this Driver Agreement.
+
+[[PB]]
