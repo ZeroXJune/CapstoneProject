@@ -136,21 +136,27 @@ SETUP_GUIDE.md.
 
 ### The evaluation, which is the long pole
 
-No survey data has been collected, and the manuscript no longer pretends otherwise —
-results, collected data and statistical treatment were removed rather than left as empty
-tables. The chain is: letters signed, respondents recruited, app distributed, respondents
-use it, responses collected, statistician sets the treatment, results written up.
+The survey has been administered: forty-one returns, twenty passengers, twenty drivers and
+the administrator, transcribed in Appendix F. The statistical treatment is with the
+statistician. Appendix G carries a descriptive tally in the meantime — item frequencies,
+weighted means and their interpretation against the questionnaire's scale — labelled
+provisional, because the treatment may differ and may add tests this tally does not
+attempt. The arithmetic in it reconciles exactly with the returns; it is the method that
+is not settled.
+
+What is left: statistician sets the treatment, results written up against it.
 
 What has to be written once that is done:
 
 | Where | What is missing |
 |:---|:---|
-| § 1.9 | Population figures, the sampling method and sample size, respondents who took part |
+| § 1.9 | Population figures, the sampling method and sample size |
 | § 1.11 | The statistical treatment, once the statistician has specified it |
-| Chapter 4 | A section presenting the evaluation results and their interpretation |
+| § 4.9 | System Evaluation — the section the prescribed format requires and the manuscript does not have |
+| Chapter 4 | The evaluation results and their interpretation, against the settled treatment |
 | Chapter 5 | A summary of findings, ahead of the conclusions already written |
-| § 4.5 | User acceptance completion rates, performance measurements, the defect log |
-| Appendices | Raw responses and the statistical computation, as the statistician requires |
+| § 4.5 | Performance measurements and the defect log |
+| Appendix G | Recomputation under the statistician's treatment, replacing the provisional tally |
 
 Three appendices need nothing but capturing while the evaluation is running:
 **Appendix G**, screenshots covering every module; **Appendix M**, printed sample reports,
@@ -176,11 +182,11 @@ fares would cover a demo and turn on both of those features for the stops that m
 following the department's required format: preliminaries, five chapters, references in
 APA 7, and appendices A through P.
 
-Chapters 1 through 4 are complete. Nothing about results, collected data, or statistical
-treatment is in the document: the evaluation has not been run, and the treatment is the
-statistician's to specify, so those sections were removed rather than left as empty
-tables. What remains to be added once the evaluation happens is the results, their
-interpretation, Chapter 5's summary and findings, and the appendices that depend on them.
+Chapters 1 through 4 are complete. The evaluation has been administered and the returns
+are in Appendix F; Appendix G tallies them provisionally, pending the treatment the
+statistician is determining. What remains is that treatment, the results and their
+interpretation written against it, the § 4.9 System Evaluation section the prescribed
+format requires, and Chapter 5's summary of findings.
 
 Appendix D now carries all four user agreements in full rather than a summary and a
 placeholder, and Appendix H the user manual rather than an outline of one. The manual is

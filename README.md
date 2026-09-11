@@ -172,10 +172,12 @@ Google Sign-In. Email and password only.
 
 ## Documentation
 
-The full capstone manuscript is in `docs/`. Chapters 1 through 4 are complete. Results,
-collected data, and statistical treatment are absent by intent — the evaluation has not
-been conducted and the treatment is for the study's statistician to determine, so those
-sections were removed rather than mocked up. Nothing in there is invented.
+The full capstone manuscript is in `docs/`. Chapters 1 through 4 are complete. The
+evaluation has been administered — forty-one returns, transcribed in Appendix F — and the
+statistical treatment is with the study's statistician. Appendix G carries a descriptive
+tally of those returns, marked provisional, so the data can be read while the treatment is
+settled; it is not the final analysis. Results and their interpretation go in once the
+treatment is fixed. Nothing in there is invented.
 
 Appendix I reproduces the whole source — every Kotlin file, the manifest, the build
 scripts and the database security rules — in dependency order. The two credential files,

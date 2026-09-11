@@ -115,7 +115,7 @@ The application was built in Kotlin with Jetpack Compose against Firebase Authen
 
 The system is to be evaluated against the four ISO/IEC 25010 quality characteristics named in the research instrument: usability, functionality, efficiency, and reliability, with students of Talibon Polytechnic College and tricycle drivers serving the campus as respondents.
 
-*[The evaluation has not been conducted. Results, their interpretation, and the statistical treatment applied to them are to be added once data have been collected and the treatment has been determined.]*
+*[The evaluation has been administered and the returns are transcribed in Appendix F. The statistical treatment is being determined by the study's statistician, so the figures in Appendix G are a descriptive tally of the responses and not the final analysis. Results and their interpretation are to be written into this summary once the treatment is settled.]*
 
 [[PB]]
 
@@ -1649,6 +1649,8 @@ The responses exactly as they were entered, one row per questionnaire. Item colu
 
 Forty-one questionnaires were returned: twenty from student passengers, twenty from tricycle drivers, and one from the system administrator.
 
+This appendix is the transcription of the returns and is independent of whatever treatment is applied to them. The treatment itself is being determined by the study's statistician; the tally in Appendix G is provisional until it is settled.
+
 [[PB]]
 
 ### F.1 Student passengers — respondent profile
@@ -1964,8 +1966,17 @@ Forty-one questionnaires were returned: twenty from student passengers, twenty f
 | 1 | 22 | Male | 5 | 5 | 5 | 5 | 5 | 4 | 4 |
 
 ## Appendix G — Statistical Computation
-[[PB]]
 
+*[Provisional. The statistical treatment for this study is being determined by the
+statistician. What follows is a descriptive tally of the returns in Appendix F — item
+frequencies, weighted means and their interpretation against the questionnaire's own
+scale — computed so that the data can be read while the treatment is settled. It is not
+the final analysis, and the statistician may apply a different treatment, a different
+basis for the overall figures, or tests of significance that this tally does not attempt.
+Every figure below was recomputed from the raw responses and reconciles with them
+exactly; what is provisional is the method, not the arithmetic.]*
+
+[[PB]]
 
 Each item was scored on the five-point scale printed on the questionnaire. The weighted mean of an item is the sum of the weights given to it divided by the number of respondents who answered it:
 
@@ -18837,7 +18848,11 @@ The test cases executed in this study are documented in Tables 11 through 14 in 
 
 The results of unit, integration, system, and security testing are recorded in Tables 11 through 14.
 
-User acceptance testing was carried out with forty-one respondents — twenty student passengers, twenty tricycle drivers, and the system administrator. The returns are reproduced in full in Appendix F and the computation of every figure in Appendix G. In summary, the passengers rated the system 4.30, the drivers 4.29, and the administrator 4.67, each interpreted as *Strongly Agree* on the scale printed on the questionnaire.
+User acceptance testing was carried out with forty-one respondents — twenty student passengers, twenty tricycle drivers, and the system administrator. The returns are reproduced in full in Appendix F.
+
+*[The figures below are provisional. They are the descriptive tally set out in Appendix G, pending the treatment the study's statistician is determining.]*
+
+On that tally the passengers rated the system 4.30, the drivers 4.29, and the administrator 4.67, each falling in the *Strongly Agree* band of the scale printed on the questionnaire.
 
 | Respondent group | N | Overall weighted mean | Interpretation |
 |:---|---:|---:|:---|
@@ -18845,7 +18860,7 @@ User acceptance testing was carried out with forty-one respondents — twenty st
 | Tricycle drivers | 20 | 4.29 | Strongly Agree |
 | System administrator | 1 | 4.67 | Strongly Agree |
 
-No characteristic fell below *Agree* for any group. Across the two groups of twenty, category means ran from 4.20 — Usability among drivers — to 4.38, Reliability among drivers. The administrator's three categories, each from one respondent, were 5.00 for Functional Suitability, 5.00 for Usability and 4.00 for Reliability, the last of these the lowest single category figure in the evaluation. Appendix G records three qualifications on these figures: a duplicated item in the passenger instrument, the single administrator respondent, and the narrowness of the response distribution.
+No characteristic fell below *Agree* for any group. Across the two groups of twenty, category means ran from 4.20 — Usability among drivers — to 4.38, Reliability among drivers. The administrator's three categories, each from one respondent, were 5.00 for Functional Suitability, 5.00 for Usability and 4.00 for Reliability, the last of these the lowest single category figure. Appendix G records three qualifications: a duplicated item in the passenger instrument, the single administrator respondent, and the narrowness of the response distribution.
 
 Performance measurements and the defect log are to be inserted here.
 
