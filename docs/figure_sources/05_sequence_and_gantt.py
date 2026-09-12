@@ -75,21 +75,22 @@ print('ok  fig09_sequence_booking')
 
 # ---------------------------------------------------------------- Gantt chart
 tasks = [
-    ("Problem identification and needs assessment", "2026-02-01", "2026-02-28", GREEN),
-    ("Review of related literature and systems",    "2026-02-15", "2026-03-20", GREEN),
-    ("Proposal writing and defense",                "2026-03-01", "2026-03-31", GREEN),
-    ("Requirements analysis and documentation",     "2026-03-20", "2026-04-15", GREEN),
-    ("System design (diagrams, database, UI)",      "2026-04-01", "2026-04-30", GREEN),
-    ("Development: authentication and onboarding",  "2026-04-15", "2026-05-15", DEEP),
-    ("Development: booking and matching",           "2026-05-01", "2026-06-05", DEEP),
-    ("Development: admin, fares and reports",       "2026-05-20", "2026-06-30", DEEP),
-    ("Fare table transcription and verification",   "2026-06-01", "2026-06-30", AMBER),
-    ("Unit and integration testing",                "2026-06-15", "2026-07-15", AMBER),
-    ("Pilot deployment to respondents",             "2026-07-01", "2026-07-20", AMBER),
-    ("User acceptance testing and evaluation",      "2026-07-15", "2026-08-10", AMBER),
-    ("Data analysis and interpretation",            "2026-08-05", "2026-08-25", '#3B82F6'),
-    ("Final manuscript and oral defense",           "2026-08-15", "2026-09-10", '#3B82F6'),
+    ("Problem identification and needs assessment", "2026-02-01", "2026-03-15", GREEN),
+    ("Review of related literature and systems",    "2026-03-01", "2026-04-15", GREEN),
+    ("Requirements analysis and documentation",     "2026-04-01", "2026-05-10", GREEN),
+    ("System design (diagrams, database, UI)",      "2026-04-20", "2026-05-31", GREEN),
+    ("Proposal writing and defense",                "2026-05-01", "2026-06-15", GREEN),
+    ("Development: authentication and onboarding",  "2026-06-10", "2026-07-05", DEEP),
+    ("Development: booking and matching",           "2026-06-25", "2026-07-25", DEEP),
+    ("Development: admin, fares and reports",       "2026-07-10", "2026-08-10", DEEP),
+    ("Fare table transcription and verification",   "2026-07-01", "2026-07-31", AMBER),
+    ("Unit and integration testing",                "2026-07-20", "2026-08-20", AMBER),
+    ("Pilot deployment to respondents",             "2026-08-05", "2026-08-22", AMBER),
+    ("User acceptance testing and evaluation",      "2026-08-18", "2026-09-05", AMBER),
+    ("Data analysis and interpretation",            "2026-09-01", "2026-09-14", '#3B82F6'),
+    ("Final manuscript and oral defense",           "2026-09-05", "2026-09-23", '#3B82F6'),
 ]
+MILESTONES = [("2026-06-15", "Proposal\ndefense"), ("2026-09-23", "Oral\ndefense")]
 fig, ax = plt.subplots(figsize=(12, 6.4))
 for i, (name, s, e, c) in enumerate(reversed(tasks)):
     sd = dt.datetime.strptime(s, "%Y-%m-%d"); ed = dt.datetime.strptime(e, "%Y-%m-%d")
@@ -104,7 +105,15 @@ for spine in ('top','right','left'):
     ax.spines[spine].set_visible(False)
 ax.spines['bottom'].set_color('#CBD5E1')
 ax.tick_params(axis='x', labelsize=8.5, colors=GREY)
-ax.set_xlim(dt.datetime(2026,1,20), dt.datetime(2026,9,25))
+ax.set_xlim(dt.datetime(2026,1,20), dt.datetime(2026,10,20))
+for ms, label in MILESTONES:
+    md = dt.datetime.strptime(ms, "%Y-%m-%d")
+    ax.axvline(md, color='#DC2626', lw=1.1, ls=(0,(4,3)), zorder=3)
+    ax.annotate(f"{label}\n{md.strftime('%d %b')}", xy=(md, len(tasks)-0.25),
+                ha='center', va='bottom', fontsize=8, color='#DC2626', linespacing=1.2,
+                zorder=5, bbox=dict(boxstyle='round,pad=0.25', fc='white',
+                                    ec='#DC2626', lw=0.7))
+ax.set_ylim(-0.7, len(tasks)+1.15)
 plt.tight_layout()
 plt.savefig(f'{OUT}/fig14_gantt.png', dpi=170, bbox_inches='tight', facecolor='white')
 plt.close()
