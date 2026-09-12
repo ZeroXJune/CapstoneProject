@@ -75,22 +75,22 @@ print('ok  fig09_sequence_booking')
 
 # ---------------------------------------------------------------- Gantt chart
 tasks = [
-    ("Problem identification and needs assessment", "2025-08-01", "2025-09-15", GREEN),
-    ("Review of related literature and systems",    "2025-09-01", "2025-10-15", GREEN),
-    ("Proposal writing and defense",                "2025-10-01", "2025-11-30", GREEN),
-    ("Requirements analysis and documentation",     "2025-11-15", "2025-12-31", GREEN),
-    ("System design (diagrams, database, UI)",      "2025-12-01", "2026-01-31", GREEN),
-    ("Development: authentication and onboarding",  "2026-01-05", "2026-02-28", DEEP),
-    ("Development: booking and matching",           "2026-02-01", "2026-03-31", DEEP),
-    ("Development: admin, fares and reports",       "2026-03-01", "2026-04-30", DEEP),
-    ("Fare table transcription and verification",   "2026-04-01", "2026-05-15", AMBER),
-    ("Unit and integration testing",                "2026-04-15", "2026-05-31", AMBER),
-    ("Pilot deployment to respondents",             "2026-06-01", "2026-06-30", AMBER),
-    ("User acceptance testing and evaluation",      "2026-06-15", "2026-07-31", AMBER),
-    ("Data analysis and interpretation",            "2026-07-15", "2026-08-15", '#3B82F6'),
-    ("Final manuscript and oral defense",           "2026-08-01", "2026-09-30", '#3B82F6'),
+    ("Problem identification and needs assessment", "2026-02-01", "2026-02-28", GREEN),
+    ("Review of related literature and systems",    "2026-02-15", "2026-03-20", GREEN),
+    ("Proposal writing and defense",                "2026-03-01", "2026-03-31", GREEN),
+    ("Requirements analysis and documentation",     "2026-03-20", "2026-04-15", GREEN),
+    ("System design (diagrams, database, UI)",      "2026-04-01", "2026-04-30", GREEN),
+    ("Development: authentication and onboarding",  "2026-04-15", "2026-05-15", DEEP),
+    ("Development: booking and matching",           "2026-05-01", "2026-06-05", DEEP),
+    ("Development: admin, fares and reports",       "2026-05-20", "2026-06-30", DEEP),
+    ("Fare table transcription and verification",   "2026-06-01", "2026-06-30", AMBER),
+    ("Unit and integration testing",                "2026-06-15", "2026-07-15", AMBER),
+    ("Pilot deployment to respondents",             "2026-07-01", "2026-07-20", AMBER),
+    ("User acceptance testing and evaluation",      "2026-07-15", "2026-08-10", AMBER),
+    ("Data analysis and interpretation",            "2026-08-05", "2026-08-25", '#3B82F6'),
+    ("Final manuscript and oral defense",           "2026-08-15", "2026-09-10", '#3B82F6'),
 ]
-fig, ax = plt.subplots(figsize=(13, 6.4))
+fig, ax = plt.subplots(figsize=(12, 6.4))
 for i, (name, s, e, c) in enumerate(reversed(tasks)):
     sd = dt.datetime.strptime(s, "%Y-%m-%d"); ed = dt.datetime.strptime(e, "%Y-%m-%d")
     ax.barh(i, (ed-sd).days, left=sd, height=0.58, color=c, edgecolor='white', lw=0.8)
@@ -104,7 +104,7 @@ for spine in ('top','right','left'):
     ax.spines[spine].set_visible(False)
 ax.spines['bottom'].set_color('#CBD5E1')
 ax.tick_params(axis='x', labelsize=8.5, colors=GREY)
-ax.set_xlim(dt.datetime(2025,7,20), dt.datetime(2026,10,10))
+ax.set_xlim(dt.datetime(2026,1,20), dt.datetime(2026,9,25))
 plt.tight_layout()
 plt.savefig(f'{OUT}/fig14_gantt.png', dpi=170, bbox_inches='tight', facecolor='white')
 plt.close()
