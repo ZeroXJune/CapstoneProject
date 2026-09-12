@@ -79,7 +79,7 @@ tasks = [
     ("Review of related literature and systems",    "2026-03-01", "2026-04-15", GREEN),
     ("Requirements analysis and documentation",     "2026-04-01", "2026-05-10", GREEN),
     ("System design (diagrams, database, UI)",      "2026-04-20", "2026-05-31", GREEN),
-    ("Proposal writing and defense",                "2026-05-01", "2026-06-15", GREEN),
+    ("Proposal writing and defense",                "2026-05-01", "2026-06-09", GREEN),
     ("Development: authentication and onboarding",  "2026-06-10", "2026-07-05", DEEP),
     ("Development: booking and matching",           "2026-06-25", "2026-07-25", DEEP),
     ("Development: admin, fares and reports",       "2026-07-10", "2026-08-10", DEEP),
@@ -90,7 +90,7 @@ tasks = [
     ("Data analysis and interpretation",            "2026-09-01", "2026-09-14", '#3B82F6'),
     ("Final manuscript and oral defense",           "2026-09-05", "2026-09-23", '#3B82F6'),
 ]
-MILESTONES = [("2026-06-15", "Proposal\ndefense"), ("2026-09-23", "Oral\ndefense")]
+MILESTONES = [("2026-06-09", "Proposal\ndefense"), ("2026-09-23", "Oral\ndefense")]
 fig, ax = plt.subplots(figsize=(12, 6.4))
 for i, (name, s, e, c) in enumerate(reversed(tasks)):
     sd = dt.datetime.strptime(s, "%Y-%m-%d"); ed = dt.datetime.strptime(e, "%Y-%m-%d")
