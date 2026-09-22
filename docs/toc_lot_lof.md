@@ -41,13 +41,13 @@
 | &nbsp;&nbsp;&nbsp;&nbsp;Development Tools | 44 |
 | &nbsp;&nbsp;&nbsp;&nbsp;Database Technologies | 45 |
 | &nbsp;&nbsp;&nbsp;&nbsp;Network Architecture | 49 |
-| &nbsp;&nbsp;&nbsp;&nbsp;Software Architecture | 50 |
-| &nbsp;&nbsp;&nbsp;&nbsp;Security Features | 52 |
-| &nbsp;&nbsp;&nbsp;&nbsp;System Architecture | 59 |
+| &nbsp;&nbsp;&nbsp;&nbsp;Software Architecture | 49 |
+| &nbsp;&nbsp;&nbsp;&nbsp;Security Features | 51 |
+| &nbsp;&nbsp;&nbsp;&nbsp;System Architecture | 58 |
 | **4 — METHODOLOGY, RESULTS, AND DISCUSSION** | 61 |
 | &nbsp;&nbsp;&nbsp;&nbsp;Requirement Analysis | 61 |
-| &nbsp;&nbsp;&nbsp;&nbsp;Requirements Documentation | 65 |
-| &nbsp;&nbsp;&nbsp;&nbsp;System Design | 69 |
+| &nbsp;&nbsp;&nbsp;&nbsp;Requirements Documentation | 66 |
+| &nbsp;&nbsp;&nbsp;&nbsp;System Design | 70 |
 | &nbsp;&nbsp;&nbsp;&nbsp;Software Development | 82 |
 | &nbsp;&nbsp;&nbsp;&nbsp;Testing | 86 |
 | &nbsp;&nbsp;&nbsp;&nbsp;Prototype Description | 93 |
@@ -59,38 +59,32 @@
 | &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Evaluation by the System Administrator | 128 |
 | &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Comparison and Overall Result | 132 |
 | &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Summary of the Evaluation | 133 |
-| **5 — SUMMARY, CONCLUSIONS AND RECOMMENDATIONS** | 136 |
-| &nbsp;&nbsp;&nbsp;&nbsp;Summary of Findings | 136 |
-| &nbsp;&nbsp;&nbsp;&nbsp;Conclusions | 139 |
-| &nbsp;&nbsp;&nbsp;&nbsp;Recommendations | 141 |
-| &nbsp;&nbsp;&nbsp;&nbsp;Future Enhancements | 143 |
-| **REFERENCES** | 146 |
-| **APPENDICES** | 149 |
-| &nbsp;&nbsp;&nbsp;&nbsp;Appendix A — Research Instruments | 149 |
-| &nbsp;&nbsp;&nbsp;&nbsp;Appendix B — Forms | 157 |
-| &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;IS-CP Form No. 1 — Project Team Member | 157 |
-| &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;IS-CP Form No. 2 — Capstone Project Adviser Acceptance | 158 |
-| &nbsp;&nbsp;&nbsp;&nbsp;Appendix C — Letters | 159 |
-| &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Grammarian | 159 |
-| &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Statistician | 160 |
-| &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Coordination Letter — San Isidro TODA | 161 |
-| &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Coordination Letter — San Jose TODA | 162 |
-| &nbsp;&nbsp;&nbsp;&nbsp;Appendix D — Survey Questionnaires | 163 |
-| &nbsp;&nbsp;&nbsp;&nbsp;Appendix E — Legal Documents Presented In-App | 171 |
-| &nbsp;&nbsp;&nbsp;&nbsp;Appendix F — Interview Guide | 181 |
-| &nbsp;&nbsp;&nbsp;&nbsp;Appendix G — Evaluation Form | 183 |
-| &nbsp;&nbsp;&nbsp;&nbsp;Appendix H — User Manual | 191 |
-| &nbsp;&nbsp;&nbsp;&nbsp;Appendix I — Raw Data | 208 |
-| &nbsp;&nbsp;&nbsp;&nbsp;Appendix J — Statistical Computation | 220 |
-| &nbsp;&nbsp;&nbsp;&nbsp;Appendix K — System Screenshots | 228 |
-| &nbsp;&nbsp;&nbsp;&nbsp;Appendix L — Test Cases | 242 |
-| &nbsp;&nbsp;&nbsp;&nbsp;Appendix M — Source Code | 244 |
-| &nbsp;&nbsp;&nbsp;&nbsp;Appendix N — Database Schema | 247 |
-| &nbsp;&nbsp;&nbsp;&nbsp;Appendix O — Test Results | 248 |
-| &nbsp;&nbsp;&nbsp;&nbsp;Appendix P — Sample Reports | 249 |
-| &nbsp;&nbsp;&nbsp;&nbsp;Appendix Q — Documentation of Data Gathering | 252 |
-| &nbsp;&nbsp;&nbsp;&nbsp;Appendix R — Gantt Chart | 255 |
-| **RESEARCHER'S BIODATA** | 256 |
+| **5 — SUMMARY, CONCLUSIONS AND RECOMMENDATIONS** | 134 |
+| &nbsp;&nbsp;&nbsp;&nbsp;Summary of Findings | 134 |
+| &nbsp;&nbsp;&nbsp;&nbsp;Conclusions | 137 |
+| &nbsp;&nbsp;&nbsp;&nbsp;Recommendations | 139 |
+| &nbsp;&nbsp;&nbsp;&nbsp;Future Enhancements | 141 |
+| **REFERENCES** | 144 |
+| **APPENDICES** | 147 |
+| &nbsp;&nbsp;&nbsp;&nbsp;Appendix A — Research Instruments | 147 |
+| &nbsp;&nbsp;&nbsp;&nbsp;Appendix B — Forms | 155 |
+| &nbsp;&nbsp;&nbsp;&nbsp;Appendix C — Letters | 157 |
+| &nbsp;&nbsp;&nbsp;&nbsp;Appendix D — Survey Questionnaires | 161 |
+| &nbsp;&nbsp;&nbsp;&nbsp;Appendix E — Legal Documents Presented In-App | 169 |
+| &nbsp;&nbsp;&nbsp;&nbsp;Appendix F — Interview Guide | 179 |
+| &nbsp;&nbsp;&nbsp;&nbsp;Appendix G — Evaluation Form | 181 |
+| &nbsp;&nbsp;&nbsp;&nbsp;Appendix H — User Manual | 189 |
+| &nbsp;&nbsp;&nbsp;&nbsp;Appendix I — Raw Data | 206 |
+| &nbsp;&nbsp;&nbsp;&nbsp;Appendix J — Statistical Computation | 218 |
+| &nbsp;&nbsp;&nbsp;&nbsp;Appendix K — System Screenshots | 226 |
+| &nbsp;&nbsp;&nbsp;&nbsp;Appendix L — Test Cases | 240 |
+| &nbsp;&nbsp;&nbsp;&nbsp;Appendix M — Source Code | 242 |
+| &nbsp;&nbsp;&nbsp;&nbsp;Appendix N — Database Schema | 245 |
+| &nbsp;&nbsp;&nbsp;&nbsp;Appendix O — Test Results | 246 |
+| &nbsp;&nbsp;&nbsp;&nbsp;Appendix P — Sample Reports | 247 |
+| &nbsp;&nbsp;&nbsp;&nbsp;Appendix Q — Documentation of Data Gathering | 250 |
+| &nbsp;&nbsp;&nbsp;&nbsp;Appendix R — Gantt Chart | 253 |
+| **RESEARCHER'S BIODATA** | 254 |
 
 [[PB]]
 
@@ -158,4 +152,4 @@
 | 11 | Realtime Database Schema | 79 |
 | 12 | Screen Navigation Flow | 81 |
 | 13 | Waterfall Model of the Software Development Life Cycle | 83 |
-| 14 | Gantt Chart of Project Activities | 255 |
+| 14 | Gantt Chart of Project Activities | 253 |
